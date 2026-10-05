@@ -32,7 +32,7 @@ function argsLine(tool: ToolDef): string {
 
 const sections = TOOL_GROUPS.map(([title, tools]) => {
   const rows = tools.map(
-    (t) => `| \`${t.name}\`${t.write ? " ✎" : ""} | ${argsLine(t) || "—"} | ${t.description.replace(/\|/g, "\\|").replace(/\n/g, " ")} |`,
+    (t) => `| \`${t.name}\`${t.write ? " ✎" : ""} | ${argsLine(t) || "—"} | ${t.description.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\n/g, " ")} |`,
   );
   return `### ${title}\n\n| Tool | Arguments | Description |\n|---|---|---|\n${rows.join("\n")}`;
 });
