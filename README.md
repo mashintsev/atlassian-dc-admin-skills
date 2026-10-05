@@ -17,7 +17,7 @@ One skill, `atlassian-dc-admin`, covers Jira, Confluence and Assets; Assets deta
 
 ## Token efficiency
 
-`npm run bench` replays the MCP responses captured by eunsanMountain/atlassian-skills
+`pnpm run bench` replays the MCP responses captured by eunsanMountain/atlassian-skills
 (`test/fixtures/mcp/`) through this CLI's generic output path (cl100k_base tokens):
 
 | | MCP JSON | `--format=json` | `compact` |
@@ -58,7 +58,7 @@ The skill is available to Claude Code in `.claude/skills/devsecops/` and to Code
 ## Install the skill
 
 ```bash
-npm install && npm run build
+pnpm install --frozen-lockfile && pnpm run build
 ln -s "$PWD/atlassian-dc-admin" ~/.claude/skills/atlassian-dc-admin     # all projects
 # or: ln -s ... <project>/.claude/skills/<name>
 # Codex: the same folder works as a Codex skill
@@ -111,11 +111,11 @@ Optional second layer in Claude Code: `atlassian-dc-admin/hooks/guard-confirmati
 ## Develop
 
 ```bash
-npm run typecheck
-npm test                 # unit tests, no network
-npm run build            # bundle the CLI into the skill and regenerate REFERENCE.md
-npm run bench            # token benchmark on captured MCP responses
-npm run cli -- list jira # run from sources with tsx
+pnpm run typecheck
+pnpm test                 # unit tests, no network
+pnpm run build            # bundle the CLI into the skill and regenerate REFERENCE.md
+pnpm run bench            # token benchmark on captured MCP responses
+pnpm run cli list jira    # run from sources with tsx
 ```
 
 A new tool is a `ToolDef` (name, product, write flag, description, Zod input shape, handler) in
