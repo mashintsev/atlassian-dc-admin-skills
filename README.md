@@ -69,6 +69,23 @@ cp atlassian-dc-admin/.env.example ~/.config/atlassian-dc-admin/.env   # fill in
 node atlassian-dc-admin/scripts/atlassian-admin.mjs check --ping
 ```
 
+## Superpowers
+
+This project follows the development workflows from [obra/superpowers](https://github.com/obra/superpowers). The repository rules are in `AGENTS.md`; install Superpowers separately for the coding-agent harness you use, following the [upstream installation guide](https://github.com/obra/superpowers#installation).
+
+For Claude Code, install through either marketplace:
+
+```text
+/plugin install superpowers@claude-plugins-official
+```
+
+Or use the Superpowers marketplace:
+
+```text
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
 ## Per-project Jira / Confluence
 
 `~/.config/atlassian-dc-admin/.env` is the machine-wide default. A project that talks to a different instance
