@@ -107,7 +107,7 @@ pnpm run typecheck
 pnpm test                 # unit tests, no network
 pnpm run build            # bundle the CLI into the skill and regenerate REFERENCE.md
 pnpm run bench            # token benchmark on captured MCP responses
-pnpm run cli -- list jira # run from sources with tsx
+pnpm run cli list jira    # run from sources with tsx
 ```
 
 A new tool is a `ToolDef` (name, product, write flag, description, Zod input shape, handler) in
