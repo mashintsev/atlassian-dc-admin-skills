@@ -4,15 +4,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, it } from "node:test";
+import { ConfirmationError } from "../../src/confirm.js";
 import { createContext } from "../../src/runner.js";
 import {
   applySpaceWorkflow,
+  applySpaceWorkflowWithConfirmation,
   prepareSpaceUpdates,
   prepareSpaceWorkflowApply,
   readSpaceWorkflowPlan,
   renderSpaceWorkflowPlan,
   verifySpaceWorkflow,
-  workflowConfirmationItems,
 } from "../../src/spaceWorkflow.js";
 import { TEST_ENV, testContext } from "./helpers.js";
 
@@ -21,6 +22,8 @@ const counts = JSON.parse(readFileSync("test/fixtures/confluence/space-workflow-
 function workflowServer(options: { permissionFailure?: boolean; mutationFailure?: boolean } = {}) {
   const addedCategories = new Set<string>();
   const addedPermissions = new Map<string, Set<string>>();
+  const removedCategories = new Set<string>();
+  const removedPermissions = new Map<string, Set<string>>();
   let resolvedUserKey = "SYNTHETIC-ADMIN-KEY";
   let groupHasRead = true;
   const harness = testContext((call) => {
@@ -79,7 +82,7 @@ function workflowServer(options: { permissionFailure?: boolean; mutationFailure?
       const index = Number(url.pathname.split("/").at(-1)!.slice(1));
       const key = url.pathname.split("/").at(-1)!;
       return { body: { metadata: { labels: {
-        results: index <= counts.categoriesAlreadyPresent || addedCategories.has(key)
+        results: (index <= counts.categoriesAlreadyPresent && !removedCategories.has(key)) || addedCategories.has(key)
           ? [{ prefix: "team", name: "sample-category" }]
           : [],
         _links: {},
@@ -93,6 +96,7 @@ function workflowServer(options: { permissionFailure?: boolean; mutationFailure?
           ? ["read:space"]
           : []);
       for (const operation of addedPermissions.get(`S${String(index).padStart(3, "0")}`) ?? []) operations.add(operation);
+      for (const operation of removedPermissions.get(`S${String(index).padStart(3, "0")}`) ?? []) operations.delete(operation);
       return { body: [...operations].map((value) => {
         const [operationKey, targetType] = value.split(":");
         return {
@@ -107,6 +111,12 @@ function workflowServer(options: { permissionFailure?: boolean; mutationFailure?
     ...harness,
     setIdentityKey(value: string) { resolvedUserKey = value; },
     setGroupHasRead(value: boolean) { groupHasRead = value; },
+    removeCategory(key: string) { removedCategories.add(key); },
+    removeUserOperation(key: string, operation: string) {
+      const removed = removedPermissions.get(key) ?? new Set<string>();
+      removed.add(operation);
+      removedPermissions.set(key, removed);
+    },
   };
 }
 
@@ -203,8 +213,12 @@ describe("Confluence space workflow preparation", () => {
       group: "sample-team", category: "sample-category", username: "sample-admin",
     }, file);
     const preview = await prepareSpaceWorkflowApply(ctx, plan, file);
-    assert.equal(workflowConfirmationItems(preview).length, 101);
-    const result = await applySpaceWorkflow(ctx, preview, preview.activeItems.map((active) => active.item.n));
+    let reviewed = 0;
+    const result = await applySpaceWorkflowWithConfirmation(ctx, preview, (items) => {
+      reviewed = items.length;
+      return items.map((item) => item.n);
+    });
+    assert.equal(reviewed, 101);
 
     assert.deepEqual(result.summary, {
       executed: 101,
@@ -303,5 +317,46 @@ describe("Confluence space workflow preparation", () => {
     const result = await applySpaceWorkflow(group.ctx, preview, []);
     assert.equal(result.summary.executed, 0);
     assert.equal(group.calls.filter((call) => call.method === "POST" || call.method === "PUT").length, 0);
+  });
+
+  it("refuses unavailable native confirmation without sending mutations", async () => {
+    const { ctx, calls } = workflowServer();
+    const dir = mkdtempSync(join(tmpdir(), "space-workflow-confirm-"));
+    const file = join(dir, "plan.json");
+    const { plan } = await prepareSpaceUpdates(ctx, {
+      group: "sample-team", category: "sample-category", username: "sample-admin",
+    }, file);
+    const preview = await prepareSpaceWorkflowApply(ctx, plan, file, [1]);
+    const before = process.env.ATLASSIAN_CONFIRM_MODE;
+    process.env.ATLASSIAN_CONFIRM_MODE = "tty";
+    try {
+      await assert.rejects(
+        applySpaceWorkflowWithConfirmation(ctx, preview),
+        (error: unknown) => error instanceof ConfirmationError && error.name === "ConfirmationUnavailable",
+      );
+    } finally {
+      if (before === undefined) delete process.env.ATLASSIAN_CONFIRM_MODE;
+      else process.env.ATLASSIAN_CONFIRM_MODE = before;
+    }
+    assert.equal(calls.every((call) => call.method === "GET"), true);
+  });
+
+  it("fails verification when a desired state or recorded baseline assignment is missing", async () => {
+    const { ctx, calls, removeCategory, removeUserOperation } = workflowServer();
+    const dir = mkdtempSync(join(tmpdir(), "space-workflow-verify-failure-"));
+    const file = join(dir, "plan.json");
+    const { plan } = await prepareSpaceUpdates(ctx, {
+      group: "sample-team", category: "sample-category", username: "sample-admin",
+    }, file);
+    removeCategory("S001");
+    removeUserOperation("S001", "administer:space");
+    const verification = await verifySpaceWorkflow(ctx, plan, file);
+    const first = verification.spaces.find((space: any) => space.spaceKey === "S001");
+
+    assert.equal(verification.overallVerified, false);
+    assert.equal(first.categoriesPresent, false);
+    assert.equal(first.baselineCategoriesPreserved, false);
+    assert.equal(first.baselineUserPermissionsPreserved, false);
+    assert.equal(calls.every((call) => call.method === "GET"), true);
   });
 });

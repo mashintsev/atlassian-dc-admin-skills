@@ -113,4 +113,18 @@ describe("Confluence space categories", () => {
     assert.equal((result.value as any).verification.previousCategoriesPreserved, true);
     assert.equal((result.value as any).verification.categoryPresent, true);
   });
+
+  it("does not report success when category read-back is forbidden", async () => {
+    let categoryReads = 0;
+    const { ctx, calls } = testContext((call) => {
+      if (call.method === "POST") return { body: {} };
+      categoryReads++;
+      if (categoryReads === 2) return { status: 403 };
+      return { body: { metadata: { labels: { results: [], _links: {} } } } };
+    });
+    const result = await runTool(writeTool, { space_key: "SAMPLE", name: "new-category", dry_run: false }, ctx);
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(calls.map((call) => call.method), ["GET", "POST", "GET"]);
+  });
 });

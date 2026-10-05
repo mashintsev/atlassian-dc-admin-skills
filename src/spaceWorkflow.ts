@@ -12,6 +12,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { z } from "zod";
 import { boundedAll } from "./client.js";
+import { confirmChanges } from "./confirm.js";
 import type { ToolContext } from "./tools/types.js";
 import { ValidationError } from "./errors.js";
 import { digestOf } from "./plan.js";
@@ -722,6 +723,15 @@ export function workflowConfirmationItems(preview: SpaceWorkflowApplyPreview) {
     summary: item.summary,
     detail: `${request.method} ${request.url}${request.body === undefined ? "" : ` body=${JSON.stringify(request.body)}`}`,
   }));
+}
+
+export async function applySpaceWorkflowWithConfirmation(
+  ctx: ToolContext,
+  preview: SpaceWorkflowApplyPreview,
+  confirm: typeof confirmChanges = confirmChanges,
+) {
+  const selected = confirm(workflowConfirmationItems(preview), "Confluence space workflow — confirm updates");
+  return applySpaceWorkflow(ctx, preview, selected);
 }
 
 export async function verifySpaceWorkflow(

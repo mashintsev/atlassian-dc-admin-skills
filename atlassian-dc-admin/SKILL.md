@@ -64,4 +64,5 @@ user to run the printed command. The Claude Code hook does not exist in Codex; t
 Errors print `ERROR <type> | message` and a `hint:` line.
 
 Jira Assets (objects, schemas, attributes, AQL): read [ASSETS.md](ASSETS.md) before the first `assets_*` call (`list assets`).
+Confluence group space audits, categories and mixed administrator batches: read [SPACE_WORKFLOWS.md](SPACE_WORKFLOWS.md) before preparing the workflow. Honor an already stated batch choice and use its native confirmation checklist.
 Configuration, all tools by area and typical task recipes: [REFERENCE.md](REFERENCE.md) (read only when needed).

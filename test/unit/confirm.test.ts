@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ConfirmationError, confirmChanges } from "../../src/confirm.js";
+import { exitCodeFor } from "../../src/format.js";
 
 // Tests force the terminal channel, which has no /dev/tty under the test runner,
 // so no real dialog is ever opened.
@@ -39,5 +40,10 @@ describe("confirmChanges", () => {
 
   it("returns nothing to confirm for an empty list", () => {
     assert.deepEqual(confirmChanges([]), []);
+  });
+
+  it("preserves declined and unavailable confirmation exit codes", () => {
+    assert.equal(exitCodeFor({ type: "ConfirmationDeclined", message: "cancelled" }), 12);
+    assert.equal(exitCodeFor({ type: "ConfirmationUnavailable", message: "no channel" }), 13);
   });
 });

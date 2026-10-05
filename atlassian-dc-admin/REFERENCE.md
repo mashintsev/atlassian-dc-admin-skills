@@ -68,7 +68,7 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 ## Tools
 
 <!-- tools:start -->
-201 tools, 89 of them write tools (✎). Write tools also take `dry_run` (default true).
+204 tools, 90 of them write tools (✎). Write tools also take `dry_run` (default true).
 
 ### Jira admin — system
 
@@ -331,6 +331,9 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | `confluence_get_global_permissions` | `subject_type`: user\|group\|anonymous\|unlicensed, `subject?`: string | Global permissions (use / create space / administer / system administer...) of a user, group, anonymous or unlicensed users. |
 | `confluence_archive_space` ✎ | `space_key`: string | Archive a space (hidden from navigation and search by default; reversible in Space tools). |
 | `confluence_delete_space` ✎ | `space_key`: string | Permanently delete a space and all its content. Runs as a long task: follow it with confluence_get_long_task. |
+| `confluence_get_space_categories` | `space_key`: string | Read team-prefixed categories attached to a Confluence space, with explicit paging completeness. |
+| `confluence_add_space_category` ✎ | `space_key`: string, `name`: string | Add a team-prefixed category to a space without replacing existing categories. |
+| `confluence_find_spaces_by_group` | `group`: string, `type?`: global\|personal, `status?`: current\|archived | Audit spaces for exact direct group permissions; only explicit read:space grants are selected. |
 
 ### Confluence — pages and search
 

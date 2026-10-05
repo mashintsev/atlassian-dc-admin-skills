@@ -30,7 +30,7 @@ import { exceedsResponseLimit, maxResponseChars } from "./json.js";
 import { ConfirmationError, confirmChanges } from "./confirm.js";
 import { addToPlan, applyPlan, readPlan, renderOutcomes, renderPlan } from "./plan.js";
 import {
-  applySpaceWorkflow,
+  applySpaceWorkflowWithConfirmation,
   prepareSpaceUpdates,
   prepareSpaceWorkflowApply,
   readSpaceWorkflowPlan,
@@ -38,7 +38,6 @@ import {
   renderSpaceWorkflowPlan,
   saveSpaceWorkflowVerification,
   verifySpaceWorkflow,
-  workflowConfirmationItems,
 } from "./spaceWorkflow.js";
 import { argsSchema, createContext, runToolByName, type RunResult } from "./runner.js";
 import { ALL_TOOLS, findTool } from "./tools/index.js";
@@ -357,13 +356,13 @@ async function main(argv: string[]): Promise<number> {
       if (spacePlan) {
         try {
           const preview = await prepareSpaceWorkflowApply(ctx, spacePlan, file, options.only);
-          let approved: number[];
+          let result;
           try {
-            approved = confirmChanges(workflowConfirmationItems(preview), "Confluence space workflow — confirm updates");
+            result = await applySpaceWorkflowWithConfirmation(ctx, preview);
           } catch (error) {
-            return printConfirmError(error);
+            if (error instanceof ConfirmationError) return printConfirmError(error);
+            throw error;
           }
-          const result = await applySpaceWorkflow(ctx, preview, approved);
           if (options.format === "compact") {
             print(renderSpaceWorkflowOutcomes(result));
           } else {

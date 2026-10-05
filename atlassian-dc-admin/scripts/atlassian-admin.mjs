@@ -1917,9 +1917,9 @@ var require_dispatcher_base = __commonJS({
       }
       close(callback) {
         if (callback === void 0) {
-          return new Promise((resolve9, reject) => {
+          return new Promise((resolve10, reject) => {
             this.close((err, data) => {
-              return err ? reject(err) : resolve9(data);
+              return err ? reject(err) : resolve10(data);
             });
           });
         }
@@ -1957,12 +1957,12 @@ var require_dispatcher_base = __commonJS({
           err = null;
         }
         if (callback === void 0) {
-          return new Promise((resolve9, reject) => {
+          return new Promise((resolve10, reject) => {
             this.destroy(err, (err2, data) => {
               return err2 ? (
                 /* istanbul ignore next: should never error */
                 reject(err2)
-              ) : resolve9(data);
+              ) : resolve10(data);
             });
           });
         }
@@ -4229,8 +4229,8 @@ var require_util2 = __commonJS({
     function createDeferredPromise() {
       let res;
       let rej;
-      const promise2 = new Promise((resolve9, reject) => {
-        res = resolve9;
+      const promise2 = new Promise((resolve10, reject) => {
+        res = resolve10;
         rej = reject;
       });
       return { promise: promise2, resolve: res, reject: rej };
@@ -6482,12 +6482,12 @@ upgrade: ${upgrade}\r
           cb();
         }
       }
-      const waitForDrain = () => new Promise((resolve9, reject) => {
+      const waitForDrain = () => new Promise((resolve10, reject) => {
         assert2(callback === null);
         if (socket[kError]) {
           reject(socket[kError]);
         } else {
-          callback = resolve9;
+          callback = resolve10;
         }
       });
       socket.on("close", onDrain).on("drain", onDrain);
@@ -7159,12 +7159,12 @@ var require_client_h2 = __commonJS({
           cb();
         }
       }
-      const waitForDrain = () => new Promise((resolve9, reject) => {
+      const waitForDrain = () => new Promise((resolve10, reject) => {
         assert2(callback === null);
         if (socket[kError]) {
           reject(socket[kError]);
         } else {
-          callback = resolve9;
+          callback = resolve10;
         }
       });
       h2stream.on("close", onDrain).on("drain", onDrain);
@@ -7642,16 +7642,16 @@ var require_client = __commonJS({
         return this[kNeedDrain] < 2;
       }
       async [kClose]() {
-        return new Promise((resolve9) => {
+        return new Promise((resolve10) => {
           if (this[kSize]) {
-            this[kClosedResolve] = resolve9;
+            this[kClosedResolve] = resolve10;
           } else {
-            resolve9(null);
+            resolve10(null);
           }
         });
       }
       async [kDestroy](err) {
-        return new Promise((resolve9) => {
+        return new Promise((resolve10) => {
           const requests = this[kQueue].splice(this[kPendingIdx]);
           for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
@@ -7662,7 +7662,7 @@ var require_client = __commonJS({
               this[kClosedResolve]();
               this[kClosedResolve] = null;
             }
-            resolve9(null);
+            resolve10(null);
           };
           if (this[kHTTPContext]) {
             this[kHTTPContext].destroy(err, callback);
@@ -7713,7 +7713,7 @@ var require_client = __commonJS({
         });
       }
       try {
-        const socket = await new Promise((resolve9, reject) => {
+        const socket = await new Promise((resolve10, reject) => {
           client[kConnector]({
             host,
             hostname: hostname3,
@@ -7725,7 +7725,7 @@ var require_client = __commonJS({
             if (err) {
               reject(err);
             } else {
-              resolve9(socket2);
+              resolve10(socket2);
             }
           });
         });
@@ -8062,8 +8062,8 @@ var require_pool_base = __commonJS({
         if (this[kQueue].isEmpty()) {
           await Promise.all(this[kClients].map((c) => c.close()));
         } else {
-          await new Promise((resolve9) => {
-            this[kClosedResolve] = resolve9;
+          await new Promise((resolve10) => {
+            this[kClosedResolve] = resolve10;
           });
         }
       }
@@ -9329,7 +9329,7 @@ var require_readable = __commonJS({
         if (this._readableState.closeEmitted) {
           return null;
         }
-        return await new Promise((resolve9, reject) => {
+        return await new Promise((resolve10, reject) => {
           if (this[kContentLength] > limit) {
             this.destroy(new AbortError());
           }
@@ -9342,7 +9342,7 @@ var require_readable = __commonJS({
             if (signal?.aborted) {
               reject(signal.reason ?? new AbortError());
             } else {
-              resolve9(null);
+              resolve10(null);
             }
           }).on("error", noop).on("data", function(chunk) {
             limit -= chunk.length;
@@ -9361,7 +9361,7 @@ var require_readable = __commonJS({
     }
     async function consume(stream, type) {
       assert2(!stream[kConsume]);
-      return new Promise((resolve9, reject) => {
+      return new Promise((resolve10, reject) => {
         if (isUnusable(stream)) {
           const rState = stream._readableState;
           if (rState.destroyed && rState.closeEmitted === false) {
@@ -9378,7 +9378,7 @@ var require_readable = __commonJS({
             stream[kConsume] = {
               type,
               stream,
-              resolve: resolve9,
+              resolve: resolve10,
               reject,
               length: 0,
               body: []
@@ -9448,18 +9448,18 @@ var require_readable = __commonJS({
       return buffer;
     }
     function consumeEnd(consume2) {
-      const { type, body, resolve: resolve9, stream, length } = consume2;
+      const { type, body, resolve: resolve10, stream, length } = consume2;
       try {
         if (type === "text") {
-          resolve9(chunksDecode(body, length));
+          resolve10(chunksDecode(body, length));
         } else if (type === "json") {
-          resolve9(JSON.parse(chunksDecode(body, length)));
+          resolve10(JSON.parse(chunksDecode(body, length)));
         } else if (type === "arrayBuffer") {
-          resolve9(chunksConcat(body, length).buffer);
+          resolve10(chunksConcat(body, length).buffer);
         } else if (type === "blob") {
-          resolve9(new Blob(body, { type: stream[kContentType] }));
+          resolve10(new Blob(body, { type: stream[kContentType] }));
         } else if (type === "bytes") {
-          resolve9(chunksConcat(body, length));
+          resolve10(chunksConcat(body, length));
         }
         consumeFinish(consume2);
       } catch (err) {
@@ -9717,9 +9717,9 @@ var require_api_request = __commonJS({
     };
     function request(opts, callback) {
       if (callback === void 0) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           request.call(this, opts, (err, data) => {
-            return err ? reject(err) : resolve9(data);
+            return err ? reject(err) : resolve10(data);
           });
         });
       }
@@ -9943,9 +9943,9 @@ var require_api_stream = __commonJS({
     };
     function stream(opts, factory, callback) {
       if (callback === void 0) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           stream.call(this, opts, factory, (err, data) => {
-            return err ? reject(err) : resolve9(data);
+            return err ? reject(err) : resolve10(data);
           });
         });
       }
@@ -10230,9 +10230,9 @@ var require_api_upgrade = __commonJS({
     };
     function upgrade(opts, callback) {
       if (callback === void 0) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           upgrade.call(this, opts, (err, data) => {
-            return err ? reject(err) : resolve9(data);
+            return err ? reject(err) : resolve10(data);
           });
         });
       }
@@ -10324,9 +10324,9 @@ var require_api_connect = __commonJS({
     };
     function connect(opts, callback) {
       if (callback === void 0) {
-        return new Promise((resolve9, reject) => {
+        return new Promise((resolve10, reject) => {
           connect.call(this, opts, (err, data) => {
-            return err ? reject(err) : resolve9(data);
+            return err ? reject(err) : resolve10(data);
           });
         });
       }
@@ -14188,7 +14188,7 @@ var require_fetch = __commonJS({
       function dispatch({ body }) {
         const url2 = requestCurrentURL(request);
         const agent = fetchParams.controller.dispatcher;
-        return new Promise((resolve9, reject) => agent.dispatch(
+        return new Promise((resolve10, reject) => agent.dispatch(
           {
             path: url2.pathname + url2.search,
             origin: url2.origin,
@@ -14264,7 +14264,7 @@ var require_fetch = __commonJS({
                 }
               }
               const onError = this.onError.bind(this);
-              resolve9({
+              resolve10({
                 status,
                 statusText,
                 headersList,
@@ -14310,7 +14310,7 @@ var require_fetch = __commonJS({
               for (let i = 0; i < rawHeaders.length; i += 2) {
                 headersList.append(bufferToLowerCasedHeaderName(rawHeaders[i]), rawHeaders[i + 1].toString("latin1"), true);
               }
-              resolve9({
+              resolve10({
                 status,
                 statusText: STATUS_CODES[status],
                 headersList,
@@ -18041,8 +18041,8 @@ var require_util8 = __commonJS({
       return true;
     }
     function delay(ms) {
-      return new Promise((resolve9) => {
-        setTimeout(resolve9, ms).unref();
+      return new Promise((resolve10) => {
+        setTimeout(resolve10, ms).unref();
       });
     }
     module.exports = {
@@ -35493,9 +35493,9 @@ var require_lib = __commonJS({
 });
 
 // src/cli.ts
-import { appendFileSync, existsSync as existsSync6, mkdirSync as mkdirSync3, readFileSync as readFileSync7, writeFileSync as writeFileSync4 } from "fs";
+import { appendFileSync, existsSync as existsSync7, mkdirSync as mkdirSync3, readFileSync as readFileSync8, writeFileSync as writeFileSync5 } from "fs";
 import { spawnSync as spawnSync2 } from "child_process";
-import { dirname as dirname2, resolve as resolve8 } from "path";
+import { dirname as dirname2, resolve as resolve9 } from "path";
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -40523,7 +40523,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack, resolve9) {
+function isRecursive(inst, stack, resolve10) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -40533,7 +40533,7 @@ function isRecursive(inst, stack, resolve9) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve9);
+      const answer = isRecursive(child, stack, resolve10);
       if (answer > result)
         result = answer;
     }
@@ -40544,7 +40544,7 @@ function isRecursive(inst, stack, resolve9) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve9) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve10) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -40608,7 +40608,7 @@ function isRecursive(inst, stack, resolve9) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve9 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve10 ? inst._zod.innerType : void 0);
       merge2(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -49561,7 +49561,7 @@ function generateTupleCheck(doc, ctx, schema, accessor) {
   const outputVar = newVar(ctx);
   doc.write(`const ${outputVar} = [];`);
   for (let i = 0; i < items.length; i++) {
-    const itemSchema = items[i];
+    const itemSchema2 = items[i];
     if (i >= optoutStart) {
       doc.write(`if (${outputVar}.length === ${i}) {`);
       doc.indented((d) => {
@@ -49569,12 +49569,12 @@ function generateTupleCheck(doc, ctx, schema, accessor) {
         d.indented((d2) => {
           const elemVar = newVar(ctx);
           d2.write(`const ${elemVar} = ${accessor}[${i}];`);
-          const elemOutput = compileChild(d2, ctx, itemSchema, elemVar);
+          const elemOutput = compileChild(d2, ctx, itemSchema2, elemVar);
           d2.write(`${outputVar}[${i}] = ${elemOutput};`);
         });
         d.write(`} else {`);
         d.indented((d2) => {
-          if (dropsWhenAbsent(itemSchema)) {
+          if (dropsWhenAbsent(itemSchema2)) {
             d2.write(`${outputVar}.length = ${i};`);
             return;
           }
@@ -49583,7 +49583,7 @@ function generateTupleCheck(doc, ctx, schema, accessor) {
           d2.write(`const ${elemVar} = undefined;`);
           d2.write(`const ${branchVar} = (() => {`);
           d2.indented((d3) => {
-            const elemOutput = compileChild(d3, ctx, itemSchema, elemVar);
+            const elemOutput = compileChild(d3, ctx, itemSchema2, elemVar);
             d3.write(`return ${elemOutput};`);
           });
           d2.write(`})();`);
@@ -49596,7 +49596,7 @@ function generateTupleCheck(doc, ctx, schema, accessor) {
     } else {
       const elemVar = newVar(ctx);
       doc.write(`const ${elemVar} = ${accessor}[${i}];`);
-      const elemOutput = compileChild(doc, ctx, itemSchema, elemVar);
+      const elemOutput = compileChild(doc, ctx, itemSchema2, elemVar);
       doc.write(`${outputVar}[${i}] = ${elemOutput};`);
     }
   }
@@ -61792,6 +61792,96 @@ var USER_FIELDS2 = ["type", "username", "userKey", "displayName", "email", "stat
 function compactUser3(u) {
   return pick2(u, USER_FIELDS2);
 }
+function userEmail(user) {
+  const email3 = user?.email ?? user?.displayableEmail;
+  return typeof email3 === "string" && email3.length > 0 ? email3 : void 0;
+}
+function requireActiveUser(user, email3) {
+  const username = user?.username ?? user?.name;
+  const userKey = user?.userKey ?? user?.key;
+  if (typeof username !== "string" || !username || typeof userKey !== "string" || !userKey) {
+    throw new ValidationError("Resolved Confluence user has no stable username and user key");
+  }
+  const status = typeof user?.status === "string" ? user.status.toLowerCase() : void 0;
+  if (status !== "active" && !(status === void 0 && user?.active === true)) {
+    throw new ValidationError(`Confluence user '${username}' is inactive or its status is unavailable`);
+  }
+  const actualEmail = userEmail(user);
+  if (email3 && (!actualEmail || actualEmail.toLowerCase() !== email3.toLowerCase())) {
+    throw new ValidationError(`Confluence user '${username}' does not have the exact requested email`);
+  }
+  return {
+    username,
+    userKey,
+    ...typeof (user?.title ?? user?.displayName) === "string" ? { displayName: user.title ?? user.displayName } : {},
+    ...actualEmail ? { email: actualEmail } : {}
+  };
+}
+function usernameFromSearchResult(user) {
+  const username = user?.username ?? user?.name;
+  return typeof username === "string" && username.length > 0 ? username : void 0;
+}
+async function resolveConfluenceGrantUser(client, identity) {
+  const username = identity.username;
+  const email3 = identity.email;
+  if (!!username === !!email3) throw new ValidationError("provide exactly one username or email for user resolution");
+  const query = username ?? email3;
+  let direct;
+  try {
+    direct = await client.get(`${API8}/user`, { username: query, expand: "status" });
+  } catch (error62) {
+    if (!isHttpStatusError(error62) || error62.status !== 404 || !email3) {
+      throw new ValidationError(`Could not verify the requested Confluence user: ${String(error62?.message ?? error62)}`);
+    }
+  }
+  if (direct) {
+    const directUsername = direct?.username ?? direct?.name;
+    if (directUsername === query) return requireActiveUser(direct, email3);
+    if (!email3) throw new ValidationError("Exact username lookup returned a different account");
+  }
+  if (!email3) throw new ValidationError(`Confluence username '${query}' was not found`);
+  const maxResults = 100;
+  let search2;
+  try {
+    search2 = await client.get(`${PROTOTYPE2}/search/user`, { query: email3, "max-results": maxResults });
+  } catch (error62) {
+    throw new ValidationError(`Could not search Confluence users by exact email: ${String(error62?.message ?? error62)}`);
+  }
+  if (!Array.isArray(search2?.result)) throw new ValidationError("Confluence user search returned an unknown response shape");
+  const results = search2.result;
+  if (!Number.isFinite(search2.totalSize)) {
+    throw new ValidationError("Confluence user search did not report a total; exact email uniqueness cannot be established");
+  }
+  if (search2.totalSize > results.length) {
+    throw new ValidationError("Confluence user search was truncated; exact email uniqueness cannot be established");
+  }
+  if (search2.totalSize < results.length || search2.totalSize > maxResults) {
+    throw new ValidationError("Confluence user search returned inconsistent or capped results; exact email uniqueness cannot be established");
+  }
+  if (results.some((candidate) => !userEmail(candidate))) {
+    throw new ValidationError("A user search result has no email evidence; exact uniqueness cannot be established");
+  }
+  const emailCandidates = results.filter((candidate) => userEmail(candidate).toLowerCase() === email3.toLowerCase());
+  const matching = [];
+  for (const candidate of emailCandidates) {
+    const candidateUsername = usernameFromSearchResult(candidate);
+    if (!candidateUsername) throw new ValidationError("An exact-email search match has no usable username");
+    let hydrated;
+    try {
+      hydrated = await client.get(`${API8}/user`, { username: candidateUsername, expand: "status" });
+    } catch (error62) {
+      throw new ValidationError(`Could not verify exact-email match '${candidateUsername}': ${String(error62?.message ?? error62)}`);
+    }
+    if ((hydrated?.username ?? hydrated?.name) !== candidateUsername) {
+      throw new ValidationError("An exact-email search match resolved to a different username");
+    }
+    matching.push(requireActiveUser(hydrated, email3));
+  }
+  if (matching.length !== 1) {
+    throw new ValidationError(matching.length === 0 ? "No active Confluence user has the exact requested email" : "Multiple active Confluence users have the exact requested email");
+  }
+  return matching[0];
+}
 var userShape = { username: external_exports.string() };
 var confluenceUserTools = [
   {
@@ -61805,10 +61895,24 @@ var confluenceUserTools = [
         "max-results": args.limit ?? 50
       });
       const results = data?.result ?? [];
+      const items = results.map((u) => {
+        const username = u?.username ?? u?.name;
+        const userKey = u?.userKey ?? u?.key;
+        const displayName = u?.title ?? u?.displayName;
+        const email3 = u?.displayableEmail ?? u?.email;
+        return {
+          ...username !== void 0 ? { username } : {},
+          ...userKey !== void 0 ? { userKey } : {},
+          ...displayName !== void 0 ? { displayName } : {},
+          ...email3 !== void 0 ? { email: email3 } : {},
+          ...!username && !userKey ? { diagnostic: "unrecognized identity shape: no username or user key" } : {}
+        };
+      });
       return {
         total: data?.totalSize ?? null,
         returned: results.length,
-        items: results.map((u) => ({ username: u.name, displayName: u.displayName, email: u.displayableEmail }))
+        items,
+        unrecognizedIdentityCount: items.filter((u) => "diagnostic" in u).length
       };
     }
   },
@@ -62159,10 +62263,355 @@ var confluenceSpaceTools = [
   }
 ];
 
+// src/tools/confluence/spaceCategories.ts
+var API10 = "/rest/api";
+var MAX_CATEGORY_PAGES = 50;
+var MAX_CATEGORIES = 1e3;
+var spaceCategoryNameSchema = external_exports.string().regex(
+  /^[\p{Ll}\p{M}\p{N}_-]{1,255}$/u,
+  "Category names must be 1\u2013255 lowercase letters, combining marks, digits, underscores or hyphens"
+);
+function continuationPath(baseUrl, spacePath, next2) {
+  if (typeof next2 !== "string" || !next2) return void 0;
+  const base = new URL(baseUrl);
+  const basePath = base.pathname.replace(/\/+$/, "");
+  const url2 = new URL(next2, `${baseUrl}${spacePath}`);
+  if (url2.origin !== base.origin || url2.username || url2.password) return void 0;
+  const expected = `${basePath}${spacePath}`;
+  if (url2.pathname !== expected && url2.pathname !== spacePath) return void 0;
+  return `${spacePath}${url2.search}`;
+}
+async function readSpaceCategories(client, spaceKey) {
+  const spacePath = `${API10}/space/${seg(spaceKey)}`;
+  const categories = [];
+  const issues = [];
+  const seen = /* @__PURE__ */ new Set();
+  let path = spacePath;
+  let pages = 0;
+  let complete = false;
+  while (pages < MAX_CATEGORY_PAGES && categories.length < MAX_CATEGORIES) {
+    const data = await client.get(path, pages === 0 ? { expand: "metadata.labels" } : void 0);
+    pages++;
+    const labels = data?.metadata?.labels;
+    if (!labels || !Array.isArray(labels.results)) {
+      issues.push(`page ${pages} has an unknown metadata.labels response shape`);
+      break;
+    }
+    if (!labels._links || typeof labels._links !== "object" || Array.isArray(labels._links)) {
+      issues.push(`page ${pages} has an unknown category continuation shape`);
+      break;
+    }
+    if (labels.results.some(
+      (label) => !label || typeof label !== "object" || typeof label.prefix !== "string" || typeof label.name !== "string"
+    )) {
+      issues.push(`page ${pages} contains a malformed category record`);
+      break;
+    }
+    for (const label of labels.results) {
+      if (label.prefix === "team") categories.push({ name: label.name, prefix: label.prefix });
+      if (categories.length >= MAX_CATEGORIES) break;
+    }
+    const next2 = labels?._links?.next;
+    if (!next2) {
+      complete = true;
+      break;
+    }
+    const safePath = continuationPath(client.config.baseUrl, spacePath, next2);
+    if (!safePath) {
+      issues.push("server continuation points outside the expected space-category resource");
+      break;
+    }
+    if (seen.has(safePath)) {
+      issues.push("server repeated a category continuation");
+      break;
+    }
+    seen.add(safePath);
+    path = safePath;
+  }
+  if (!complete && issues.length === 0) issues.push("category pagination reached its safety limit");
+  return { returned: categories.length, pages, complete, truncated: !complete, issues, categories };
+}
+var confluenceSpaceCategoryTools = [
+  {
+    name: "confluence_get_space_categories",
+    product: "confluence",
+    description: "Read team-prefixed categories attached to a Confluence space, with explicit paging completeness.",
+    inputShape: { space_key: external_exports.string() },
+    async handler({ client }, args) {
+      return { space: args.space_key, ...await readSpaceCategories(client("confluence"), args.space_key) };
+    }
+  },
+  {
+    name: "confluence_add_space_category",
+    product: "confluence",
+    write: true,
+    description: "Add a team-prefixed category to a space without replacing existing categories.",
+    inputShape: { space_key: external_exports.string(), name: spaceCategoryNameSchema, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("confluence");
+      const request = {
+        method: "POST",
+        path: `${API10}/space/${seg(args.space_key)}/category/${seg(args.name)}`,
+        summary: `Add category ${args.name} to space ${args.space_key}`
+      };
+      if (args.dry_run !== false) return guardedWrite(c, args, request);
+      const before = await readSpaceCategories(c, args.space_key);
+      if (!before.complete) throw new ValidationError("Cannot safely add a category when existing categories cannot be read completely");
+      if (before.categories.some((category) => category.name === args.name)) {
+        return { dry_run: false, alreadySatisfied: true, space: args.space_key, category: args.name, verification: "present before write" };
+      }
+      const result = await guardedWrite(c, args, request);
+      const after = await readSpaceCategories(c, args.space_key);
+      const preserved2 = before.categories.every(
+        (category) => after.categories.some((current) => current.name === category.name && current.prefix === category.prefix)
+      );
+      const present = after.categories.some((category) => category.name === args.name);
+      if (!after.complete || !present || !preserved2) {
+        throw new ValidationError("Category request completed but read-back could not verify the addition and preserve existing categories");
+      }
+      return { ...result, verification: { complete: true, categoryPresent: present, previousCategoriesPreserved: preserved2 } };
+    }
+  }
+];
+
+// src/tools/confluence/spaceDiscovery.ts
+var API11 = "/rest/api";
+var PAGE_SIZE = 100;
+var MAX_SPACES = 2e3;
+var MAX_PAGES_PER_SCOPE = Math.ceil(MAX_SPACES / PAGE_SIZE);
+function sameResourcePath(client, path, next2) {
+  if (typeof next2 !== "string" || !next2) return void 0;
+  const base = new URL(client.config.baseUrl);
+  const basePath = base.pathname.replace(/\/+$/, "");
+  const url2 = new URL(next2, `${client.config.baseUrl}${path}`);
+  if (url2.origin !== base.origin || url2.username || url2.password) return void 0;
+  const expected = `${basePath}${path}`;
+  if (url2.pathname !== expected && url2.pathname !== path) return void 0;
+  return `${path}${url2.search}`;
+}
+function recordsFromPermissionResponse(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.results)) return data.results;
+  return void 0;
+}
+function groupPermissionOperations(data, exactGroup) {
+  const records = recordsFromPermissionResponse(data);
+  if (!records) return { issue: "permission endpoint returned an unknown response shape" };
+  const operations = [];
+  for (const permission of records) {
+    const subject = permission?.subject;
+    const subjectType = subject?.type ?? (subject?.name ? "group" : void 0);
+    const subjectName = subject?.name ?? subject?.group;
+    const operationKey = permission?.operation?.operationKey ?? permission?.operation?.key;
+    const targetType = permission?.operation?.targetType;
+    if (subjectType !== "group" || typeof subjectName !== "string" || typeof operationKey !== "string" || typeof targetType !== "string") {
+      return { issue: "permission endpoint returned a malformed permission record" };
+    }
+    if (subjectName !== exactGroup) return { issue: `permission endpoint returned a non-exact group subject '${subjectName}'` };
+    operations.push(`${operationKey}:${targetType}`);
+  }
+  return { operations: [...new Set(operations)].sort() };
+}
+async function exactGroupExists(client, group) {
+  let data;
+  try {
+    data = await client.get(`${API11}/group`, { groupname: group, limit: 2 });
+  } catch (error62) {
+    throw new ValidationError(`Could not verify Confluence group '${group}': ${String(error62?.message ?? error62)}`);
+  }
+  const results = Array.isArray(data) ? data : data?.results;
+  if (!Array.isArray(results) || Number.isFinite(data?.totalSize) && data.totalSize > results.length) {
+    throw new ValidationError("Confluence group lookup returned an unknown or incomplete response");
+  }
+  const exact = results.filter((item) => item?.name === group);
+  if (exact.length !== 1) {
+    throw new ValidationError(exact.length ? `Confluence group '${group}' is ambiguous` : `Confluence group '${group}' does not exist`);
+  }
+}
+async function enumerateScope(client, type, status, maxSpaces) {
+  const path = `${API11}/space`;
+  const spaces = [];
+  const issues = [];
+  const visited = /* @__PURE__ */ new Set();
+  let cursor;
+  let count = null;
+  for (let page = 0; page < MAX_PAGES_PER_SCOPE && spaces.length < maxSpaces; page++) {
+    let data;
+    try {
+      data = await client.get(cursor ?? path, cursor ? void 0 : { type, status, start: 0, limit: PAGE_SIZE });
+    } catch (error62) {
+      issues.push(`${type}/${status} space listing failed: ${String(error62?.message ?? error62)}`);
+      break;
+    }
+    if (!Array.isArray(data?.results) || !data?._links || typeof data._links !== "object" || Array.isArray(data._links)) {
+      issues.push(`${type}/${status} space listing returned an unknown response shape`);
+      break;
+    }
+    if (page === 0) {
+      count = Number.isFinite(data.totalSize) ? data.totalSize : null;
+    } else if (Number.isFinite(data.totalSize) && count !== data.totalSize) {
+      issues.push(`${type}/${status} reported inconsistent total sizes across pages`);
+      break;
+    }
+    const remaining = maxSpaces - spaces.length;
+    spaces.push(...data.results.slice(0, remaining));
+    if (data.results.length > remaining) {
+      issues.push(`${type}/${status} space listing exceeded its safety limit`);
+      break;
+    }
+    const next2 = data?._links?.next;
+    if (!next2) {
+      if (count !== null && spaces.length !== count) {
+        issues.push(`${type}/${status} space listing ended at ${spaces.length} of ${count} reported spaces`);
+      }
+      return { spaces, count, issues };
+    }
+    const safePath = sameResourcePath(client, path, next2);
+    if (!safePath) {
+      issues.push(`${type}/${status} continuation points outside the space-list resource`);
+      break;
+    }
+    const nextUrl = new URL(safePath, `${client.config.baseUrl}${path}`);
+    const nextType = nextUrl.searchParams.get("type");
+    const nextStatus = nextUrl.searchParams.get("status");
+    if (nextType !== type || nextStatus !== status) {
+      issues.push(`${type}/${status} continuation changed the requested scope`);
+      break;
+    }
+    if (visited.has(safePath)) {
+      issues.push(`${type}/${status} space listing repeated a continuation`);
+      break;
+    }
+    visited.add(safePath);
+    cursor = safePath;
+  }
+  if (issues.length === 0) issues.push(`${type}/${status} space listing reached its safety limit`);
+  return { spaces, count, issues };
+}
+function compactSpace(space) {
+  const id2 = space?.id;
+  const key = space?.key;
+  const type = space?.type;
+  const status = space?.status;
+  if (typeof id2 !== "string" && typeof id2 !== "number" || typeof key !== "string" || typeof space?.name !== "string" || type !== "global" && type !== "personal" || status !== "current" && status !== "archived") return void 0;
+  return { id: id2, key, name: space.name, type, status };
+}
+var confluenceSpaceDiscoveryTools = [
+  {
+    name: "confluence_find_spaces_by_group",
+    product: "confluence",
+    description: "Audit spaces for exact direct group permissions; only explicit read:space grants are selected.",
+    inputShape: {
+      group: external_exports.string().min(1),
+      type: external_exports.enum(["global", "personal"]).optional(),
+      status: external_exports.enum(["current", "archived"]).optional()
+    },
+    async handler({ client }, args) {
+      const c = client("confluence");
+      await exactGroupExists(c, args.group);
+      const types = args.type ? [args.type] : ["global", "personal"];
+      const statuses = args.status ? [args.status] : ["current", "archived"];
+      const scopeResults = [];
+      let enumeratedCount = 0;
+      for (const type of types) {
+        for (const status of statuses) {
+          const remaining = MAX_SPACES - enumeratedCount;
+          if (remaining <= 0) {
+            scopeResults.push({ spaces: [], count: null, issues: ["space enumeration reached its site-wide safety limit"] });
+            continue;
+          }
+          const result = await enumerateScope(c, type, status, remaining);
+          scopeResults.push(result);
+          enumeratedCount += result.spaces.length;
+        }
+      }
+      const issues = scopeResults.flatMap((scope) => scope.issues);
+      const spaceMap = /* @__PURE__ */ new Map();
+      for (const scope of scopeResults) {
+        for (const raw of scope.spaces) {
+          const space = compactSpace(raw);
+          if (!space) {
+            issues.push("space listing contained a malformed space record");
+            continue;
+          }
+          const key = String(space.id);
+          const previous = spaceMap.get(key);
+          if (previous && (previous.key !== space.key || previous.type !== space.type || previous.status !== space.status)) {
+            issues.push(`space identity '${key}' changed across listing scopes`);
+          } else {
+            spaceMap.set(key, space);
+          }
+        }
+      }
+      const spaces = [...spaceMap.values()];
+      if (enumeratedCount >= MAX_SPACES) issues.push("space enumeration reached its site-wide safety limit");
+      const permissionRows = await boundedAll(spaces.map((space) => async () => {
+        try {
+          const data = await c.get(`${API11}/space/${seg(space.key)}/permissions/group/${seg(args.group)}`);
+          const parsed = groupPermissionOperations(data, args.group);
+          return parsed.issue ? { ...space, groupOperations: [], selected: false, error: parsed.issue } : { ...space, groupOperations: parsed.operations, selected: parsed.operations.includes("read:space") };
+        } catch (error62) {
+          return {
+            ...space,
+            groupOperations: [],
+            selected: false,
+            error: isHttpStatusError(error62) ? `HTTP ${error62.status} permission read is unknown` : String(error62?.message ?? error62)
+          };
+        }
+      }), 4);
+      const unknownReads = permissionRows.filter((space) => space.error).map((space) => ({
+        spaceKey: space.key,
+        error: space.error
+      }));
+      if (unknownReads.length) issues.push(`${unknownReads.length} permission read(s) were unknown`);
+      const filters = { type: args.type ?? null, status: args.status ?? null };
+      let siteCountCrossCheck = {
+        status: "not-applicable-for-filtered-scope",
+        inspectedCount: spaces.length
+      };
+      if (!args.type && !args.status) {
+        const counts = scopeResults.map((scope) => scope.count);
+        if (counts.every((count) => count !== null)) {
+          const serverCount = counts.reduce((sum, count) => sum + (count ?? 0), 0);
+          siteCountCrossCheck = {
+            status: serverCount === spaces.length ? "matched" : "mismatch",
+            serverCount,
+            inspectedCount: spaces.length
+          };
+          if (serverCount !== spaces.length) issues.push(`site count mismatch: server reports ${serverCount}, inspected ${spaces.length}`);
+        } else {
+          siteCountCrossCheck = { status: "unavailable", inspectedCount: spaces.length };
+        }
+      }
+      const enumerationComplete = scopeResults.every((scope) => scope.issues.length === 0) && enumeratedCount < MAX_SPACES;
+      const permissionReadsComplete = unknownReads.length === 0;
+      const countMismatch = siteCountCrossCheck.status === "mismatch";
+      const completeForCaller = enumerationComplete && permissionReadsComplete && !countMismatch && issues.length === 0;
+      const audit = permissionRows.sort((a, b) => a.key.localeCompare(b.key));
+      const matches = audit.filter((space) => space.selected);
+      return {
+        group: args.group,
+        filters,
+        inspected: audit.length,
+        selected: matches.length,
+        enumerationComplete,
+        permissionReadsComplete,
+        completeForCaller,
+        siteWideComplete: completeForCaller && siteCountCrossCheck.status === "matched",
+        siteCountCrossCheck,
+        issues,
+        unknownReads,
+        matches,
+        audit
+      };
+    }
+  }
+];
+
 // src/tools/confluence/pages.ts
 import { existsSync as existsSync3, readFileSync as readFileSync4, statSync as statSync2 } from "fs";
 import { resolve as resolve5 } from "path";
-var API10 = "/rest/api";
+var API12 = "/rest/api";
 var StaleVersionError = class extends Error {
   constructor(message) {
     super(message);
@@ -62220,7 +62669,7 @@ var contentShape = {
   content_format: external_exports.enum(["markdown", "storage"]).optional().describe("Default markdown; storage = XHTML sent as is")
 };
 async function getPage(client, id2, expand, extra = {}) {
-  return client.get(`${API10}/content/${seg(id2)}`, { expand, ...extra });
+  return client.get(`${API12}/content/${seg(id2)}`, { expand, ...extra });
 }
 function compactPage(client, p, bodyFormat = "none") {
   const ancestors = p?.ancestors ?? [];
@@ -62348,7 +62797,7 @@ var confluencePageTools = [
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 25, 100);
       const c = client("confluence");
-      const call = (cql2) => c.get(`${API10}/search`, {
+      const call = (cql2) => c.get(`${API12}/search`, {
         cql: cql2,
         start: offset,
         limit,
@@ -62394,7 +62843,7 @@ var confluencePageTools = [
       if (args.page) {
         p = await getPage(c, resolvePageId(args.page), expand);
       } else if (args.title && args.space_key) {
-        const data = await c.get(`${API10}/content`, { type: "page", spaceKey: args.space_key, title: args.title, limit: 1, expand });
+        const data = await c.get(`${API12}/content`, { type: "page", spaceKey: args.space_key, title: args.title, limit: 1, expand });
         p = data?.results?.[0];
         if (!p) throw new ValidationError(`No page '${args.title}' in space ${args.space_key}`);
       } else {
@@ -62411,7 +62860,7 @@ var confluencePageTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 50;
-      const data = await client("confluence").get(`${API10}/content/${seg(resolvePageId(args.page))}/child/page`, {
+      const data = await client("confluence").get(`${API12}/content/${seg(resolvePageId(args.page))}/child/page`, {
         start: offset,
         limit,
         expand: "version"
@@ -62432,7 +62881,7 @@ var confluencePageTools = [
       let start = 0;
       let more = false;
       for (; ; ) {
-        const data = await c.get(`${API10}/content`, { spaceKey: args.space_key, type: "page", start, limit: Math.min(200, max - pages.length), expand: "ancestors" });
+        const data = await c.get(`${API12}/content`, { spaceKey: args.space_key, type: "page", start, limit: Math.min(200, max - pages.length), expand: "ancestors" });
         const batch = data?.results ?? [];
         pages.push(...batch);
         more = !!data?._links?.next;
@@ -62481,7 +62930,7 @@ var confluencePageTools = [
       if (args.parent) body.ancestors = [{ id: resolvePageId(args.parent) }];
       const res = await guardedWrite(c, args, {
         method: "POST",
-        path: `${API10}/content`,
+        path: `${API12}/content`,
         json: body,
         summary: `Create page '${args.title}' in ${args.space_key}`
       });
@@ -62518,7 +62967,7 @@ var confluencePageTools = [
       if (args.parent) body.ancestors = [{ id: resolvePageId(args.parent) }];
       const res = await guardedWrite(c, args, {
         method: "PUT",
-        path: `${API10}/content/${seg(id2)}`,
+        path: `${API12}/content/${seg(id2)}`,
         json: body,
         summary: `Update page ${id2} '${body.title}' v${current} \u2192 v${current + 1}`
       });
@@ -62548,7 +62997,7 @@ var confluencePageTools = [
       const storage = replaceSection(String(page?.body?.storage?.value ?? ""), args.heading, fragment);
       const res = await guardedWrite(c, args, {
         method: "PUT",
-        path: `${API10}/content/${seg(id2)}`,
+        path: `${API12}/content/${seg(id2)}`,
         json: {
           id: id2,
           type: page?.type ?? "page",
@@ -62571,7 +63020,7 @@ var confluencePageTools = [
       const id2 = resolvePageId(args.page);
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API10}/content/${seg(id2)}`,
+        path: `${API12}/content/${seg(id2)}`,
         summary: `Move page ${id2} to trash`
       });
     }
@@ -62593,7 +63042,7 @@ var confluencePageTools = [
       const id2 = resolvePageId(args.page);
       if (!args.target && !args.target_space_key) throw new ValidationError("Pass target and/or target_space_key");
       const targetId = args.target ? resolvePageId(args.target) : void 0;
-      const spaceKey = args.target_space_key ?? (await c.get(`${API10}/content/${seg(targetId)}`, { expand: "space" }))?.space?.key;
+      const spaceKey = args.target_space_key ?? (await c.get(`${API12}/content/${seg(targetId)}`, { expand: "space" }))?.space?.key;
       const res = await guardedWrite(c, args, {
         method: "POST",
         path: "/pages/movepage.action",
@@ -62619,7 +63068,7 @@ var confluencePageTools = [
       if (args.version === void 0) {
         const offset = args.offset ?? 0;
         const limit = args.limit ?? 25;
-        const data = await c.get(`${API10}/content/${seg(id2)}/version`, { start: offset, limit });
+        const data = await c.get(`${API12}/content/${seg(id2)}/version`, { start: offset, limit });
         const items = (data?.results ?? []).map((v) => ({
           number: v.number,
           when: v.when,
@@ -62660,7 +63109,7 @@ var confluencePageTools = [
     description: "View (read) and edit (update) restrictions of a page: users and groups; empty = not restricted.",
     inputShape: { page: external_exports.string() },
     async handler({ client }, args) {
-      const data = await client("confluence").get(`${API10}/content/${seg(resolvePageId(args.page))}/restriction/byOperation`, {
+      const data = await client("confluence").get(`${API12}/content/${seg(resolvePageId(args.page))}/restriction/byOperation`, {
         expand: "restrictions.user,restrictions.group"
       });
       const op = (key) => ({
@@ -62696,7 +63145,7 @@ var confluencePageTools = [
       const count = body.reduce((n, e) => n + e.restrictions.user.length + e.restrictions.group.length, 0);
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
-        path: `${API10}/content/${seg(id2)}/restriction`,
+        path: `${API12}/content/${seg(id2)}/restriction`,
         json: body,
         summary: count ? `Replace restrictions of page ${id2} (${count} entries)` : `Remove all restrictions of page ${id2}`
       });
@@ -62726,7 +63175,7 @@ var confluencePageTools = [
       if (args.parent) body.ancestors = [{ id: resolvePageId(args.parent) }];
       const res = await guardedWrite(c, args, {
         method: "POST",
-        path: `${API10}/content`,
+        path: `${API12}/content`,
         json: body,
         summary: `Copy page ${src?.id} '${src?.title}' to '${args.title}' in ${args.space_key}`
       });
@@ -62736,7 +63185,7 @@ var confluencePageTools = [
 ];
 
 // src/tools/confluence/comments.ts
-var API11 = "/rest/api";
+var API13 = "/rest/api";
 var COMMENT_EXPAND = "body.view,version,ancestors,extensions.inlineProperties,extensions.resolution";
 function toStorage(body, format) {
   if (format === "storage") return body;
@@ -62763,7 +63212,7 @@ function compactComment2(c, baseUrl) {
   };
 }
 async function commentPage(client, pageId, offset, limit, location) {
-  const data = await client.get(`${API11}/content/${seg(pageId)}/child/comment`, {
+  const data = await client.get(`${API13}/content/${seg(pageId)}/child/comment`, {
     expand: COMMENT_EXPAND,
     depth: "all",
     location,
@@ -62773,7 +63222,7 @@ async function commentPage(client, pageId, offset, limit, location) {
   return { results: data?.results ?? [], last: !data?._links?.next };
 }
 async function pageOfComment(client, commentId) {
-  const c = await client.get(`${API11}/content/${seg(commentId)}`, { expand: "container,ancestors" });
+  const c = await client.get(`${API13}/content/${seg(commentId)}`, { expand: "container,ancestors" });
   if (c?.type && c.type !== "comment") throw new ValidationError(`${commentId} is a ${c.type}, not a comment`);
   if (c?.container?.type === "page" || c?.container?.type === "blogpost") return String(c.container.id);
   const page = [...c?.ancestors ?? []].reverse().find((a) => a.type === "page" || a.type === "blogpost");
@@ -62822,7 +63271,7 @@ var confluenceCommentTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API11}/content`,
+        path: `${API13}/content`,
         json: {
           type: "comment",
           container: { id: args.page_id, type: "page", status: "current" },
@@ -62843,7 +63292,7 @@ var confluenceCommentTools = [
       const pageId = await pageOfComment(c, args.comment_id);
       return guardedWrite(c, args, {
         method: "POST",
-        path: `${API11}/content`,
+        path: `${API13}/content`,
         json: {
           type: "comment",
           container: { id: pageId, type: "page", status: "current" },
@@ -62873,7 +63322,7 @@ var confluenceCommentTools = [
       if (index >= count) throw new ValidationError("match_index must be smaller than match_count");
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API11}/content`,
+        path: `${API13}/content`,
         json: {
           type: "comment",
           container: { id: args.page_id, type: "page", status: "current" },
@@ -62896,7 +63345,7 @@ var confluenceCommentTools = [
 ];
 
 // src/tools/confluence/labels.ts
-var API12 = "/rest/api";
+var API14 = "/rest/api";
 var confluenceLabelTools = [
   {
     name: "confluence_get_labels",
@@ -62910,7 +63359,7 @@ var confluenceLabelTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 200;
-      const data = await client("confluence").get(`${API12}/content/${seg(args.content_id)}/label`, {
+      const data = await client("confluence").get(`${API14}/content/${seg(args.content_id)}/label`, {
         prefix: args.prefix,
         start: offset,
         limit
@@ -62934,7 +63383,7 @@ var confluenceLabelTools = [
       const prefix = args.prefix ?? "global";
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API12}/content/${seg(args.content_id)}/label`,
+        path: `${API14}/content/${seg(args.content_id)}/label`,
         json: args.names.map((name) => ({ prefix, name: name.trim().toLowerCase().replace(/\s+/g, "-") })),
         summary: `Add label(s) ${args.names.join(", ")} to ${args.content_id}`
       });
@@ -62945,7 +63394,7 @@ var confluenceLabelTools = [
 // src/tools/confluence/attachments.ts
 import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync2 } from "fs";
 import { basename as basename4, join as join3, resolve as resolve6, sep as sep2 } from "path";
-var API13 = "/rest/api";
+var API15 = "/rest/api";
 var MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 var IMAGE_MIME2 = /* @__PURE__ */ new Set(["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/bmp"]);
 var IMAGE_EXT2 = /\.(png|jpe?g|gif|webp|svg|bmp)$/i;
@@ -63004,7 +63453,7 @@ async function downloadMany(client, contentId, outputDir, filter, max, serverMed
   let start = 0;
   let scanned = 0;
   for (; ; ) {
-    const data = await client.get(`${API13}/content/${seg(contentId)}/child/attachment`, {
+    const data = await client.get(`${API15}/content/${seg(contentId)}/child/attachment`, {
       start,
       limit: 100,
       mediaType: serverMediaType,
@@ -63035,7 +63484,7 @@ function uploadForm(path, comment, minorEdit) {
   return form;
 }
 async function uploadOne(client, contentId, path, comment, minorEdit) {
-  const base = `${API13}/content/${seg(contentId)}/child/attachment`;
+  const base = `${API15}/content/${seg(contentId)}/child/attachment`;
   try {
     const res = await client.request("POST", base, { form: uploadForm(path, comment, minorEdit) });
     const a = res?.results?.[0] ?? res;
@@ -63053,7 +63502,7 @@ async function guardedUpload(client, args, paths) {
   const summary = `Upload ${paths.length} file(s) to content ${args.content_id}` + (args.comment ? ` ("${args.comment}")` : "");
   const req = {
     method: "POST",
-    path: `${API13}/content/${seg(args.content_id)}/child/attachment`,
+    path: `${API15}/content/${seg(args.content_id)}/child/attachment`,
     json: { comment: args.comment, minorEdit: args.minor_edit ?? false },
     files: { field: "file", paths },
     summary
@@ -63099,7 +63548,7 @@ var confluenceAttachmentTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 50, 100);
-      const data = await client("confluence").get(`${API13}/content/${seg(args.content_id)}/child/attachment`, {
+      const data = await client("confluence").get(`${API15}/content/${seg(args.content_id)}/child/attachment`, {
         start: offset,
         limit,
         filename: args.filename,
@@ -63137,7 +63586,7 @@ var confluenceAttachmentTools = [
     inputShape: { attachment_id: external_exports.coerce.string(), output_dir: external_exports.string() },
     async handler({ client }, args) {
       const c = client("confluence");
-      const a = await c.get(`${API13}/content/${seg(args.attachment_id)}`, { expand: "version" });
+      const a = await c.get(`${API15}/content/${seg(args.attachment_id)}`, { expand: "version" });
       const r = await download(c, a, args.output_dir);
       if (r.error) throw new ValidationError(`${args.attachment_id}: ${r.error}`);
       return r;
@@ -63179,7 +63628,7 @@ var confluenceAttachmentTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API13}/content/${seg(args.attachment_id)}`,
+        path: `${API15}/content/${seg(args.attachment_id)}`,
         summary: `Delete attachment ${args.attachment_id}`
       });
     }
@@ -64296,7 +64745,7 @@ var TOOL_GROUPS = [
   ["Jira Assets \u2014 objects, AQL, history", assetsObjectTools],
   ["Confluence admin \u2014 system", confluenceSystemTools],
   ["Confluence admin \u2014 users and groups", confluenceUserTools],
-  ["Confluence admin \u2014 spaces and permissions", confluenceSpaceTools],
+  ["Confluence admin \u2014 spaces and permissions", [...confluenceSpaceTools, ...confluenceSpaceCategoryTools, ...confluenceSpaceDiscoveryTools]],
   ["Confluence \u2014 pages and search", confluencePageTools],
   ["Confluence \u2014 comments", confluenceCommentTools],
   ["Confluence \u2014 labels", confluenceLabelTools],
@@ -64388,7 +64837,9 @@ function readPlan(file2) {
   const path = resolve7(file2);
   if (!existsSync5(path)) return { version: 1, items: [] };
   const data = JSON.parse(readFileSync6(path, "utf8"));
-  if (!data || !Array.isArray(data.items)) throw new Error(`${file2} is not a change plan`);
+  if (!data || data.version !== 1 || !Array.isArray(data.items)) {
+    throw new Error(`${file2} is not a version-1 change plan`);
+  }
   return data;
 }
 function addToPlan(file2, tool, args, dry) {
@@ -64439,6 +64890,861 @@ function renderOutcomes(outcomes) {
   return lines.join("\n");
 }
 
+// src/spaceWorkflow.ts
+import {
+  closeSync as closeSync2,
+  existsSync as existsSync6,
+  fsyncSync,
+  openSync as openSync2,
+  readFileSync as readFileSync7,
+  renameSync,
+  unlinkSync,
+  writeFileSync as writeFileSync4
+} from "fs";
+import { createHash as createHash2, randomUUID } from "crypto";
+import { resolve as resolve8 } from "path";
+var spaceSchema = external_exports.object({
+  id: external_exports.union([external_exports.string(), external_exports.number()]),
+  key: external_exports.string().min(1),
+  name: external_exports.string(),
+  type: external_exports.enum(["global", "personal"]),
+  status: external_exports.enum(["current", "archived"]),
+  groupOperations: external_exports.array(external_exports.string()),
+  baselineCategories: external_exports.array(external_exports.string()),
+  baselineUserOperations: external_exports.array(external_exports.string())
+}).strict();
+var itemSchema = external_exports.object({
+  n: external_exports.number().int().positive(),
+  kind: external_exports.enum(["category", "grant"]),
+  tool: external_exports.enum(["confluence_add_space_category", "confluence_grant_space_permissions"]),
+  args: external_exports.record(external_exports.string(), external_exports.unknown()),
+  summary: external_exports.string(),
+  request: external_exports.object({
+    method: external_exports.enum(["POST", "PUT"]),
+    url: external_exports.string().url(),
+    body: external_exports.unknown().optional()
+  }).strict(),
+  digest: external_exports.string().regex(/^[a-f0-9]{16}$/),
+  plannedAt: external_exports.string().datetime()
+}).strict();
+var outcomeItemSchema = external_exports.object({
+  n: external_exports.number().int().positive(),
+  status: external_exports.enum(["executed", "already-satisfied", "failed", "drifted", "unselected", "unattempted", "verification-failed"]),
+  detail: external_exports.string().optional(),
+  mutationStatus: external_exports.enum(["executed", "already-satisfied", "failed", "drifted", "unselected", "unattempted"]).optional()
+}).strict();
+var workflowPlanSchema = external_exports.object({
+  version: external_exports.literal(2),
+  workflow: external_exports.literal("confluence-space-updates"),
+  preparedAt: external_exports.string().datetime(),
+  target: external_exports.string().url(),
+  selector: external_exports.object({
+    group: external_exports.string().min(1),
+    type: external_exports.enum(["global", "personal"]).nullable(),
+    status: external_exports.enum(["current", "archived"]).nullable()
+  }).strict(),
+  identity: external_exports.object({
+    username: external_exports.string().min(1),
+    userKey: external_exports.string().min(1)
+  }).strict(),
+  desired: external_exports.object({
+    category: external_exports.string().min(1),
+    userOperations: external_exports.tuple([external_exports.literal("read:space"), external_exports.literal("administer:space")])
+  }).strict(),
+  completeness: external_exports.object({
+    enumerationComplete: external_exports.boolean(),
+    permissionReadsComplete: external_exports.boolean(),
+    completeForCaller: external_exports.boolean(),
+    siteWideComplete: external_exports.boolean(),
+    siteCountCrossCheck: external_exports.object({
+      status: external_exports.enum(["matched", "mismatch", "unavailable", "not-applicable-for-filtered-scope"]),
+      serverCount: external_exports.number().int().nonnegative().optional(),
+      inspectedCount: external_exports.number().int().nonnegative()
+    }).strict(),
+    issues: external_exports.array(external_exports.string())
+  }).strict(),
+  spaces: external_exports.array(spaceSchema),
+  items: external_exports.array(itemSchema),
+  previousEvidence: external_exports.object({
+    planFile: external_exports.string().min(1),
+    outcomeFile: external_exports.string().min(1),
+    target: external_exports.string().url(),
+    planDigest: external_exports.string().regex(/^[a-f0-9]{64}$/),
+    updatedAt: external_exports.string().datetime(),
+    items: external_exports.array(outcomeItemSchema)
+  }).strict().optional()
+}).strict();
+var workflowOutcomeSchema = external_exports.object({
+  version: external_exports.literal(1),
+  workflow: external_exports.literal("confluence-space-updates-outcomes"),
+  planFile: external_exports.string().min(1),
+  target: external_exports.string().url(),
+  planDigest: external_exports.string().regex(/^[a-f0-9]{64}$/),
+  updatedAt: external_exports.string().datetime(),
+  items: external_exports.array(outcomeItemSchema),
+  verification: external_exports.unknown().optional()
+}).strict();
+function safeTarget(value) {
+  let url2;
+  try {
+    url2 = new URL(value);
+  } catch {
+    throw new ValidationError("Configured Confluence target is not a valid URL");
+  }
+  if (!["http:", "https:"].includes(url2.protocol)) throw new ValidationError("Configured Confluence target must use HTTP or HTTPS");
+  url2.username = "";
+  url2.password = "";
+  url2.search = "";
+  url2.hash = "";
+  return url2.toString().replace(/\/+$/, "");
+}
+function validateWorkflowPlan(input2) {
+  const parsed = workflowPlanSchema.safeParse(input2);
+  if (!parsed.success) {
+    throw new ValidationError(`Invalid version-2 space workflow plan: ${parsed.error.issues.map((issue2) => issue2.message).join("; ")}`);
+  }
+  const plan = parsed.data;
+  const target = new URL(plan.target);
+  if (target.username || target.password || target.search || target.hash) {
+    throw new ValidationError("Workflow plan target must not contain credentials, query parameters, or fragments");
+  }
+  const basePath = target.pathname.replace(/\/+$/, "");
+  if (!spaceCategoryNameSchema.safeParse(plan.desired.category).success) {
+    throw new ValidationError("Workflow plan contains an unsupported category name");
+  }
+  if (!plan.completeness.enumerationComplete || !plan.completeness.permissionReadsComplete || !plan.completeness.completeForCaller || plan.completeness.siteCountCrossCheck.status === "mismatch") {
+    throw new ValidationError("Workflow plan is based on incomplete space or permission discovery");
+  }
+  if (plan.previousEvidence && plan.previousEvidence.target !== plan.target) {
+    throw new ValidationError("Previous workflow evidence belongs to a different Confluence target");
+  }
+  const keySet = /* @__PURE__ */ new Set();
+  const idSet = /* @__PURE__ */ new Set();
+  const itemNumbers = /* @__PURE__ */ new Set();
+  for (const space of plan.spaces) {
+    if (keySet.has(space.key) || idSet.has(String(space.id))) {
+      throw new ValidationError(`Workflow plan repeats a space identity '${space.key}'`);
+    }
+    if (plan.selector.type && space.type !== plan.selector.type || plan.selector.status && space.status !== plan.selector.status || !space.groupOperations.includes("read:space")) {
+      throw new ValidationError(`Workflow space '${space.key}' does not satisfy its immutable selector`);
+    }
+    keySet.add(space.key);
+    idSet.add(String(space.id));
+  }
+  const itemKindsBySpace = /* @__PURE__ */ new Map();
+  for (const item of plan.items) {
+    if (itemNumbers.has(item.n)) throw new ValidationError(`Workflow plan repeats item number ${item.n}`);
+    itemNumbers.add(item.n);
+    if (item.n !== itemNumbers.size) throw new ValidationError("Workflow plan item numbers must be sequential");
+    const spaceKey = item.args.space_key;
+    if (typeof spaceKey !== "string" || !keySet.has(spaceKey)) {
+      throw new ValidationError(`Workflow item ${item.n} is outside the immutable space selection`);
+    }
+    const kinds = itemKindsBySpace.get(spaceKey) ?? /* @__PURE__ */ new Set();
+    if (kinds.has(item.kind)) throw new ValidationError(`Workflow repeats ${item.kind} work for space '${spaceKey}'`);
+    kinds.add(item.kind);
+    itemKindsBySpace.set(spaceKey, kinds);
+    const requestUrl = new URL(item.request.url);
+    if (requestUrl.origin !== target.origin || requestUrl.username || requestUrl.password || requestUrl.search || requestUrl.hash || !requestUrl.pathname.startsWith(`${basePath}/rest/api/space/`)) {
+      throw new ValidationError(`Workflow item ${item.n} targets a different Confluence instance or resource`);
+    }
+    if (item.kind === "category") {
+      if (Object.keys(item.args).sort().join(",") !== "name,space_key") {
+        throw new ValidationError(`Workflow category item ${item.n} contains unsupported arguments`);
+      }
+      if (item.tool !== "confluence_add_space_category" || item.args.name !== plan.desired.category || item.request.method !== "POST" || item.request.body !== void 0) {
+        throw new ValidationError(`Workflow category item ${item.n} is not an allowed additive request`);
+      }
+      const expectedPath = `${basePath}/rest/api/space/${encodeURIComponent(spaceKey)}/category/${encodeURIComponent(plan.desired.category)}`;
+      if (requestUrl.pathname !== expectedPath) throw new ValidationError(`Workflow category item ${item.n} has an unexpected request path`);
+    } else {
+      const operations = item.args.operations;
+      if (Object.keys(item.args).sort().join(",") !== "operations,space_key,subject,subject_type") {
+        throw new ValidationError(`Workflow grant item ${item.n} contains unsupported arguments`);
+      }
+      if (item.tool !== "confluence_grant_space_permissions" || item.request.method !== "PUT" || item.args.subject_type !== "user" || item.args.subject !== plan.identity.userKey || !Array.isArray(operations) || operations.length === 0 || operations.some((operation) => !plan.desired.userOperations.includes(String(operation))) || !Array.isArray(item.request.body)) {
+        throw new ValidationError(`Workflow grant item ${item.n} is not an allowed direct user grant`);
+      }
+      const expectedPath = `${basePath}/rest/api/space/${encodeURIComponent(spaceKey)}/permissions/user/${encodeURIComponent(plan.identity.userKey)}/grant`;
+      if (requestUrl.pathname !== expectedPath) throw new ValidationError(`Workflow grant item ${item.n} has an unexpected request path`);
+      const bodyOperations = item.request.body.map(
+        (operation) => `${operation?.operationKey}:${operation?.targetType}`
+      );
+      if (item.request.body.some(
+        (operation) => !operation || typeof operation !== "object" || Object.keys(operation).sort().join(",") !== "operationKey,targetType"
+      ) || bodyOperations.length !== operations.length || bodyOperations.some((operation) => !operations.includes(operation)) || operations.some((operation) => !bodyOperations.includes(String(operation)))) {
+        throw new ValidationError(`Workflow grant item ${item.n} body does not match its approved operations`);
+      }
+    }
+    if (digestOf({ request: item.request }) !== item.digest) {
+      throw new ValidationError(`Workflow item ${item.n} request fingerprint is invalid`);
+    }
+  }
+  for (const space of plan.spaces) {
+    const kinds = itemKindsBySpace.get(space.key) ?? /* @__PURE__ */ new Set();
+    const categoryMissing = !space.baselineCategories.includes(plan.desired.category);
+    const grantMissing = plan.desired.userOperations.filter((operation) => !space.baselineUserOperations.includes(operation));
+    if (kinds.has("category") !== categoryMissing || kinds.has("grant") !== grantMissing.length > 0) {
+      throw new ValidationError(`Workflow items for '${space.key}' do not match the reconciled desired state`);
+    }
+    const grant = plan.items.find((item) => item.kind === "grant" && item.args.space_key === space.key);
+    if (grant && JSON.stringify(grant.args.operations) !== JSON.stringify(grantMissing)) {
+      throw new ValidationError(`Workflow grant operations for '${space.key}' differ from the reconciled delta`);
+    }
+  }
+  return plan;
+}
+function readSpaceWorkflowPlan(file2) {
+  const data = JSON.parse(readFileSync7(resolve8(file2), "utf8"));
+  return validateWorkflowPlan(data);
+}
+function writeSpaceWorkflowPlan(file2, input2) {
+  const path = resolve8(file2);
+  const plan = validateWorkflowPlan(input2);
+  let fd;
+  let created = false;
+  try {
+    fd = openSync2(path, "wx", 384);
+    created = true;
+    writeFileSync4(fd, `${JSON.stringify(plan, null, 2)}
+`);
+    fsyncSync(fd);
+    closeSync2(fd);
+    fd = void 0;
+  } catch (error62) {
+    if (fd !== void 0) closeSync2(fd);
+    if (created) {
+      try {
+        unlinkSync(path);
+      } catch {
+      }
+    }
+    throw error62;
+  }
+  return plan;
+}
+function renderSpaceWorkflowPlan(planInput, file2) {
+  const plan = validateWorkflowPlan(planInput);
+  const countCategories = plan.items.filter((item) => item.kind === "category").length;
+  const countGrants = plan.items.filter((item) => item.kind === "grant").length;
+  const lines = [
+    `space workflow plan ${file2}`,
+    `target: ${plan.target}`,
+    `group: ${plan.selector.group}`,
+    `scope: type=${plan.selector.type ?? "all"} status=${plan.selector.status ?? "all"}`,
+    `user: ${plan.identity.username} (${plan.identity.userKey})`,
+    `category: ${plan.desired.category}`,
+    `spaces: ${plan.spaces.length} | discovery complete: ${plan.completeness.completeForCaller} | site-wide: ${plan.completeness.siteWideComplete}`,
+    `items: ${plan.items.length} total | ${countCategories} categories | ${countGrants} permission grants`
+  ];
+  for (const item of plan.items) {
+    const body = item.request.body === void 0 ? "" : ` body=${JSON.stringify(item.request.body)}`;
+    lines.push(`${item.n}. ${item.summary} | ${item.request.method} ${item.request.url}${body}`);
+  }
+  return lines.join("\n");
+}
+function requireToolValue(result, label) {
+  if (result?.ok) return result.value;
+  throw new ValidationError(`${label}: ${result?.error?.message ?? "unknown read failure"}`);
+}
+async function readUserOperations(ctx, spaceKey, userKey, username) {
+  const client = ctx.client("confluence");
+  const data = await client.get(`/rest/api/space/${encodeURIComponent(spaceKey)}/permissions/user/${encodeURIComponent(userKey)}`);
+  const records = Array.isArray(data) ? data : data?.results;
+  if (!Array.isArray(records)) throw new ValidationError(`User permission read for '${spaceKey}' returned an unknown response shape`);
+  const operations = [];
+  for (const permission of records) {
+    const subject = permission?.subject;
+    const subjectType = subject?.type ?? (subject?.userKey || subject?.username ? "user" : void 0);
+    const subjectKey = subject?.userKey ?? subject?.username ?? subject?.name;
+    const op = permission?.operation?.operationKey ?? permission?.operation?.key;
+    const target = permission?.operation?.targetType;
+    if (subjectType !== "user" || subjectKey !== userKey && subjectKey !== username || typeof op !== "string" || typeof target !== "string") {
+      throw new ValidationError(`User permission read for '${spaceKey}' returned an unknown permission record`);
+    }
+    operations.push(`${op}:${target}`);
+  }
+  return [...new Set(operations)].sort();
+}
+async function readCategories(ctx, spaceKey) {
+  const result = await runToolByName("confluence_get_space_categories", { space_key: spaceKey }, ctx);
+  const value = requireToolValue(result, `Could not read categories for '${spaceKey}'`);
+  if (value.complete !== true) {
+    throw new ValidationError(`Category read for '${spaceKey}' is incomplete: ${(value.issues ?? []).join("; ")}`);
+  }
+  return value.categories.map((category) => category.name);
+}
+async function addItem(items, kind, tool, args, ctx) {
+  const result = await runToolByName(tool, { ...args, dry_run: true }, ctx);
+  const dry = requireToolValue(result, `Could not prepare ${kind} request`);
+  if (dry.dry_run !== true || !dry.request?.url || !dry.request?.method) {
+    throw new ValidationError(`The ${tool} tool did not return a dry-run request`);
+  }
+  const item = {
+    n: items.length + 1,
+    kind,
+    tool,
+    args,
+    summary: dry.summary,
+    request: {
+      method: dry.request.method,
+      url: dry.request.url,
+      ...dry.request.body !== void 0 ? { body: dry.request.body } : {}
+    },
+    digest: digestOf(dry),
+    plannedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  items.push(item);
+}
+async function prepareSpaceUpdates(ctx, input2, outputFile) {
+  if (!input2.group || !input2.category || !!input2.username === !!input2.email) {
+    throw new ValidationError("Preparation requires group, category, and exactly one of username or email");
+  }
+  if (existsSync6(resolve8(outputFile))) throw new ValidationError(`Refusing to overwrite existing plan file '${resolve8(outputFile)}'`);
+  const discoveryResult = await runToolByName("confluence_find_spaces_by_group", {
+    group: input2.group,
+    type: input2.type,
+    status: input2.status
+  }, ctx);
+  const discovery = requireToolValue(discoveryResult, "Group-space discovery failed");
+  if (discovery.completeForCaller !== true) {
+    throw new ValidationError(`Group-space discovery is incomplete; no update plan was written: ${(discovery.issues ?? []).join("; ")}`);
+  }
+  const client = ctx.client("confluence");
+  const identity = await resolveConfluenceGrantUser(client, {
+    ...input2.username ? { username: input2.username } : {},
+    ...input2.email ? { email: input2.email } : {}
+  });
+  let previousEvidence;
+  if (input2.previousOutcomes) {
+    const outcomeFile = resolve8(input2.previousOutcomes);
+    const parsedOutcome = workflowOutcomeSchema.safeParse(JSON.parse(readFileSync7(outcomeFile, "utf8")));
+    if (!parsedOutcome.success) throw new ValidationError("Previous workflow outcome file is malformed");
+    const previous = parsedOutcome.data;
+    const previousPlanFile = resolve8(previous.planFile);
+    if (outcomeFile !== outcomePath(previousPlanFile)) {
+      throw new ValidationError("Previous outcome file does not match its recorded immutable plan path");
+    }
+    const previousPlan = readSpaceWorkflowPlan(previousPlanFile);
+    const verifiedPrevious = readWorkflowOutcome(previousPlanFile, previousPlan);
+    if (!verifiedPrevious || previous.target !== safeTarget(client.config.baseUrl)) {
+      throw new ValidationError("Previous workflow outcome does not match this Confluence target or its original plan");
+    }
+    if (previousPlan.selector.group !== input2.group || previousPlan.selector.type !== (input2.type ?? null) || previousPlan.selector.status !== (input2.status ?? null) || previousPlan.desired.category !== input2.category || previousPlan.identity.username !== identity.username || previousPlan.identity.userKey !== identity.userKey) {
+      throw new ValidationError("Previous workflow evidence does not match the requested group, scope, category, or user");
+    }
+    previousEvidence = {
+      planFile: previousPlanFile,
+      outcomeFile,
+      target: verifiedPrevious.target,
+      planDigest: verifiedPrevious.planDigest,
+      updatedAt: verifiedPrevious.updatedAt,
+      items: verifiedPrevious.items
+    };
+  }
+  const selected = discovery.matches;
+  const spaces = [];
+  const items = [];
+  for (const discovered of selected) {
+    const [categories, userOperations] = await Promise.all([
+      readCategories(ctx, discovered.key),
+      readUserOperations(ctx, discovered.key, identity.userKey, identity.username)
+    ]);
+    const groupOperations = [...discovered.groupOperations].sort();
+    const baselineCategories = [...new Set(categories)].sort();
+    const baselineUserOperations = [...new Set(userOperations)].sort();
+    spaces.push({
+      id: discovered.id,
+      key: discovered.key,
+      name: discovered.name,
+      type: discovered.type,
+      status: discovered.status,
+      groupOperations,
+      baselineCategories,
+      baselineUserOperations
+    });
+    if (!baselineCategories.includes(input2.category)) {
+      await addItem(items, "category", "confluence_add_space_category", {
+        space_key: discovered.key,
+        name: input2.category
+      }, ctx);
+    }
+    const missingOperations = ["read:space", "administer:space"].filter((operation) => !baselineUserOperations.includes(operation));
+    if (missingOperations.length) {
+      await addItem(items, "grant", "confluence_grant_space_permissions", {
+        space_key: discovered.key,
+        subject_type: "user",
+        subject: identity.userKey,
+        operations: missingOperations
+      }, ctx);
+    }
+  }
+  const plan = validateWorkflowPlan({
+    version: 2,
+    workflow: "confluence-space-updates",
+    preparedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    target: safeTarget(client.config.baseUrl),
+    selector: { group: input2.group, type: input2.type ?? null, status: input2.status ?? null },
+    identity: { username: identity.username, userKey: identity.userKey },
+    desired: { category: input2.category, userOperations: ["read:space", "administer:space"] },
+    completeness: {
+      enumerationComplete: discovery.enumerationComplete,
+      permissionReadsComplete: discovery.permissionReadsComplete,
+      completeForCaller: discovery.completeForCaller,
+      siteWideComplete: discovery.siteWideComplete,
+      siteCountCrossCheck: discovery.siteCountCrossCheck,
+      issues: discovery.issues
+    },
+    spaces,
+    items,
+    ...previousEvidence ? { previousEvidence } : {}
+  });
+  writeSpaceWorkflowPlan(outputFile, plan);
+  return {
+    plan,
+    summary: {
+      file: resolve8(outputFile),
+      target: plan.target,
+      group: plan.selector.group,
+      identity: plan.identity,
+      inspected: discovery.inspected,
+      selected: spaces.length,
+      categoryItems: items.filter((item) => item.kind === "category").length,
+      permissionItems: items.filter((item) => item.kind === "grant").length,
+      totalItems: items.length,
+      siteCountCrossCheck: plan.completeness.siteCountCrossCheck,
+      completeForCaller: plan.completeness.completeForCaller,
+      siteWideComplete: plan.completeness.siteWideComplete,
+      previousOutcomeFile: plan.previousEvidence?.outcomeFile ?? null
+    }
+  };
+}
+function workflowPlanDigest(plan) {
+  return createHash2("sha256").update(JSON.stringify(plan)).digest("hex");
+}
+function outcomePath(planFile) {
+  return `${resolve8(planFile)}.outcomes.json`;
+}
+function verificationPath(planFile) {
+  return `${resolve8(planFile)}.verification.json`;
+}
+function readWorkflowOutcome(planFile, plan) {
+  const path = outcomePath(planFile);
+  if (!existsSync6(path)) return void 0;
+  const parsed = workflowOutcomeSchema.safeParse(JSON.parse(readFileSync7(path, "utf8")));
+  if (!parsed.success) throw new ValidationError(`Invalid workflow outcome file '${path}'`);
+  const outcome = parsed.data;
+  if (outcome.planDigest !== workflowPlanDigest(plan) || outcome.target !== plan.target) {
+    throw new ValidationError("Workflow outcome file does not match this immutable plan");
+  }
+  if (resolve8(outcome.planFile) !== resolve8(planFile)) {
+    throw new ValidationError("Workflow outcome file references a different plan path");
+  }
+  const numbers = outcome.items.map((item) => item.n).sort((a, b) => a - b);
+  if (numbers.length !== plan.items.length || numbers.some((number4, index) => number4 !== index + 1)) {
+    throw new ValidationError("Workflow outcome file does not account for every plan item");
+  }
+  return outcome;
+}
+function atomicWriteJson(path, value) {
+  const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
+  let fd;
+  try {
+    fd = openSync2(temporary, "wx", 384);
+    writeFileSync4(fd, `${JSON.stringify(value, null, 2)}
+`);
+    fsyncSync(fd);
+    closeSync2(fd);
+    fd = void 0;
+    renameSync(temporary, path);
+  } catch (error62) {
+    if (fd !== void 0) closeSync2(fd);
+    try {
+      unlinkSync(temporary);
+    } catch {
+    }
+    throw error62;
+  }
+}
+function writeWorkflowOutcome(planFile, plan, items, verification) {
+  const value = {
+    version: 1,
+    workflow: "confluence-space-updates-outcomes",
+    planFile: resolve8(planFile),
+    target: plan.target,
+    planDigest: workflowPlanDigest(plan),
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    items: [...items].sort((a, b) => a.n - b.n),
+    ...verification !== void 0 ? { verification } : {}
+  };
+  const validated = workflowOutcomeSchema.parse(value);
+  atomicWriteJson(outcomePath(planFile), validated);
+  return validated;
+}
+async function readGroupOperations(ctx, spaceKey, group) {
+  const data = await ctx.client("confluence").get(
+    `/rest/api/space/${encodeURIComponent(spaceKey)}/permissions/group/${encodeURIComponent(group)}`
+  );
+  const records = Array.isArray(data) ? data : data?.results;
+  if (!Array.isArray(records)) throw new ValidationError(`Group permission read for '${spaceKey}' returned an unknown response shape`);
+  const operations = [];
+  for (const permission of records) {
+    const subject = permission?.subject;
+    const subjectType = subject?.type ?? (subject?.name ? "group" : void 0);
+    const subjectName = subject?.name ?? subject?.group;
+    const operationKey = permission?.operation?.operationKey ?? permission?.operation?.key;
+    const targetType = permission?.operation?.targetType;
+    if (subjectType !== "group" || subjectName !== group || typeof operationKey !== "string" || typeof targetType !== "string") {
+      throw new ValidationError(`Group permission read for '${spaceKey}' returned an unknown permission record`);
+    }
+    operations.push(`${operationKey}:${targetType}`);
+  }
+  return [...new Set(operations)].sort();
+}
+async function readSpaceState(ctx, space, plan) {
+  const [categories, userOperations, groupOperations] = await Promise.all([
+    readCategories(ctx, space.key),
+    readUserOperations(ctx, space.key, plan.identity.userKey, plan.identity.username),
+    readGroupOperations(ctx, space.key, plan.selector.group)
+  ]);
+  return {
+    categories: [...new Set(categories)].sort(),
+    userOperations: [...new Set(userOperations)].sort(),
+    groupOperations: [...new Set(groupOperations)].sort()
+  };
+}
+function spaceByKey(plan, key) {
+  const space = plan.spaces.find((candidate) => candidate.key === key);
+  if (!space) throw new ValidationError(`Workflow item refers to space '${key}' outside the plan`);
+  return space;
+}
+function preserved(space, state) {
+  return space.baselineCategories.every((category) => state.categories.includes(category)) && space.baselineUserOperations.every((operation) => state.userOperations.includes(operation));
+}
+function outcomeItem(n, status, detail) {
+  return { n, status, ...detail ? { detail } : {} };
+}
+async function prepareSpaceWorkflowApply(ctx, plan, planFile, only) {
+  if (safeTarget(ctx.client("confluence").config.baseUrl) !== plan.target) {
+    throw new ValidationError("Configured Confluence target differs from the prepared workflow plan");
+  }
+  if (existsSync6(outcomePath(planFile))) {
+    throw new ValidationError("This workflow plan already has execution outcomes; prepare a fresh plan to retry safely");
+  }
+  const identity = await resolveConfluenceGrantUser(ctx.client("confluence"), { username: plan.identity.username });
+  if (identity.userKey !== plan.identity.userKey) {
+    throw new ValidationError("Resolved active user key differs from the immutable workflow plan");
+  }
+  const allowed = only?.length ? new Set(only) : new Set(plan.items.map((item) => item.n));
+  const candidates = plan.items.filter((item) => allowed.has(item.n));
+  const spacesToRead = [...new Set(candidates.map((item) => String(item.args.space_key)))];
+  const states = /* @__PURE__ */ new Map();
+  const readRows = await boundedAll(spacesToRead.map((key) => async () => {
+    const space = spaceByKey(plan, key);
+    try {
+      return { key, state: await readSpaceState(ctx, space, plan) };
+    } catch (error62) {
+      return { key, error: String(error62?.message ?? error62) };
+    }
+  }), 4);
+  for (const row of readRows) states.set(row.key, row);
+  const statuses = plan.items.map(
+    (item) => outcomeItem(item.n, allowed.has(item.n) ? "unattempted" : "unselected")
+  );
+  const activeItems = [];
+  for (const item of candidates) {
+    const key = String(item.args.space_key);
+    const current = states.get(key);
+    if (!current?.state) {
+      statuses[item.n - 1] = outcomeItem(item.n, "drifted", current?.error ?? "preflight state is unavailable");
+      continue;
+    }
+    const space = spaceByKey(plan, key);
+    const state = current.state;
+    if (!state.groupOperations.includes("read:space")) {
+      statuses[item.n - 1] = outcomeItem(item.n, "drifted", "the selected group no longer has direct read:space");
+      continue;
+    }
+    if (!preserved(space, state)) {
+      statuses[item.n - 1] = outcomeItem(item.n, "drifted", "recorded baseline categories or direct user permissions are no longer present");
+      continue;
+    }
+    let args = { ...item.args };
+    if (item.kind === "category") {
+      if (state.categories.includes(plan.desired.category)) {
+        statuses[item.n - 1] = outcomeItem(item.n, "already-satisfied");
+        continue;
+      }
+    } else {
+      const approvedOperations = item.args.operations;
+      const missingOperations = approvedOperations.filter((operation) => !state.userOperations.includes(operation));
+      if (missingOperations.length === 0) {
+        statuses[item.n - 1] = outcomeItem(item.n, "already-satisfied");
+        continue;
+      }
+      args = { ...args, operations: missingOperations };
+    }
+    const dryResult = await runToolByName(item.tool, { ...args, dry_run: true }, ctx);
+    if (!dryResult.ok) {
+      statuses[item.n - 1] = outcomeItem(item.n, "drifted", dryResult.error.message);
+      continue;
+    }
+    const dry = dryResult.value;
+    activeItems.push({
+      item,
+      args,
+      request: {
+        method: dry.request.method,
+        url: dry.request.url,
+        ...dry.request.body !== void 0 ? { body: dry.request.body } : {}
+      },
+      digest: digestOf(dry)
+    });
+  }
+  return { plan, planFile: resolve8(planFile), statuses, activeItems };
+}
+function workflowConfirmationItems(preview) {
+  return preview.activeItems.map(({ item, request }) => ({
+    n: item.n,
+    summary: item.summary,
+    detail: `${request.method} ${request.url}${request.body === void 0 ? "" : ` body=${JSON.stringify(request.body)}`}`
+  }));
+}
+async function applySpaceWorkflowWithConfirmation(ctx, preview, confirm = confirmChanges) {
+  const selected = confirm(workflowConfirmationItems(preview), "Confluence space workflow \u2014 confirm updates");
+  return applySpaceWorkflow(ctx, preview, selected);
+}
+async function verifySpaceWorkflow(ctx, plan, planFile) {
+  if (safeTarget(ctx.client("confluence").config.baseUrl) !== plan.target) {
+    throw new ValidationError("Configured Confluence target differs from the prepared workflow plan");
+  }
+  let identityError;
+  try {
+    const identity = await resolveConfluenceGrantUser(ctx.client("confluence"), { username: plan.identity.username });
+    if (identity.userKey !== plan.identity.userKey) {
+      identityError = "Resolved active user key differs from the immutable workflow plan";
+    }
+  } catch (error62) {
+    identityError = String(error62?.message ?? error62);
+  }
+  const rows2 = identityError ? plan.spaces.map((space) => ({
+    spaceKey: space.key,
+    categoriesPresent: false,
+    operationsPresent: false,
+    baselineCategoriesPreserved: false,
+    baselineUserPermissionsPreserved: false,
+    groupAccessPresent: false,
+    verified: false,
+    error: identityError
+  })) : await boundedAll(plan.spaces.map((space) => async () => {
+    try {
+      const state = await readSpaceState(ctx, space, plan);
+      const categoriesPresent = state.categories.includes(plan.desired.category);
+      const operationsPresent = plan.desired.userOperations.every((operation) => state.userOperations.includes(operation));
+      const baselineCategoriesPreserved = space.baselineCategories.every((category) => state.categories.includes(category));
+      const baselineUserPermissionsPreserved = space.baselineUserOperations.every((operation) => state.userOperations.includes(operation));
+      const groupAccessPresent = state.groupOperations.includes("read:space");
+      return {
+        spaceKey: space.key,
+        categoriesPresent,
+        operationsPresent,
+        baselineCategoriesPreserved,
+        baselineUserPermissionsPreserved,
+        groupAccessPresent,
+        verified: categoriesPresent && operationsPresent && baselineCategoriesPreserved && baselineUserPermissionsPreserved && groupAccessPresent
+      };
+    } catch (error62) {
+      return {
+        spaceKey: space.key,
+        categoriesPresent: false,
+        operationsPresent: false,
+        baselineCategoriesPreserved: false,
+        baselineUserPermissionsPreserved: false,
+        groupAccessPresent: false,
+        verified: false,
+        error: String(error62?.message ?? error62)
+      };
+    }
+  }), 4);
+  const outcome = readWorkflowOutcome(planFile, plan);
+  const incompleteOutcome = outcome?.items.some(
+    (item) => ["failed", "drifted", "unselected", "unattempted"].includes(item.status)
+  ) ?? false;
+  const verified = !identityError && rows2.every((row) => row.verified) && !incompleteOutcome;
+  const verifiedCount = rows2.filter((row) => row.verified).length;
+  const itemStatuses = outcome?.items ?? plan.items.map((item) => outcomeItem(item.n, "unattempted", "not applied"));
+  const counts = {
+    executed: itemStatuses.filter((item) => item.status === "executed").length,
+    alreadySatisfied: itemStatuses.filter((item) => item.status === "already-satisfied").length,
+    failed: itemStatuses.filter((item) => item.status === "failed").length,
+    drifted: itemStatuses.filter((item) => item.status === "drifted").length,
+    unselected: itemStatuses.filter((item) => item.status === "unselected").length,
+    unattempted: itemStatuses.filter((item) => item.status === "unattempted").length,
+    verificationFailed: itemStatuses.filter((item) => item.status === "verification-failed").length
+  };
+  return {
+    target: plan.target,
+    identityVerified: !identityError,
+    ...identityError ? { identityError } : {},
+    checkedSpaces: rows2.length,
+    verifiedSpaces: verifiedCount,
+    overallVerified: verified,
+    itemCounts: counts,
+    spaces: rows2
+  };
+}
+function saveSpaceWorkflowVerification(planFile, verification) {
+  atomicWriteJson(verificationPath(planFile), verification);
+}
+async function applySpaceWorkflow(ctx, preview, selected) {
+  const { plan, planFile } = preview;
+  const lockPath = `${planFile}.lock`;
+  let lockFd;
+  let lockCreated = false;
+  try {
+    lockFd = openSync2(lockPath, "wx", 384);
+    lockCreated = true;
+    closeSync2(lockFd);
+    lockFd = void 0;
+    if (existsSync6(outcomePath(planFile))) {
+      throw new ValidationError("This workflow plan already has execution outcomes; prepare a fresh plan to retry safely");
+    }
+    const approved = new Set(selected);
+    const activeByNumber = new Map(preview.activeItems.map((active) => [active.item.n, active]));
+    const statuses = preview.statuses.map((item) => ({ ...item }));
+    for (const active of preview.activeItems) {
+      if (!approved.has(active.item.n)) statuses[active.item.n - 1] = outcomeItem(active.item.n, "unselected");
+      else statuses[active.item.n - 1] = outcomeItem(active.item.n, "unattempted");
+    }
+    writeWorkflowOutcome(planFile, plan, statuses);
+    for (const number4 of [...approved].sort((a, b) => a - b)) {
+      const active = activeByNumber.get(number4);
+      if (!active) continue;
+      const item = active.item;
+      const space = spaceByKey(plan, String(item.args.space_key));
+      try {
+        const identity = await resolveConfluenceGrantUser(ctx.client("confluence"), { username: plan.identity.username });
+        if (identity.userKey !== plan.identity.userKey) {
+          statuses[number4 - 1] = outcomeItem(number4, "drifted", "active user key changed after confirmation");
+          writeWorkflowOutcome(planFile, plan, statuses);
+          continue;
+        }
+      } catch (error62) {
+        statuses[number4 - 1] = outcomeItem(number4, "drifted", `active user could not be revalidated: ${String(error62?.message ?? error62)}`);
+        writeWorkflowOutcome(planFile, plan, statuses);
+        continue;
+      }
+      let state;
+      try {
+        state = await readSpaceState(ctx, space, plan);
+      } catch (error62) {
+        statuses[number4 - 1] = outcomeItem(number4, "drifted", `pre-mutation state recheck failed: ${String(error62?.message ?? error62)}`);
+        writeWorkflowOutcome(planFile, plan, statuses);
+        continue;
+      }
+      if (!state.groupOperations.includes("read:space") || !preserved(space, state)) {
+        statuses[number4 - 1] = outcomeItem(number4, "drifted", "group access or recorded baseline changed after confirmation");
+        writeWorkflowOutcome(planFile, plan, statuses);
+        continue;
+      }
+      if (item.kind === "category" && state.categories.includes(plan.desired.category)) {
+        statuses[number4 - 1] = outcomeItem(number4, "already-satisfied");
+        writeWorkflowOutcome(planFile, plan, statuses);
+        continue;
+      }
+      if (item.kind === "grant") {
+        const approvedOperations = active.args.operations;
+        const missingOperations = approvedOperations.filter((operation) => !state.userOperations.includes(operation));
+        if (missingOperations.length === 0) {
+          statuses[number4 - 1] = outcomeItem(number4, "already-satisfied");
+          writeWorkflowOutcome(planFile, plan, statuses);
+          continue;
+        }
+        if (missingOperations.length !== approvedOperations.length) {
+          statuses[number4 - 1] = outcomeItem(number4, "drifted", "the approved grant operations changed after confirmation");
+          writeWorkflowOutcome(planFile, plan, statuses);
+          continue;
+        }
+      }
+      const dryResult = await runToolByName(item.tool, { ...active.args, dry_run: true }, ctx);
+      if (!dryResult.ok || digestOf(dryResult.value) !== active.digest) {
+        statuses[number4 - 1] = outcomeItem(number4, "drifted", dryResult.ok ? "request changed after confirmation" : dryResult.error.message);
+        writeWorkflowOutcome(planFile, plan, statuses);
+        continue;
+      }
+      const writeResult2 = await runToolByName(item.tool, { ...active.args, dry_run: false }, ctx);
+      if (!writeResult2.ok) {
+        statuses[number4 - 1] = outcomeItem(number4, "failed", writeResult2.error.message);
+        writeWorkflowOutcome(planFile, plan, statuses);
+        break;
+      }
+      statuses[number4 - 1] = outcomeItem(number4, "executed");
+      writeWorkflowOutcome(planFile, plan, statuses);
+    }
+    writeWorkflowOutcome(planFile, plan, statuses);
+    let verification;
+    try {
+      verification = await verifySpaceWorkflow(ctx, plan, planFile);
+    } catch (error62) {
+      verification = {
+        target: plan.target,
+        identityVerified: false,
+        checkedSpaces: plan.spaces.length,
+        verifiedSpaces: 0,
+        overallVerified: false,
+        itemCounts: {},
+        spaces: plan.spaces.map((space) => ({
+          spaceKey: space.key,
+          verified: false,
+          error: String(error62?.message ?? error62)
+        }))
+      };
+    }
+    const verificationByKey = new Map(verification.spaces.map((space) => [space.spaceKey, space]));
+    for (const item of plan.items) {
+      const current = statuses[item.n - 1];
+      if (current.status !== "executed" && current.status !== "already-satisfied") continue;
+      const space = verificationByKey.get(String(item.args.space_key));
+      const passes = space && space.groupAccessPresent && (item.kind === "category" ? space.categoriesPresent && space.baselineCategoriesPreserved : space.operationsPresent && space.baselineUserPermissionsPreserved);
+      if (!passes) {
+        statuses[item.n - 1] = {
+          ...outcomeItem(item.n, "verification-failed", space?.error ?? "post-apply state did not satisfy the plan"),
+          mutationStatus: current.status
+        };
+      }
+    }
+    const outcome = writeWorkflowOutcome(planFile, plan, statuses, verification);
+    const summary = {
+      executed: statuses.filter((item) => item.status === "executed").length,
+      alreadySatisfied: statuses.filter((item) => item.status === "already-satisfied").length,
+      failed: statuses.filter((item) => item.status === "failed").length,
+      drifted: statuses.filter((item) => item.status === "drifted").length,
+      unselected: statuses.filter((item) => item.status === "unselected").length,
+      unattempted: statuses.filter((item) => item.status === "unattempted").length,
+      verificationFailed: statuses.filter((item) => item.status === "verification-failed").length,
+      overallVerified: verification.overallVerified
+    };
+    return { outcome, verification, summary };
+  } finally {
+    if (lockFd !== void 0) closeSync2(lockFd);
+    if (lockCreated) {
+      try {
+        unlinkSync(lockPath);
+      } catch {
+      }
+    }
+  }
+}
+function renderSpaceWorkflowOutcomes(result) {
+  const summary = result.summary;
+  return [
+    `space workflow outcomes | executed:${summary.executed} satisfied:${summary.alreadySatisfied} failed:${summary.failed} drifted:${summary.drifted}`,
+    `unselected:${summary.unselected} unattempted:${summary.unattempted} verification-failed:${summary.verificationFailed}`,
+    `verified:${summary.overallVerified} spaces:${result.verification.verifiedSpaces}/${result.verification.checkedSpaces}`,
+    ...result.outcome.items.map((item) => `${item.n}. ${item.status.toUpperCase()}${item.detail ? ` | ${item.detail}` : ""}`)
+  ].join("\n");
+}
+
 // src/cli.ts
 var USAGE = `Usage:
   atlassian-admin list [jira|confluence|both|<text>] [--writes|--reads] [--long]
@@ -64449,6 +65755,8 @@ var USAGE = `Usage:
   atlassian-admin <write tool> [key=value ...] --plan=FILE
   atlassian-admin plan FILE
   atlassian-admin apply FILE [--only=1,3]
+  atlassian-admin prepare-space-updates group=GROUP category=NAME username=USER|email=EMAIL --plan=FILE [type=global|personal] [status=current|archived] [previous_outcomes=FILE]
+  atlassian-admin verify FILE
 Write tools only describe the request unless called with dry_run=false (or applied from a plan).
 Every dry_run=false call and every apply needs the user's interactive confirmation.`;
 var GLOBAL_KEYS = /* @__PURE__ */ new Set(["format", "fields", "out", "plan", "only"]);
@@ -64501,10 +65809,10 @@ function countOf(value) {
 function output2(res, options) {
   if (!res.ok) return renderError(res.error, options.format);
   if (options.out) {
-    const file2 = resolve8(options.out);
+    const file2 = resolve9(options.out);
     mkdirSync3(dirname2(file2), { recursive: true });
     const json2 = JSON.stringify(res.value ?? null, null, 2);
-    writeFileSync4(file2, json2);
+    writeFileSync5(file2, json2);
     return `saved | ${res.tool.name} | ${countOf(res.value)} | ${json2.length} chars \u2192 ${file2}`;
   }
   const text = render(res.value, options.format, options.fields);
@@ -64594,22 +65902,81 @@ hint: run: list <text>`);
   if (command === "init") {
     const root2 = gitRoot(process.cwd()) ?? process.cwd();
     const file2 = `${root2}/${PROJECT_CONFIG_FILE}`;
-    if (existsSync6(file2)) {
+    if (existsSync7(file2)) {
       print(`exists | ${file2} (edit it to change this project's Jira/Confluence)`);
       return EXIT.OK;
     }
     const url2 = (name) => rest.find((a) => a.startsWith(`--${name}-url=`))?.split("=").slice(1).join("=");
-    writeFileSync4(file2, projectTemplate(url2("jira"), url2("confluence")), { mode: 384 });
+    writeFileSync5(file2, projectTemplate(url2("jira"), url2("confluence")), { mode: 384 });
     const lines = [`created | ${file2} (mode 600) \u2014 fill in the tokens`];
     const gi = `${root2}/.gitignore`;
-    const ignored = existsSync6(gi) && readFileSync7(gi, "utf8").split(/\r?\n/).some((l3) => l3.trim() === PROJECT_CONFIG_FILE || l3.trim() === `/${PROJECT_CONFIG_FILE}`);
+    const ignored = existsSync7(gi) && readFileSync8(gi, "utf8").split(/\r?\n/).some((l3) => l3.trim() === PROJECT_CONFIG_FILE || l3.trim() === `/${PROJECT_CONFIG_FILE}`);
     if (!ignored && gitRoot(root2)) {
-      appendFileSync(gi, `${existsSync6(gi) && !readFileSync7(gi, "utf8").endsWith("\n") ? "\n" : ""}${PROJECT_CONFIG_FILE}
+      appendFileSync(gi, `${existsSync7(gi) && !readFileSync8(gi, "utf8").endsWith("\n") ? "\n" : ""}${PROJECT_CONFIG_FILE}
 `);
       lines.push(`added ${PROJECT_CONFIG_FILE} to ${gi}`);
     }
     print(lines.join("\n"));
     return EXIT.OK;
+  }
+  if (command === "prepare-space-updates") {
+    let parsed2;
+    try {
+      parsed2 = parseArgs(rest);
+    } catch (e) {
+      print(renderError({ type: "UsageError", message: e.message }, "compact"));
+      return EXIT.VALIDATION;
+    }
+    const allowed = /* @__PURE__ */ new Set(["group", "category", "username", "email", "type", "status", "previous_outcomes"]);
+    const unknown2 = Object.keys(parsed2.args).filter((key) => !allowed.has(key));
+    const { group, category, username, email: email3, type, status, previous_outcomes } = parsed2.args;
+    const categoryCheck = spaceCategoryNameSchema.safeParse(category);
+    if (unknown2.length || !parsed2.options.plan || parsed2.options.out !== void 0 || parsed2.options.fields !== void 0 || parsed2.options.only !== void 0 || parsed2.options.flags.size > 0 || typeof group !== "string" || !group || !categoryCheck.success || !!username === !!email3 || username !== void 0 && (typeof username !== "string" || !username) || email3 !== void 0 && (typeof email3 !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email3)) || type !== void 0 && type !== "global" && type !== "personal" || status !== void 0 && status !== "current" && status !== "archived" || previous_outcomes !== void 0 && (typeof previous_outcomes !== "string" || !previous_outcomes)) {
+      const details = [
+        ...unknown2.map((key) => `unknown argument '${key}'`),
+        ...!parsed2.options.plan ? ["--plan=FILE is required"] : [],
+        ...parsed2.options.out !== void 0 ? ["--out is not supported; the plan file holds the complete workflow"] : [],
+        ...parsed2.options.fields !== void 0 || parsed2.options.only !== void 0 || parsed2.options.flags.size > 0 ? ["unsupported CLI options for preparation"] : [],
+        ...!group ? ["group is required"] : [],
+        ...!categoryCheck.success ? ["category is required and must satisfy the supported category naming rules"] : [],
+        ...!!username === !!email3 ? ["provide exactly one of username or email"] : [],
+        ...email3 !== void 0 && (typeof email3 !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email3)) ? ["email must be a valid email address"] : [],
+        ...type !== void 0 && type !== "global" && type !== "personal" ? ["type must be global or personal"] : [],
+        ...status !== void 0 && status !== "current" && status !== "archived" ? ["status must be current or archived"] : [],
+        ...previous_outcomes !== void 0 && (typeof previous_outcomes !== "string" || !previous_outcomes) ? ["previous_outcomes must be a file path"] : []
+      ];
+      print(renderError({ type: "UsageError", message: details.join("; ") }, "compact"));
+      return EXIT.VALIDATION;
+    }
+    const { ctx: ctx2, close: close2 } = createContext();
+    try {
+      const result = await prepareSpaceUpdates(ctx2, {
+        group,
+        category,
+        ...username ? { username } : {},
+        ...email3 ? { email: email3 } : {},
+        ...type ? { type } : {},
+        ...status ? { status } : {},
+        ...previous_outcomes ? { previousOutcomes: previous_outcomes } : {}
+      }, parsed2.options.plan);
+      if (parsed2.options.format === "compact") {
+        const summary = result.summary;
+        print([
+          `prepared space workflow plan ${summary.file}`,
+          `target:${summary.target} group:${summary.group} spaces:${summary.selected}/${summary.inspected}`,
+          `items:${summary.totalItems} categories:${summary.categoryItems} permission-grants:${summary.permissionItems}`,
+          `complete-for-caller:${summary.completeForCaller} site-wide:${summary.siteWideComplete}`
+        ].join("\n"));
+      } else {
+        print(JSON.stringify(result.summary, null, parsed2.options.format === "full" ? 2 : 0));
+      }
+      return EXIT.OK;
+    } catch (e) {
+      print(renderError({ type: e?.name ?? "Error", message: String(e?.message ?? e) }, parsed2.options.format));
+      return EXIT.VALIDATION;
+    } finally {
+      await close2();
+    }
   }
   if (command === "plan" || command === "apply") {
     const file2 = rest.find((a) => !a.startsWith("--"));
@@ -64619,29 +65986,109 @@ hint: <write tool> ... --plan=FILE`);
       return EXIT.VALIDATION;
     }
     let plan;
+    let spacePlan;
     try {
-      plan = readPlan(file2);
+      const filePath = resolve9(file2);
+      if (existsSync7(filePath)) {
+        const candidate = JSON.parse(readFileSync8(filePath, "utf8"));
+        if (candidate?.version === 2) spacePlan = readSpaceWorkflowPlan(file2);
+        else plan = readPlan(file2);
+      } else {
+        plan = readPlan(file2);
+      }
     } catch (e) {
       print(renderError({ type: "UsageError", message: e.message }, "compact"));
       return EXIT.VALIDATION;
     }
     if (command === "plan") {
-      print(renderPlan(plan, file2));
+      print(spacePlan ? renderSpaceWorkflowPlan(spacePlan, file2) : renderPlan(plan, file2));
       return EXIT.OK;
     }
     const { options } = parseArgs(rest.filter((a) => a.startsWith("--")));
-    const candidates = plan.items.filter((i) => !options.only?.length || options.only.includes(i.n));
-    let approved;
-    try {
-      approved = confirmChanges(candidates.map((i) => ({ n: i.n, summary: i.summary, detail: `${i.request.method} ${i.request.url}` })));
-    } catch (e) {
-      return printConfirmError(e);
+    const onlyArg = rest.find((argument) => argument.startsWith("--only="));
+    if (onlyArg) {
+      const raw = onlyArg.slice("--only=".length).split(",");
+      const validValues = raw.length > 0 && raw.every((value) => /^[1-9]\d*$/.test(value));
+      const planItems = spacePlan?.items ?? plan?.items ?? [];
+      const validItems = options.only?.every((number4) => planItems.some((item) => item.n === number4));
+      if (!validValues || !options.only?.length || !validItems) {
+        print("ERROR UsageError | --only must be a comma-separated list of item numbers in the plan");
+        return EXIT.VALIDATION;
+      }
     }
     const { ctx: ctx2, close: close2 } = createContext();
     try {
-      const outcomes = await applyPlan(ctx2, plan, approved);
+      if (spacePlan) {
+        try {
+          const preview = await prepareSpaceWorkflowApply(ctx2, spacePlan, file2, options.only);
+          let result;
+          try {
+            result = await applySpaceWorkflowWithConfirmation(ctx2, preview);
+          } catch (error62) {
+            if (error62 instanceof ConfirmationError) return printConfirmError(error62);
+            throw error62;
+          }
+          if (options.format === "compact") {
+            print(renderSpaceWorkflowOutcomes(result));
+          } else {
+            print(JSON.stringify({
+              summary: result.summary,
+              outcomes: result.outcome.items,
+              verification: result.verification
+            }, null, options.format === "full" ? 2 : 0));
+          }
+          return result.verification.overallVerified ? EXIT.OK : EXIT.GENERIC;
+        } catch (error62) {
+          print(renderError({ type: error62?.name ?? "Error", message: String(error62?.message ?? error62) }, options.format));
+          return error62?.name === "ValidationError" ? EXIT.VALIDATION : EXIT.GENERIC;
+        }
+      }
+      const genericPlan = plan;
+      const candidates = genericPlan.items.filter((i) => !options.only?.length || options.only.includes(i.n));
+      let approved;
+      try {
+        approved = confirmChanges(candidates.map((i) => ({ n: i.n, summary: i.summary, detail: `${i.request.method} ${i.request.url}` })));
+      } catch (e) {
+        return printConfirmError(e);
+      }
+      const outcomes = await applyPlan(ctx2, genericPlan, approved);
       print(renderOutcomes(outcomes));
       return outcomes.every((o) => o.status === "done") ? EXIT.OK : EXIT.GENERIC;
+    } finally {
+      await close2();
+    }
+  }
+  if (command === "verify") {
+    const file2 = rest.find((argument) => !argument.startsWith("--"));
+    if (!file2) {
+      print("ERROR UsageError | verify needs a version-2 space workflow plan file");
+      return EXIT.VALIDATION;
+    }
+    const { options } = parseArgs(rest.filter((argument) => argument.startsWith("--")));
+    let workflowPlan;
+    try {
+      workflowPlan = readSpaceWorkflowPlan(file2);
+    } catch (error62) {
+      print(renderError({ type: "UsageError", message: String(error62?.message ?? error62) }, options.format));
+      return EXIT.VALIDATION;
+    }
+    const { ctx: ctx2, close: close2 } = createContext();
+    try {
+      const verification = await verifySpaceWorkflow(ctx2, workflowPlan, file2);
+      saveSpaceWorkflowVerification(file2, verification);
+      if (options.format === "compact") {
+        print([
+          `verified:${verification.overallVerified} spaces:${verification.verifiedSpaces}/${verification.checkedSpaces}`,
+          `item states: ${Object.entries(verification.itemCounts).map(([key, value]) => `${key}:${value}`).join(" ")}`,
+          `verification report: ${resolve9(`${file2}.verification.json`)}`
+        ].join("\n"));
+      } else {
+        print(JSON.stringify({ ...verification, reportFile: resolve9(`${file2}.verification.json`) }, null, options.format === "full" ? 2 : 0));
+      }
+      return verification.overallVerified ? EXIT.OK : EXIT.GENERIC;
+    } catch (error62) {
+      print(renderError({ type: error62?.name ?? "Error", message: String(error62?.message ?? error62) }, options.format));
+      return error62?.name === "ValidationError" ? EXIT.VALIDATION : EXIT.GENERIC;
     } finally {
       await close2();
     }
@@ -64683,8 +66130,16 @@ hint: <write tool> ... --plan=FILE`);
     const res = await runToolByName(command, parsed.args, ctx);
     if (res.ok && parsed.options.plan && res.value?.dry_run === true) {
       const item = addToPlan(parsed.options.plan, command, parsed.args, res.value);
-      print(`${output2(res, parsed.options)}
-planned #${item.n} in ${parsed.options.plan}`);
+      const notice = `planned #${item.n} in ${parsed.options.plan}`;
+      const rendered = output2(res, parsed.options);
+      if (parsed.options.format === "compact" || parsed.options.out) {
+        print(`${rendered}
+${notice}`);
+      } else {
+        print(rendered);
+        process.stderr.write(`${notice}
+`);
+      }
       return res.exitCode;
     }
     print(output2(res, parsed.options));
