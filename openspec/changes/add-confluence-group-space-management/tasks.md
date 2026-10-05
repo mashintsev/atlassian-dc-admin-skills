@@ -40,5 +40,5 @@
 
 - [x] 6.1 Run the complete synthetic prepare/review/apply/verify flow with injected confirmation and fake REST transport; verify exactly 101 intended requests, 52 satisfied verified spaces, preserved prior assignments and zero remote mutations during prepare/verify.
 - [x] 6.2 Run integrated negative-path cases for incomplete discovery, category pagination limits, user ambiguity, target/access drift, declined/unavailable confirmation, partial selection, request failure and forbidden read-back; verify each expected exit/state and absence of unauthorized mutations.
-- [x] 6.3 Run `npm run typecheck`, `npm test`, `npm run build`, bundled `list`/`describe` smoke checks, machine-readable output parsing, and `git diff --check`; verify existing suites pass and generated documentation/bundle match source.
+- [x] 6.3 Run `pnpm run typecheck`, `pnpm test`, `pnpm run build`, bundled `list`/`describe` smoke checks, machine-readable output parsing, and `git diff --check`; verify existing suites pass and generated documentation/bundle match source.
 - [x] 6.4 Run strict OpenSpec validation and review delivered artifact links/privacy boundaries; document any untested platform behavior and keep live mutation testing optional until a separate target and concrete plan are authorized.

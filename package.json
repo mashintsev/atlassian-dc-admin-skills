@@ -8,6 +8,7 @@
   "engines": {
     "node": ">=20"
   },
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "build": "tsup && mkdir -p atlassian-dc-admin/hooks && cp hooks/guard-confirmation.mjs atlassian-dc-admin/hooks/ && tsx scripts/gen-reference.ts",
     "typecheck": "tsc --noEmit",

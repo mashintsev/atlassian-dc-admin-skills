@@ -17,7 +17,7 @@ One skill, `atlassian-dc-admin`, covers Jira, Confluence and Assets; Assets deta
 
 ## Token efficiency
 
-`npm run bench` replays the MCP responses captured by eunsanMountain/atlassian-skills
+`pnpm run bench` replays the MCP responses captured by eunsanMountain/atlassian-skills
 (`test/fixtures/mcp/`) through this CLI's generic output path (cl100k_base tokens):
 
 | | MCP JSON | `--format=json` | `compact` |
@@ -39,6 +39,8 @@ atlassian-dc-admin/          the skill (copy or symlink this folder)
   REFERENCE.md               all tools with arguments (generated) and endpoint sources
   .env.example               configuration template
   scripts/atlassian-admin.mjs  bundled CLI (build output, committed)
+.claude/skills/devsecops/    reusable DevSecOps skill for Claude Code projects
+.agents/skills/devsecops/    matching skill for Codex projects
 src/
   config.ts client.ts errors.ts json.ts runner.ts cli.ts
   format.ts                  compact/json output, pruning, --fields, exit codes
@@ -48,10 +50,16 @@ test/unit/*.test.ts          node:test suites with a fake fetch (no network)
 scripts/gen-reference.ts     regenerates the tool table in REFERENCE.md
 ```
 
+## DevSecOps skill
+
+The repository includes a reusable `devsecops` skill for project-level security engineering and reviews. It guides agents to adapt to the project's stack, use existing security checks, validate changes, and report evidence without weakening controls or touching live systems without authorization.
+
+The skill is available to Claude Code in `.claude/skills/devsecops/` and to Codex in `.agents/skills/devsecops/`. To use it in another project, copy the relevant directory into that project's matching `.claude/skills/` or `.agents/skills/` directory.
+
 ## Install the skill
 
 ```bash
-npm install && npm run build
+pnpm install --frozen-lockfile && pnpm run build
 ln -s "$PWD/atlassian-dc-admin" ~/.claude/skills/atlassian-dc-admin     # all projects
 # or: ln -s ... <project>/.claude/skills/<name>
 # Codex: the same folder works as a Codex skill
@@ -60,6 +68,23 @@ ln -s "$PWD/atlassian-dc-admin" ~/.agents/skills/atlassian-dc-admin      # all p
 mkdir -p ~/.config/atlassian-dc-admin
 cp atlassian-dc-admin/.env.example ~/.config/atlassian-dc-admin/.env   # fill in URL and PAT
 node atlassian-dc-admin/scripts/atlassian-admin.mjs check --ping
+```
+
+## Superpowers
+
+This project follows the development workflows from [obra/superpowers](https://github.com/obra/superpowers). The repository rules are in `AGENTS.md`; install Superpowers separately for the coding-agent harness you use, following the [upstream installation guide](https://github.com/obra/superpowers#installation).
+
+For Claude Code, install through either marketplace:
+
+```text
+/plugin install superpowers@claude-plugins-official
+```
+
+Or use the Superpowers marketplace:
+
+```text
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
 ```
 
 ## Per-project Jira / Confluence
@@ -104,11 +129,11 @@ Optional second layer in Claude Code: `atlassian-dc-admin/hooks/guard-confirmati
 ## Develop
 
 ```bash
-npm run typecheck
-npm test                 # unit tests, no network
-npm run build            # bundle the CLI into the skill and regenerate REFERENCE.md
-npm run bench            # token benchmark on captured MCP responses
-npm run cli -- list jira # run from sources with tsx
+pnpm run typecheck
+pnpm test                 # unit tests, no network
+pnpm run build            # bundle the CLI into the skill and regenerate REFERENCE.md
+pnpm run bench            # token benchmark on captured MCP responses
+pnpm run cli list jira    # run from sources with tsx
 ```
 
 A new tool is a `ToolDef` (name, product, write flag, description, Zod input shape, handler) in
