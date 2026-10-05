@@ -9,10 +9,10 @@
 
 ## 2. Space categories and group discovery
 
-- [ ] 2.1 Add and register the complete space-category read tool using `metadata.labels`, team-prefix filtering and opaque server continuations; verify page-label separation, empty/malformed responses, multi-page results and capped or unsafe-continuation outcomes.
-- [ ] 2.2 Add and register the additive category write tool with exact supported name validation, dry-run default and native plan integration; verify POST path encoding, no replacement body, no dry-run mutation, invalid-input rejection and preservation of existing categories after read-back.
-- [ ] 2.3 Add exact group discovery across current/archived and global/personal scopes with bounded permission reads; verify exact group matching, stable-key casing, group existence, all-page enumeration, deduplication and grants without view access.
-- [ ] 2.4 Add audit completeness and visibility/count-cross-check output; verify read failures, unknown shapes, repeated cursors and scan caps cannot become complete results, and optional filters do not produce invalid site-count comparisons.
+- [x] 2.1 Add and register the complete space-category read tool using `metadata.labels`, team-prefix filtering and opaque server continuations; verify page-label separation, empty/malformed responses, multi-page results and capped or unsafe-continuation outcomes.
+- [x] 2.2 Add and register the additive category write tool with exact supported name validation, dry-run default and native plan integration; verify POST path encoding, no replacement body, no dry-run mutation, invalid-input rejection and preservation of existing categories after read-back.
+- [x] 2.3 Add exact group discovery across current/archived and global/personal scopes with bounded permission reads; verify exact group matching, stable-key casing, group existence, all-page enumeration, deduplication and grants without view access.
+- [x] 2.4 Add audit completeness and visibility/count-cross-check output; verify read failures, unknown shapes, repeated cursors and scan caps cannot become complete results, and optional filters do not produce invalid site-count comparisons.
 
 ## 3. Native mixed-plan preparation
 
