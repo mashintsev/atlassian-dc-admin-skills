@@ -9,7 +9,7 @@ plus **Jira Assets** (AQL search, objects, schemas, object types, attribute defi
 
 One skill, `atlassian-dc-admin`, covers Jira, Confluence and Assets; Assets details live in `ASSETS.md`, loaded on demand.
 
-- 201 tools, 89 of them change the instance. Write tools are **dry-run by default**: they return
+- 204 tools, 90 of them change the instance. Write tools are **dry-run by default**: they return
   the exact request and send nothing until called with `dry_run=false`.
 - One bundled CLI (`atlassian-dc-admin/scripts/atlassian-admin.mjs`) that needs only Node.js 20+.
 - Token-efficient output for agents: compact text by default, `--fields`, `--out=FILE` for bulk
@@ -34,6 +34,7 @@ dispatcher once and calls `describe <tool>` only for the tools it uses.
 atlassian-dc-admin/          the skill (copy or symlink this folder)
   SKILL.md                   instructions Claude follows
   ASSETS.md                  Jira Assets reference (AQL, attributes by name), read on demand
+  SPACE_WORKFLOWS.md         Confluence group-space preparation, apply and verification guide
   hooks/guard-confirmation.mjs  optional Claude Code hook (see below)
   REFERENCE.md               all tools with arguments (generated) and endpoint sources
   .env.example               configuration template
@@ -144,10 +145,13 @@ A new tool is a `ToolDef` (name, product, write flag, description, Zod input sha
 Endpoint paths, methods, parameters and bodies were checked against the compiled REST resources of
 Jira 11.3.2, Jira Software (greenhopper) 10.3.0, JSM public REST 21.3.2, Confluence 9.2.16 / 10.2.17,
 Assets (insight-rest-api) 21.3.2 with the Insight 11.0 `/iql` fallback, the audit plugin 3.1.19 and UPM 8.0.25 (see REFERENCE.md). Not verifiable offline: dev-status
-(`/rest/dev-status/1.0`) and Confluence `movepage.action`. 149 unit tests check request building,
-dry-run behaviour, markup conversion and response mapping against a fake server.
-**The tools have not been run against a live Jira or Confluence yet**, so response mapping for
-some endpoints (for example Confluence space permission subjects) may need small fixes on first real use.
+(`/rest/dev-status/1.0`) and Confluence `movepage.action`. The 240 unit tests check request building,
+dry-run behaviour, markup conversion, response mapping, and the synthetic space workflow against a fake
+server. The category-add endpoint also succeeded
+during a separate Confluence 10.2.18 operation; this is operational evidence for that endpoint only,
+not a broader compatibility claim. The shipped prepare/apply/verify workflow is covered by synthetic
+fake-server tests and has not itself been run against a live instance. No compatibility range is widened
+by the 10.2.18 observation.
 
 ## Credits
 

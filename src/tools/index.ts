@@ -18,6 +18,8 @@ import { jiraServiceDeskTools } from "./jira/servicedesk.js";
 import { confluenceSystemTools } from "./confluence/system.js";
 import { confluenceUserTools } from "./confluence/users.js";
 import { confluenceSpaceTools } from "./confluence/spaces.js";
+import { confluenceSpaceCategoryTools } from "./confluence/spaceCategories.js";
+import { confluenceSpaceDiscoveryTools } from "./confluence/spaceDiscovery.js";
 import { confluencePageTools } from "./confluence/pages.js";
 import { confluenceCommentTools } from "./confluence/comments.js";
 import { confluenceLabelTools } from "./confluence/labels.js";
@@ -46,7 +48,7 @@ export const TOOL_GROUPS: Array<[string, ToolDef[]]> = [
   ["Jira Assets — objects, AQL, history", assetsObjectTools],
   ["Confluence admin — system", confluenceSystemTools],
   ["Confluence admin — users and groups", confluenceUserTools],
-  ["Confluence admin — spaces and permissions", confluenceSpaceTools],
+  ["Confluence admin — spaces and permissions", [...confluenceSpaceTools, ...confluenceSpaceCategoryTools, ...confluenceSpaceDiscoveryTools]],
   ["Confluence — pages and search", confluencePageTools],
   ["Confluence — comments", confluenceCommentTools],
   ["Confluence — labels", confluenceLabelTools],

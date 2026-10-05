@@ -5,7 +5,8 @@
  */
 
 import { z } from "zod";
-import { seg } from "../../client.js";
+import { isHttpStatusError, ValidationError } from "../../errors.js";
+import { seg, type AtlassianClient } from "../../client.js";
 import type { ToolDef } from "../types.js";
 import { boolArg, dryRunShape, guardedWrite, pageShape, pick, serverPage } from "../util.js";
 
@@ -16,6 +17,116 @@ const USER_FIELDS = ["type", "username", "userKey", "displayName", "email", "sta
 
 function compactUser(u: any): Record<string, unknown> {
   return pick(u, USER_FIELDS);
+}
+
+export interface ResolvedConfluenceUser {
+  username: string;
+  userKey: string;
+  displayName?: string;
+  email?: string;
+}
+
+function userEmail(user: any): string | undefined {
+  const email = user?.email ?? user?.displayableEmail;
+  return typeof email === "string" && email.length > 0 ? email : undefined;
+}
+
+function requireActiveUser(user: any, email?: string): ResolvedConfluenceUser {
+  const username = user?.username ?? user?.name;
+  const userKey = user?.userKey ?? user?.key;
+  if (typeof username !== "string" || !username || typeof userKey !== "string" || !userKey) {
+    throw new ValidationError("Resolved Confluence user has no stable username and user key");
+  }
+  const status = typeof user?.status === "string" ? user.status.toLowerCase() : undefined;
+  const active = status === "active" || (status === undefined && (user?.status?.active === true || user?.active === true));
+  if (!active) {
+    throw new ValidationError(`Confluence user '${username}' is inactive or its status is unavailable`);
+  }
+  const actualEmail = userEmail(user);
+  if (email && (!actualEmail || actualEmail.toLowerCase() !== email.toLowerCase())) {
+    throw new ValidationError(`Confluence user '${username}' does not have the exact requested email`);
+  }
+  return {
+    username,
+    userKey,
+    ...(typeof (user?.title ?? user?.displayName) === "string" ? { displayName: user.title ?? user.displayName } : {}),
+    ...(actualEmail ? { email: actualEmail } : {}),
+  };
+}
+
+function usernameFromSearchResult(user: any): string | undefined {
+  const username = user?.username ?? user?.name;
+  return typeof username === "string" && username.length > 0 ? username : undefined;
+}
+
+/** Resolve exactly one active account for permission grants; fail closed on incomplete evidence. */
+export async function resolveConfluenceGrantUser(
+  client: AtlassianClient,
+  identity: { username?: string; email?: string },
+): Promise<ResolvedConfluenceUser> {
+  const username = identity.username;
+  const email = identity.email;
+  if (!!username === !!email) throw new ValidationError("provide exactly one username or email for user resolution");
+  const query = username ?? email!;
+  let direct: any;
+  try {
+    direct = await client.get(`${API}/user`, { username: query, expand: "status" });
+  } catch (error) {
+    if (!isHttpStatusError(error) || error.status !== 404 || !email) {
+      throw new ValidationError(`Could not verify the requested Confluence user: ${String((error as Error)?.message ?? error)}`);
+    }
+  }
+  if (direct) {
+    const directUsername = direct?.username ?? direct?.name;
+    if (directUsername === query) return requireActiveUser(direct, email);
+    if (!email) throw new ValidationError("Exact username lookup returned a different account");
+  }
+  if (!email) throw new ValidationError(`Confluence username '${query}' was not found`);
+
+  const maxResults = 100;
+  let search: any;
+  try {
+    search = await client.get(`${PROTOTYPE}/search/user`, { query: email, "max-results": maxResults });
+  } catch (error) {
+    throw new ValidationError(`Could not search Confluence users by exact email: ${String((error as Error)?.message ?? error)}`);
+  }
+  if (!Array.isArray(search?.result)) throw new ValidationError("Confluence user search returned an unknown response shape");
+  const results: any[] = search.result;
+  if (!Number.isFinite(search.totalSize)) {
+    throw new ValidationError("Confluence user search did not report a total; exact email uniqueness cannot be established");
+  }
+  if (search.totalSize > results.length) {
+    throw new ValidationError("Confluence user search was truncated; exact email uniqueness cannot be established");
+  }
+  if (search.totalSize < results.length || search.totalSize > maxResults) {
+    throw new ValidationError("Confluence user search returned inconsistent or capped results; exact email uniqueness cannot be established");
+  }
+
+  if (results.some((candidate) => !userEmail(candidate))) {
+    throw new ValidationError("A user search result has no email evidence; exact uniqueness cannot be established");
+  }
+  const emailCandidates = results.filter((candidate) => userEmail(candidate)!.toLowerCase() === email.toLowerCase());
+  const matching: ResolvedConfluenceUser[] = [];
+  for (const candidate of emailCandidates) {
+    const candidateUsername = usernameFromSearchResult(candidate);
+    if (!candidateUsername) throw new ValidationError("An exact-email search match has no usable username");
+    let hydrated: any;
+    try {
+      hydrated = await client.get(`${API}/user`, { username: candidateUsername, expand: "status" });
+    } catch (error) {
+      throw new ValidationError(`Could not verify exact-email match '${candidateUsername}': ${String((error as Error)?.message ?? error)}`);
+    }
+    if ((hydrated?.username ?? hydrated?.name) !== candidateUsername) {
+      throw new ValidationError("An exact-email search match resolved to a different username");
+    }
+    matching.push(requireActiveUser(hydrated, email));
+  }
+  if (matching.length !== 1) {
+    throw new ValidationError(matching.length === 0
+      ? "No active Confluence user has the exact requested email"
+      : "Multiple active Confluence users have the exact requested email");
+  }
+  return matching[0];
 }
 
 const userShape = { username: z.string() };
@@ -32,10 +143,24 @@ export const confluenceUserTools: ToolDef[] = [
         "max-results": args.limit ?? 50,
       });
       const results: any[] = data?.result ?? [];
+      const items = results.map((u) => {
+        const username = u?.username ?? u?.name;
+        const userKey = u?.userKey ?? u?.key;
+        const displayName = u?.title ?? u?.displayName;
+        const email = u?.displayableEmail ?? u?.email;
+        return {
+          ...(username !== undefined ? { username } : {}),
+          ...(userKey !== undefined ? { userKey } : {}),
+          ...(displayName !== undefined ? { displayName } : {}),
+          ...(email !== undefined ? { email } : {}),
+          ...(!username && !userKey ? { diagnostic: "unrecognized identity shape: no username or user key" } : {}),
+        };
+      });
       return {
         total: data?.totalSize ?? null,
         returned: results.length,
-        items: results.map((u) => ({ username: u.name, displayName: u.displayName, email: u.displayableEmail })),
+        items,
+        unrecognizedIdentityCount: items.filter((u) => "diagnostic" in u).length,
       };
     },
   },
