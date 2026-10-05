@@ -79,6 +79,22 @@ describe("Confluence space categories", () => {
     assert.equal(calls.length, 50);
   });
 
+  it("enforces the caller category bound and marks truncated results incomplete", async () => {
+    const { ctx } = testContext(() => ({ body: { metadata: { labels: {
+      results: [
+        { prefix: "team", name: "first" },
+        { prefix: "team", name: "second" },
+      ],
+      _links: {},
+    } } } }));
+    const result = await runTool(readTool, { space_key: "SAMPLE", max_categories: 1 }, ctx);
+
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.deepEqual((result.value as any).categories, [{ name: "first", prefix: "team" }]);
+    assert.equal((result.value as any).complete, false);
+  });
+
   it("dry-runs an additive category POST and rejects invalid names", async () => {
     const { ctx, calls } = testContext();
     const result = await runTool(writeTool, { space_key: "SAMPLE/KEY", name: "naïve" }, ctx);

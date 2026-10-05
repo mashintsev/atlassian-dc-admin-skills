@@ -140,6 +140,34 @@ describe("Confluence group space discovery", () => {
     assert.match((result as any).value.issues.join(" "), /safety limit/);
   });
 
+  it("enforces the caller space bound and marks capped discovery incomplete", async () => {
+    const { ctx } = testContext((call) => {
+      const url = new URL(call.url);
+      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname === "/rest/api/space") {
+        return { body: {
+          totalSize: 2,
+          results: [
+            { id: "1", key: "FIRST", name: "First", type: "global", status: "current" },
+            { id: "2", key: "SECOND", name: "Second", type: "global", status: "current" },
+          ],
+          _links: {},
+        } };
+      }
+      return { body: [] };
+    });
+    const result = await runTool(tool, {
+      group: "sample-team", type: "global", status: "current", max_spaces: 1,
+    }, ctx);
+
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    const value = result.value as any;
+    assert.equal(value.inspected, 1);
+    assert.equal(value.audit.length, 1);
+    assert.equal(value.completeForCaller, false);
+  });
+
   it("requires exact group existence before starting the space scan", async () => {
     const { ctx, calls } = testContext((call) =>
       call.url.includes("/rest/api/group?")

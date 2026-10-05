@@ -19,6 +19,14 @@ describe("Confluence grant user resolution", () => {
     assert.match(calls[0].url, /\/rest\/api\/user\?username=operator%40example.invalid&expand=status$/);
   });
 
+  it("accepts the expanded nested active status shape", async () => {
+    const { ctx } = testContext(() => ({
+      body: { username: "person", userKey: "USER-KEY", email: "person@example.invalid", status: { active: true } },
+    }));
+    const result = await resolveConfluenceGrantUser(ctx.client("confluence"), { username: "person" });
+    assert.equal(result.userKey, "USER-KEY");
+  });
+
   it("falls back to one exact hydrated email match", async () => {
     const { ctx } = testContext((call) => {
       const url = new URL(call.url);

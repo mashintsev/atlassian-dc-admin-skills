@@ -19,7 +19,7 @@ import { TEST_ENV, testContext } from "./helpers.js";
 
 const counts = JSON.parse(readFileSync("test/fixtures/confluence/space-workflow-cardinalities.json", "utf8"));
 
-function workflowServer(options: { permissionFailure?: boolean; mutationFailure?: boolean } = {}) {
+function workflowServer(options: { permissionFailure?: boolean; mutationFailure?: boolean; skipCategoryMutation?: boolean } = {}) {
   const addedCategories = new Set<string>();
   const addedPermissions = new Map<string, Set<string>>();
   const removedCategories = new Set<string>();
@@ -31,7 +31,7 @@ function workflowServer(options: { permissionFailure?: boolean; mutationFailure?
     if (call.method === "POST" && url.pathname.includes("/category/")) {
       const key = url.pathname.split("/")[4];
       if (options.mutationFailure) return { status: 503 };
-      addedCategories.add(key);
+      if (!options.skipCategoryMutation) addedCategories.add(key);
       return { body: {} };
     }
     if (call.method === "PUT" && url.pathname.endsWith("/grant")) {
@@ -358,5 +358,22 @@ describe("Confluence space workflow preparation", () => {
     assert.equal(first.baselineCategoriesPreserved, false);
     assert.equal(first.baselineUserPermissionsPreserved, false);
     assert.equal(calls.every((call) => call.method === "GET"), true);
+  });
+
+  it("persists item counts after successful writes fail post-apply verification", async () => {
+    const { ctx } = workflowServer({ skipCategoryMutation: true });
+    const dir = mkdtempSync(join(tmpdir(), "space-workflow-counts-"));
+    const file = join(dir, "plan.json");
+    const { plan } = await prepareSpaceUpdates(ctx, {
+      group: "sample-team", category: "sample-category", username: "sample-admin",
+    }, file);
+    const preview = await prepareSpaceWorkflowApply(ctx, plan, file);
+    const categories = preview.activeItems.filter((active) => active.item.kind === "category");
+    const result = await applySpaceWorkflow(ctx, preview, categories.map((active) => active.item.n));
+    const persisted = JSON.parse(readFileSync(`${file}.outcomes.json`, "utf8"));
+
+    assert.equal(result.summary.verificationFailed, categories.length);
+    assert.equal(result.verification.itemCounts.verificationFailed, categories.length);
+    assert.equal(persisted.verification.itemCounts.verificationFailed, categories.length);
   });
 });
