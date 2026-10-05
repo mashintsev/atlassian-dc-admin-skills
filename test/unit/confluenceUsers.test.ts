@@ -22,6 +22,7 @@ describe("Confluence user search", () => {
       items: [{ username: "sample-admin", userKey: "SYNTHETIC-USER-KEY", displayName: "Sample Administrator" }],
       unrecognizedIdentityCount: 0,
     });
+
     assert.equal(calls.length, 1);
   });
 

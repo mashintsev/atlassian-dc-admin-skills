@@ -305,7 +305,14 @@ async function main(argv: string[]): Promise<number> {
     const res = await runToolByName(command, parsed.args, ctx);
     if (res.ok && parsed.options.plan && (res.value as any)?.dry_run === true) {
       const item = addToPlan(parsed.options.plan, command, parsed.args, res.value);
-      print(`${output(res, parsed.options)}\nplanned #${item.n} in ${parsed.options.plan}`);
+      const notice = `planned #${item.n} in ${parsed.options.plan}`;
+      const rendered = output(res, parsed.options);
+      if (parsed.options.format === "compact" || parsed.options.out) {
+        print(`${rendered}\n${notice}`);
+      } else {
+        print(rendered);
+        process.stderr.write(`${notice}\n`);
+      }
       return res.exitCode;
     }
     print(output(res, parsed.options));
