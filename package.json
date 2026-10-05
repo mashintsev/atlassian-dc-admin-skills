@@ -1,0 +1,33 @@
+{
+  "name": "atlassian-dc-admin-skills",
+  "version": "0.1.0",
+  "description": "Claude Code skill for Jira and Confluence Data Center: administration and content work over REST, token-efficient output, dry-run-guarded writes",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup && mkdir -p atlassian-dc-admin/hooks && cp hooks/guard-confirmation.mjs atlassian-dc-admin/hooks/ && tsx scripts/gen-reference.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"test/unit/**/*.test.ts\"",
+    "cli": "tsx src/cli.ts",
+    "docs": "tsx scripts/gen-reference.ts",
+    "bench": "tsx scripts/token-bench.ts"
+  },
+  "dependencies": {
+    "marked": "^18.0.14",
+    "turndown": "^7.2.4",
+    "undici": "^6.21.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/turndown": "^5.0.6",
+    "js-tiktoken": "^1.0.21",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

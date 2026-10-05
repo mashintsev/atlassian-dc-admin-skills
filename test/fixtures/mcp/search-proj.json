@@ -1,0 +1,82 @@
+{
+  "total": 23,
+  "start_at": 0,
+  "max_results": 3,
+  "issues": [
+    {
+      "id": "629816",
+      "key": "PROJ-3",
+      "summary": "검색 결과 정렬 개선",
+      "description": "h2. 방향\n\n검색 결과를 사용자에게 더 정확한 순서로 보여준다\n\nh2. 배경\n\n현재는 단순 정렬만 지원하며,\n결과의 관련도를 반영할 랭킹 점수가 없다.",
+      "status": {"name": "To Do", "category": "To Do", "color": "default"},
+      "issue_type": {"name": "Epic"},
+      "priority": {"name": "Medium"},
+      "assignee": {
+        "display_name": "Test User2(testuser2) 담당자",
+        "name": "testuser2",
+        "email": "testuser2@example.com",
+        "avatar_url": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=48",
+        "key": "testuser2"
+      },
+      "reporter": {
+        "display_name": "Test User(testuser) 담당자",
+        "name": "testuser",
+        "email": "testuser@example.com",
+        "avatar_url": "https://jira.example.com/secure/useravatar?ownerId=JIRAUSER14505&avatarId=14600",
+        "key": "JIRAUSER14505"
+      },
+      "created": "2026-04-06T11:52:21.000+0900",
+      "updated": "2026-04-10T18:21:25.000+0900"
+    },
+    {
+      "id": "631647",
+      "key": "PROJ-24",
+      "summary": "리포트 내보내기 성능 향상",
+      "description": "_(Auto-mirrored from Confluence)_ ...(truncated for fixture)",
+      "status": {"name": "To Do", "category": "To Do", "color": "default"},
+      "issue_type": {"name": "Story"},
+      "priority": {"name": "Medium"},
+      "assignee": {
+        "display_name": "Test User(testuser) 담당자",
+        "name": "testuser",
+        "email": "testuser@example.com",
+        "avatar_url": "https://jira.example.com/secure/useravatar?ownerId=JIRAUSER14505&avatarId=14600",
+        "key": "JIRAUSER14505"
+      },
+      "reporter": {
+        "display_name": "Test User(testuser) 담당자",
+        "name": "testuser",
+        "email": "testuser@example.com",
+        "avatar_url": "https://jira.example.com/secure/useravatar?ownerId=JIRAUSER14505&avatarId=14600",
+        "key": "JIRAUSER14505"
+      },
+      "created": "2026-04-10T18:19:58.000+0900",
+      "updated": "2026-04-10T18:20:17.000+0900"
+    },
+    {
+      "id": "631646",
+      "key": "PROJ-23",
+      "summary": "리포트 빌드 인프라",
+      "description": "_(Auto-mirrored from Confluence)_ ...(truncated for fixture)",
+      "status": {"name": "To Do", "category": "To Do", "color": "default"},
+      "issue_type": {"name": "Story"},
+      "priority": {"name": "Medium"},
+      "assignee": {
+        "display_name": "Test User(testuser) 담당자",
+        "name": "testuser",
+        "email": "testuser@example.com",
+        "avatar_url": "https://jira.example.com/secure/useravatar?ownerId=JIRAUSER14505&avatarId=14600",
+        "key": "JIRAUSER14505"
+      },
+      "reporter": {
+        "display_name": "Test User(testuser) 담당자",
+        "name": "testuser",
+        "email": "testuser@example.com",
+        "avatar_url": "https://jira.example.com/secure/useravatar?ownerId=JIRAUSER14505&avatarId=14600",
+        "key": "JIRAUSER14505"
+      },
+      "created": "2026-04-10T18:19:57.000+0900",
+      "updated": "2026-04-10T18:20:12.000+0900"
+    }
+  ]
+}
