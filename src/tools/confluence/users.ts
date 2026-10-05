@@ -38,7 +38,8 @@ function requireActiveUser(user: any, email?: string): ResolvedConfluenceUser {
     throw new ValidationError("Resolved Confluence user has no stable username and user key");
   }
   const status = typeof user?.status === "string" ? user.status.toLowerCase() : undefined;
-  if (status !== "active" && !(status === undefined && user?.active === true)) {
+  const active = status === "active" || (status === undefined && (user?.status?.active === true || user?.active === true));
+  if (!active) {
     throw new ValidationError(`Confluence user '${username}' is inactive or its status is unavailable`);
   }
   const actualEmail = userEmail(user);

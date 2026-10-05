@@ -61803,7 +61803,8 @@ function requireActiveUser(user, email3) {
     throw new ValidationError("Resolved Confluence user has no stable username and user key");
   }
   const status = typeof user?.status === "string" ? user.status.toLowerCase() : void 0;
-  if (status !== "active" && !(status === void 0 && user?.active === true)) {
+  const active = status === "active" || status === void 0 && (user?.status?.active === true || user?.active === true);
+  if (!active) {
     throw new ValidationError(`Confluence user '${username}' is inactive or its status is unavailable`);
   }
   const actualEmail = userEmail(user);
@@ -62281,7 +62282,7 @@ function continuationPath(baseUrl, spacePath, next2) {
   if (url2.pathname !== expected && url2.pathname !== spacePath) return void 0;
   return `${spacePath}${url2.search}`;
 }
-async function readSpaceCategories(client, spaceKey) {
+async function readSpaceCategories(client, spaceKey, maxCategories = MAX_CATEGORIES) {
   const spacePath = `${API10}/space/${seg(spaceKey)}`;
   const categories = [];
   const issues = [];
@@ -62289,7 +62290,7 @@ async function readSpaceCategories(client, spaceKey) {
   let path = spacePath;
   let pages = 0;
   let complete = false;
-  while (pages < MAX_CATEGORY_PAGES && categories.length < MAX_CATEGORIES) {
+  while (pages < MAX_CATEGORY_PAGES && categories.length < maxCategories) {
     const data = await client.get(path, pages === 0 ? { expand: "metadata.labels" } : void 0);
     pages++;
     const labels = data?.metadata?.labels;
@@ -62308,12 +62309,21 @@ async function readSpaceCategories(client, spaceKey) {
       break;
     }
     for (const label of labels.results) {
-      if (label.prefix === "team") categories.push({ name: label.name, prefix: label.prefix });
-      if (categories.length >= MAX_CATEGORIES) break;
+      if (label.prefix !== "team") continue;
+      if (categories.length >= maxCategories) {
+        issues.push(`category results exceeded max_categories (${maxCategories})`);
+        break;
+      }
+      categories.push({ name: label.name, prefix: label.prefix });
     }
     const next2 = labels?._links?.next;
+    if (issues.length > 0) break;
     if (!next2) {
       complete = true;
+      break;
+    }
+    if (categories.length >= maxCategories) {
+      issues.push(`category results reached max_categories (${maxCategories})`);
       break;
     }
     const safePath = continuationPath(client.config.baseUrl, spacePath, next2);
@@ -62336,9 +62346,15 @@ var confluenceSpaceCategoryTools = [
     name: "confluence_get_space_categories",
     product: "confluence",
     description: "Read team-prefixed categories attached to a Confluence space, with explicit paging completeness.",
-    inputShape: { space_key: external_exports.string() },
+    inputShape: {
+      space_key: external_exports.string(),
+      max_categories: external_exports.coerce.number().int().min(1).max(MAX_CATEGORIES).optional().describe(`Maximum team categories to return (default ${MAX_CATEGORIES})`)
+    },
     async handler({ client }, args) {
-      return { space: args.space_key, ...await readSpaceCategories(client("confluence"), args.space_key) };
+      return {
+        space: args.space_key,
+        ...await readSpaceCategories(client("confluence"), args.space_key, args.max_categories ?? MAX_CATEGORIES)
+      };
     }
   },
   {
@@ -62504,10 +62520,12 @@ var confluenceSpaceDiscoveryTools = [
     inputShape: {
       group: external_exports.string().min(1),
       type: external_exports.enum(["global", "personal"]).optional(),
-      status: external_exports.enum(["current", "archived"]).optional()
+      status: external_exports.enum(["current", "archived"]).optional(),
+      max_spaces: external_exports.coerce.number().int().min(1).max(MAX_SPACES).optional().describe(`Maximum spaces to inspect (default ${MAX_SPACES})`)
     },
     async handler({ client }, args) {
       const c = client("confluence");
+      const maxSpaces = args.max_spaces ?? MAX_SPACES;
       await exactGroupExists(c, args.group);
       const types = args.type ? [args.type] : ["global", "personal"];
       const statuses = args.status ? [args.status] : ["current", "archived"];
@@ -62515,7 +62533,7 @@ var confluenceSpaceDiscoveryTools = [
       let enumeratedCount = 0;
       for (const type of types) {
         for (const status of statuses) {
-          const remaining = MAX_SPACES - enumeratedCount;
+          const remaining = maxSpaces - enumeratedCount;
           if (remaining <= 0) {
             scopeResults.push({ spaces: [], count: null, issues: ["space enumeration reached its site-wide safety limit"] });
             continue;
@@ -62544,7 +62562,7 @@ var confluenceSpaceDiscoveryTools = [
         }
       }
       const spaces = [...spaceMap.values()];
-      if (enumeratedCount >= MAX_SPACES) issues.push("space enumeration reached its site-wide safety limit");
+      if (enumeratedCount >= maxSpaces) issues.push("space enumeration reached the max_spaces limit");
       const permissionRows = await boundedAll(spaces.map((space) => async () => {
         try {
           const data = await c.get(`${API11}/space/${seg(space.key)}/permissions/group/${seg(args.group)}`);
@@ -62583,7 +62601,7 @@ var confluenceSpaceDiscoveryTools = [
           siteCountCrossCheck = { status: "unavailable", inspectedCount: spaces.length };
         }
       }
-      const enumerationComplete = scopeResults.every((scope) => scope.issues.length === 0) && enumeratedCount < MAX_SPACES;
+      const enumerationComplete = scopeResults.every((scope) => scope.issues.length === 0) && enumeratedCount < maxSpaces;
       const permissionReadsComplete = unknownReads.length === 0;
       const countMismatch = siteCountCrossCheck.status === "mismatch";
       const completeForCaller = enumerationComplete && permissionReadsComplete && !countMismatch && issues.length === 0;
@@ -65713,6 +65731,15 @@ async function applySpaceWorkflow(ctx, preview, selected) {
         };
       }
     }
+    verification.itemCounts = {
+      executed: statuses.filter((item) => item.status === "executed").length,
+      alreadySatisfied: statuses.filter((item) => item.status === "already-satisfied").length,
+      failed: statuses.filter((item) => item.status === "failed").length,
+      drifted: statuses.filter((item) => item.status === "drifted").length,
+      unselected: statuses.filter((item) => item.status === "unselected").length,
+      unattempted: statuses.filter((item) => item.status === "unattempted").length,
+      verificationFailed: statuses.filter((item) => item.status === "verification-failed").length
+    };
     const outcome = writeWorkflowOutcome(planFile, plan, statuses, verification);
     const summary = {
       executed: statuses.filter((item) => item.status === "executed").length,

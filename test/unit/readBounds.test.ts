@@ -18,7 +18,6 @@ const SINGLE_OR_SMALL = new Set([
   "confluence_get_long_task", "confluence_reindex_status", "confluence_get_user", "confluence_get_space",
   "confluence_get_global_permissions", "confluence_get_page", "confluence_get_page_diff", "confluence_get_page_restrictions",
   "confluence_download_attachment", "atlassian_get_plugin", "atlassian_get_safe_mode", "atlassian_audit_settings",
-  "confluence_get_space_categories", "confluence_find_spaces_by_group",
   // short fixed lists (per issue / per project / instance-wide config with tens of rows)
   "jira_list_roles", "jira_get_project_roles", "jira_list_permission_schemes", "jira_list_issue_security_schemes",
   "jira_get_transitions", "jira_get_project_issue_types", "jira_get_link_types", "jira_get_issue_links",

@@ -951,6 +951,15 @@ export async function applySpaceWorkflow(
         };
       }
     }
+    verification.itemCounts = {
+      executed: statuses.filter((item) => item.status === "executed").length,
+      alreadySatisfied: statuses.filter((item) => item.status === "already-satisfied").length,
+      failed: statuses.filter((item) => item.status === "failed").length,
+      drifted: statuses.filter((item) => item.status === "drifted").length,
+      unselected: statuses.filter((item) => item.status === "unselected").length,
+      unattempted: statuses.filter((item) => item.status === "unattempted").length,
+      verificationFailed: statuses.filter((item) => item.status === "verification-failed").length,
+    };
     const outcome = writeWorkflowOutcome(planFile, plan, statuses, verification);
     const summary = {
       executed: statuses.filter((item) => item.status === "executed").length,

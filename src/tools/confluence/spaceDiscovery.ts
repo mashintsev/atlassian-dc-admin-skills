@@ -159,9 +159,12 @@ export const confluenceSpaceDiscoveryTools: ToolDef[] = [
       group: z.string().min(1),
       type: z.enum(["global", "personal"]).optional(),
       status: z.enum(["current", "archived"]).optional(),
+      max_spaces: z.coerce.number().int().min(1).max(MAX_SPACES).optional()
+        .describe(`Maximum spaces to inspect (default ${MAX_SPACES})`),
     },
     async handler({ client }, args) {
       const c = client("confluence");
+      const maxSpaces = args.max_spaces ?? MAX_SPACES;
       await exactGroupExists(c, args.group);
       const types = args.type ? [args.type] : ["global", "personal"] as const;
       const statuses = args.status ? [args.status] : ["current", "archived"] as const;
@@ -169,7 +172,7 @@ export const confluenceSpaceDiscoveryTools: ToolDef[] = [
       let enumeratedCount = 0;
       for (const type of types) {
         for (const status of statuses) {
-          const remaining = MAX_SPACES - enumeratedCount;
+          const remaining = maxSpaces - enumeratedCount;
           if (remaining <= 0) {
             scopeResults.push({ spaces: [], count: null, issues: ["space enumeration reached its site-wide safety limit"] });
             continue;
@@ -199,7 +202,7 @@ export const confluenceSpaceDiscoveryTools: ToolDef[] = [
         }
       }
       const spaces = [...spaceMap.values()];
-      if (enumeratedCount >= MAX_SPACES) issues.push("space enumeration reached its site-wide safety limit");
+      if (enumeratedCount >= maxSpaces) issues.push("space enumeration reached the max_spaces limit");
 
       const permissionRows = await boundedAll<SpaceRecord>(spaces.map((space) => async () => {
         try {
@@ -245,7 +248,7 @@ export const confluenceSpaceDiscoveryTools: ToolDef[] = [
         }
       }
 
-      const enumerationComplete = scopeResults.every((scope) => scope.issues.length === 0) && enumeratedCount < MAX_SPACES;
+      const enumerationComplete = scopeResults.every((scope) => scope.issues.length === 0) && enumeratedCount < maxSpaces;
       const permissionReadsComplete = unknownReads.length === 0;
       const countMismatch = siteCountCrossCheck.status === "mismatch";
       const completeForCaller = enumerationComplete && permissionReadsComplete && !countMismatch && issues.length === 0;

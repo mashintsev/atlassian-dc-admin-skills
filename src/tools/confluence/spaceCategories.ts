@@ -23,7 +23,7 @@ function continuationPath(baseUrl: string, spacePath: string, next: unknown): st
   return `${spacePath}${url.search}`;
 }
 
-async function readSpaceCategories(client: AtlassianClient, spaceKey: string) {
+async function readSpaceCategories(client: AtlassianClient, spaceKey: string, maxCategories = MAX_CATEGORIES) {
   const spacePath = `${API}/space/${seg(spaceKey)}`;
   const categories: Array<{ name: string; prefix: string }> = [];
   const issues: string[] = [];
@@ -32,7 +32,7 @@ async function readSpaceCategories(client: AtlassianClient, spaceKey: string) {
   let pages = 0;
   let complete = false;
 
-  while (pages < MAX_CATEGORY_PAGES && categories.length < MAX_CATEGORIES) {
+  while (pages < MAX_CATEGORY_PAGES && categories.length < maxCategories) {
     const data = await client.get(path, pages === 0 ? { expand: "metadata.labels" } : undefined);
     pages++;
     const labels = data?.metadata?.labels;
@@ -51,12 +51,21 @@ async function readSpaceCategories(client: AtlassianClient, spaceKey: string) {
       break;
     }
     for (const label of labels.results) {
-      if (label.prefix === "team") categories.push({ name: label.name, prefix: label.prefix });
-      if (categories.length >= MAX_CATEGORIES) break;
+      if (label.prefix !== "team") continue;
+      if (categories.length >= maxCategories) {
+        issues.push(`category results exceeded max_categories (${maxCategories})`);
+        break;
+      }
+      categories.push({ name: label.name, prefix: label.prefix });
     }
     const next = labels?._links?.next;
+    if (issues.length > 0) break;
     if (!next) {
       complete = true;
+      break;
+    }
+    if (categories.length >= maxCategories) {
+      issues.push(`category results reached max_categories (${maxCategories})`);
       break;
     }
     const safePath = continuationPath(client.config.baseUrl, spacePath, next);
@@ -81,9 +90,16 @@ export const confluenceSpaceCategoryTools: ToolDef[] = [
     name: "confluence_get_space_categories",
     product: "confluence",
     description: "Read team-prefixed categories attached to a Confluence space, with explicit paging completeness.",
-    inputShape: { space_key: z.string() },
+    inputShape: {
+      space_key: z.string(),
+      max_categories: z.coerce.number().int().min(1).max(MAX_CATEGORIES).optional()
+        .describe(`Maximum team categories to return (default ${MAX_CATEGORIES})`),
+    },
     async handler({ client }, args) {
-      return { space: args.space_key, ...(await readSpaceCategories(client("confluence"), args.space_key)) };
+      return {
+        space: args.space_key,
+        ...(await readSpaceCategories(client("confluence"), args.space_key, args.max_categories ?? MAX_CATEGORIES)),
+      };
     },
   },
   {
