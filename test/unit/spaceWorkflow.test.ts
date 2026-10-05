@@ -45,8 +45,8 @@ function workflowServer(options: { permissionFailure?: boolean; mutationFailure?
       addedPermissions.set(key, granted);
       return { body: {} };
     }
-    if (url.pathname === "/rest/api/group") {
-      return { body: { results: [{ name: "sample-team" }], totalSize: 1 } };
+    if (url.pathname.startsWith("/rest/api/group/")) {
+      return { body: { results: [], size: 0 } };
     }
     if (url.pathname === "/rest/api/user") {
       return { body: {

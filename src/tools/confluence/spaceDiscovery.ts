@@ -57,19 +57,14 @@ function groupPermissionOperations(data: any, exactGroup: string): { operations?
 }
 
 async function exactGroupExists(client: AtlassianClient, group: string): Promise<void> {
-  let data: any;
+  // the member endpoint addresses the group by its exact name (404 when it does not exist), unlike the fuzzy group search
   try {
-    data = await client.get(`${API}/group`, { groupname: group, limit: 2 });
+    const data: any = await client.get(`${API}/group/${seg(group)}/member`, { start: 0, limit: 1 });
+    if (!Array.isArray(data?.results)) {
+      throw new Error("group member lookup returned an unknown response shape");
+    }
   } catch (error) {
     throw new ValidationError(`Could not verify Confluence group '${group}': ${String((error as Error)?.message ?? error)}`);
-  }
-  const results = Array.isArray(data) ? data : data?.results;
-  if (!Array.isArray(results) || (Number.isFinite(data?.totalSize) && data.totalSize > results.length)) {
-    throw new ValidationError("Confluence group lookup returned an unknown or incomplete response");
-  }
-  const exact = results.filter((item: any) => item?.name === group);
-  if (exact.length !== 1) {
-    throw new ValidationError(exact.length ? `Confluence group '${group}' is ambiguous` : `Confluence group '${group}' does not exist`);
   }
 }
 

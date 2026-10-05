@@ -7,7 +7,7 @@ import { testContext } from "./helpers.js";
 const tool = confluenceSpaceDiscoveryTools[0];
 
 function groupResponse(call: { url: string }) {
-  if (call.url.includes("/rest/api/group?")) return { body: { results: [{ name: "sample-team" }], totalSize: 1 } };
+  if (call.url.includes("/rest/api/group/sample-team/member?")) return { body: { results: [{ username: "member" }], size: 1 } };
   return undefined;
 }
 
@@ -17,7 +17,7 @@ describe("Confluence group space discovery", () => {
       const url = new URL(call.url);
       const type = url.searchParams.get("type");
       const status = url.searchParams.get("status");
-      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
       if (url.pathname === "/rest/api/space") {
         if (type === "global" && status === "current" && !url.searchParams.has("cursor")) {
           return { body: {
@@ -62,7 +62,7 @@ describe("Confluence group space discovery", () => {
   it("reports permission failures as unknown and blocks complete results", async () => {
     const { ctx } = testContext((call) => {
       const url = new URL(call.url);
-      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
       if (url.pathname === "/rest/api/space") {
         return { body: { totalSize: 1, results: [{ id: "1", key: "FAIL", name: "Failed Read", type: "global", status: "current" }], _links: {} } };
       }
@@ -82,7 +82,7 @@ describe("Confluence group space discovery", () => {
 
   it("marks malformed lists, repeated cursors, and site count mismatches incomplete", async () => {
     const malformed = testContext((call) => {
-      if (call.url.includes("/rest/api/group?")) return groupResponse(call);
+      if (call.url.includes("/rest/api/group/")) return groupResponse(call);
       return { body: { results: "not-an-array" } };
     });
     const malformedResult = await runTool(tool, { group: "sample-team", type: "global", status: "current" }, malformed.ctx);
@@ -91,7 +91,7 @@ describe("Confluence group space discovery", () => {
 
     const repeated = testContext((call) => {
       const url = new URL(call.url);
-      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
       return { body: {
         results: [{ id: "1", key: "REPEAT", name: "Repeat", type: "global", status: "current" }],
         _links: { next: "?type=global&status=current&cursor=repeat" },
@@ -103,7 +103,7 @@ describe("Confluence group space discovery", () => {
 
     const mismatch = testContext((call) => {
       const url = new URL(call.url);
-      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
       if (url.pathname === "/rest/api/space") {
         const type = url.searchParams.get("type");
         const status = url.searchParams.get("status");
@@ -126,7 +126,7 @@ describe("Confluence group space discovery", () => {
     let page = 0;
     const { ctx } = testContext((call) => {
       const url = new URL(call.url);
-      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
       page++;
       return { body: {
         totalSize: 10000,
@@ -143,7 +143,7 @@ describe("Confluence group space discovery", () => {
   it("enforces the caller space bound and marks capped discovery incomplete", async () => {
     const { ctx } = testContext((call) => {
       const url = new URL(call.url);
-      if (url.pathname === "/rest/api/group") return groupResponse(call);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
       if (url.pathname === "/rest/api/space") {
         return { body: {
           totalSize: 2,
@@ -170,9 +170,20 @@ describe("Confluence group space discovery", () => {
 
   it("requires exact group existence before starting the space scan", async () => {
     const { ctx, calls } = testContext((call) =>
-      call.url.includes("/rest/api/group?")
-        ? { body: { results: [{ name: "sample-team-other" }], totalSize: 1 } }
+      call.url.includes("/rest/api/group/")
+        ? { status: 404, body: { message: "No group found" } }
         : { body: { results: [] } },
+    );
+    const result = await runTool(tool, { group: "sample-team" }, ctx);
+
+    assert.equal(result.ok, false);
+    assert.equal(calls.length, 1);
+    assert.equal(new URL(calls[0].url).pathname, "/rest/api/group/sample-team/member");
+  });
+
+  it("rejects an unknown group member response shape before the space scan", async () => {
+    const { ctx, calls } = testContext((call) =>
+      call.url.includes("/rest/api/group/") ? { body: { name: "sample-team" } } : { body: { results: [] } },
     );
     const result = await runTool(tool, { group: "sample-team" }, ctx);
 

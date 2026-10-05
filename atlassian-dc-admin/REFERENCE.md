@@ -58,6 +58,11 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 |---|---|
 | Who can do X in project P? | `jira_get_project_config` → `jira_get_permission_scheme scheme_id=… permission=X` → `jira_get_project_roles` / `jira_get_group_members` |
 | Offboard a user | `jira_get_user` → `jira_set_user_active active=false` (+ `jira_kill_user_sessions`); `confluence_set_user_enabled enabled=false` |
+| New issue type in a project's workflow | `jira_list_issue_types` → `jira_create_issue_type` → `jira_get_project_config` (issue type and workflow scheme ids) → `jira_add_issue_types_to_scheme` → `jira_list_workflows name=…` → `jira_set_workflow_scheme_mapping` |
+| Change a project's workflow scheme | `jira_get_project_config` → `jira_get_workflow_scheme` → `jira_set_workflow_scheme_mapping` / `jira_delete_workflow_scheme_mapping` / `jira_set_workflow_scheme_default` |
+| Workflow schemes in use / where a workflow is used | `jira_list_workflow_schemes --out=…`; `jira_find_workflow_usage workflow=…` (delegate on large instances) |
+| Swap a workflow in a scheme | `jira_find_workflow_usage` → `jira_replace_workflow_in_scheme` (active scheme: `update_draft_if_needed=true` → `jira_compare_workflow_scheme_draft` → publish in the UI) |
+| New workflow scheme for a project | `jira_create_workflow_scheme copy_from_scheme_id=…` → mappings → assign to the project in the Jira UI |
 | License seats | `jira_application_roles`, `jira_set_user_application` |
 | Unused custom fields | `jira_list_custom_fields unused_only=true --out=…` → `jira_get_field_screens` / `jira_get_field_contexts` |
 | Space access review | `confluence_list_spaces --out=…` → `confluence_get_space_permissions` per space (delegate to a subagent) |
@@ -68,7 +73,7 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 ## Tools
 
 <!-- tools:start -->
-204 tools, 90 of them write tools (✎). Write tools also take `dry_run` (default true).
+221 tools, 101 of them write tools (✎). Write tools also take `dry_run` (default true).
 
 ### Jira admin — system
 
@@ -129,8 +134,30 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | `jira_get_notification_scheme` | `scheme_id`: integer | Who is notified on each event of a notification scheme. |
 | `jira_list_issue_security_schemes` | — | Issue security schemes with their default level. |
 | `jira_get_issue_security_scheme` | `scheme_id`: integer | Security levels of an issue security scheme. |
-| `jira_get_workflow_scheme` | `scheme_id`: integer | Workflow scheme: default workflow and issue type -> workflow mappings. |
 | `jira_list_workflows` | `name_contains?`: string, `name?`: string, `offset?`: integer, `limit?`: integer | Workflows with description, step count and last modification. |
+| `jira_list_issue_types` | `name_contains?`: string, `offset?`: integer, `limit?`: integer | All issue types with id, name and sub-task flag. |
+| `jira_create_issue_type` ✎ | `name`: string, `description?`: string, `subtask?`: boolean, `avatar_id?`: integer | Create a global issue type (subtask=true for a sub-task type). It is not in any project until added to the project's issue type scheme (jira_add_issue_types_to_scheme); map it in the workflow scheme with jira_set_workflow_scheme_mapping. |
+| `jira_list_issue_type_schemes` | `name_contains?`: string, `offset?`: integer, `limit?`: integer | Issue type schemes with id, name and description (jira_get_project_config shows a project's scheme). |
+| `jira_get_issue_type_scheme` | `scheme_id`: integer, `max_projects?`: integer | An issue type scheme: its issue types, default issue type and the projects that use it (up to max_projects keys). |
+| `jira_add_issue_types_to_scheme` ✎ | `scheme_id`: integer, `issue_type_ids`: list\|string, `default_issue_type_id?`: string | Add issue types (ids from jira_list_issue_types) to an issue type scheme, keeping its current types; default_issue_type_id optionally changes the default. Projects using the scheme can then create these types. |
+
+### Jira admin — workflow schemes
+
+| Tool | Arguments | Description |
+|---|---|---|
+| `jira_get_workflow_scheme` | `scheme_id`: integer, `draft?`: boolean | Workflow scheme: default workflow and issue type id -> workflow mappings (draft=true reads the unpublished draft). |
+| `jira_set_workflow_scheme_mapping` ✎ | `scheme_id`: integer, `issue_type_id`: string, `workflow`: string, `update_draft_if_needed?`: boolean | Map an issue type (id from jira_list_issue_types) to a workflow (exact name from jira_list_workflows) in a workflow scheme. |
+| `jira_delete_workflow_scheme_mapping` ✎ | `scheme_id`: integer, `issue_type_id`: string, `update_draft_if_needed?`: boolean | Remove an issue type mapping from a workflow scheme; the issue type then uses the scheme's default workflow. |
+| `jira_set_workflow_scheme_default` ✎ | `scheme_id`: integer, `workflow`: string, `update_draft_if_needed?`: boolean | Set the default workflow of a workflow scheme (used by issue types without their own mapping). |
+| `jira_list_workflow_schemes` | `name_contains?`: string, `scan_projects?`: integer, `offset?`: integer, `limit?`: integer | Workflow schemes in use, with their projects, found by scanning each project's scheme (Jira DC cannot list all schemes; unused ones are not shown). Large instances: raise scan_projects or use --out. |
+| `jira_find_workflow_usage` | `workflow`: string, `scan_projects?`: integer, `offset?`: integer, `limit?`: integer | Where a workflow (exact name) is used: the workflow schemes that map it, as default or per issue type id, and their projects. Scans projects like jira_list_workflow_schemes; drafts and unused schemes are not covered. |
+| `jira_create_workflow_scheme` ✎ | `name`: string, `description?`: string, `default_workflow?`: string, `issue_type_mappings?`: object, `copy_from_scheme_id?`: integer | Create a workflow scheme. copy_from_scheme_id copies another scheme's description, default workflow and mappings; default_workflow and issue_type_mappings ({"<issue type id>":"<workflow>"}) set or override them. Assigning it to a project is done in the Jira UI. |
+| `jira_update_workflow_scheme` ✎ | `scheme_id`: integer, `name?`: string, `description?`: string, `update_draft_if_needed?`: boolean | Rename a workflow scheme or change its description (mappings: jira_set_workflow_scheme_mapping, jira_replace_workflow_in_scheme). |
+| `jira_delete_workflow_scheme` ✎ | `scheme_id`: integer | Delete a workflow scheme (irreversible). Jira refuses while a project uses it. |
+| `jira_create_workflow_scheme_draft` ✎ | `scheme_id`: integer | Create a draft of an active workflow scheme (a copy to edit before publishing it in the Jira UI). |
+| `jira_delete_workflow_scheme_draft` ✎ | `scheme_id`: integer | Discard the draft of a workflow scheme (its unpublished changes are lost); the published scheme is unchanged. |
+| `jira_compare_workflow_scheme_draft` | `scheme_id`: integer | What the draft of a workflow scheme changes compared with the published scheme (default workflow and per issue type id). |
+| `jira_replace_workflow_in_scheme` ✎ | `scheme_id`: integer, `from_workflow`: string, `to_workflow`: string, `update_draft_if_needed?`: boolean | Replace one workflow with another everywhere in a workflow scheme (its default and every issue type mapped to it), in one request. With update_draft_if_needed=true the change is computed from and written to the draft. |
 
 ### Jira admin — fields and screens
 
@@ -412,6 +439,20 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
   `read:space`, `administer:space`, `create:page`, `create:blogpost`, `create:comment`, `create:attachment`,
   `delete:page`, `delete_own:space`, `restrict:page`, `export:space`, `delete_mail:space`.
   `subject_type=user` takes a user key or username, `group` a group name, `anonymous` no subject.
+- **Workflow scheme changes** (`jira_set_workflow_scheme_mapping`, `jira_delete_workflow_scheme_mapping`,
+  `jira_set_workflow_scheme_default`): `issue_type_id` is the id from `jira_list_issue_types`, `workflow` the exact
+  name from `jira_list_workflows`. A scheme used by projects cannot be edited directly: pass `update_draft_if_needed=true`
+  to write the change to its draft (`jira_get_workflow_scheme draft=true` shows it), then publish the draft in the Jira
+  UI, which migrates issue statuses; the REST API does not publish drafts.
+- **Workflow scheme limits in Jira DC REST**: there is no endpoint to list every scheme, to assign a scheme to a
+  project, or to publish a draft. `jira_list_workflow_schemes` and `jira_find_workflow_usage` therefore scan each
+  project's scheme (one request per project, `scan_projects` caps it and `truncatedScan` reports a partial scan), so
+  schemes no project uses and drafts are not seen. Projects on Jira's default scheme show it with id null.
+  `forbiddenProjects` counts 403s (no access, or Jira throttling the burst); a 404 for every project means the
+  endpoint is not available on this Jira version.
+- **Issue type schemes** (`jira_add_issue_types_to_scheme`): Jira replaces the whole scheme on update, so the tool
+  reads it and sends the current issue types plus the new ones, keeping name, description and default type. A plan built
+  from it drifts if someone changes the scheme before `apply`; re-plan then.
 - **Reindex types** (`jira_start_reindex`): `BACKGROUND_PREFERRED` (default), `BACKGROUND`, `FOREGROUND` (locks Jira).
 - **Audit log** (`atlassian_audit_events`): `from`/`to` are ISO-8601 timestamps; page with `page_cursor`
   (the `nextPageCursor` of the previous result) until `lastPage` is true.

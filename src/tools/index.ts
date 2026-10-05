@@ -5,6 +5,7 @@ import { jiraSystemTools } from "./jira/system.js";
 import { jiraUserTools } from "./jira/users.js";
 import { jiraProjectTools } from "./jira/projects.js";
 import { jiraSchemeTools } from "./jira/schemes.js";
+import { jiraWorkflowSchemeTools } from "./jira/workflowSchemes.js";
 import { jiraFieldTools } from "./jira/fields.js";
 import { jiraIssueTools } from "./jira/issues.js";
 import { jiraProjectMetaTools } from "./jira/projectMeta.js";
@@ -34,6 +35,7 @@ export const TOOL_GROUPS: Array<[string, ToolDef[]]> = [
   ["Jira admin — users and groups", jiraUserTools],
   ["Jira admin — projects and roles", jiraProjectTools],
   ["Jira admin — schemes and workflows", jiraSchemeTools],
+  ["Jira admin — workflow schemes", jiraWorkflowSchemeTools],
   ["Jira admin — fields and screens", jiraFieldTools],
   ["Jira — issues, search, comments, transitions", jiraIssueTools],
   ["Jira — project metadata and versions", jiraProjectMetaTools],

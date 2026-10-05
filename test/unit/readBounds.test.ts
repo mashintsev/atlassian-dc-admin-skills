@@ -10,7 +10,7 @@ const SINGLE_OR_SMALL = new Set([
   // one entity / status
   "jira_server_info", "jira_cluster_nodes", "jira_index_summary", "jira_reindex_status", "jira_get_advanced_settings",
   "jira_application_roles", "jira_get_user", "jira_get_project_config", "jira_get_permission_scheme",
-  "jira_get_notification_scheme", "jira_get_issue_security_scheme", "jira_get_workflow_scheme", "jira_get_field_contexts",
+  "jira_get_notification_scheme", "jira_get_issue_security_scheme", "jira_get_workflow_scheme", "jira_compare_workflow_scheme_draft", "jira_get_field_contexts",
   "jira_get_screen", "jira_get_issue", "jira_get_issue_dates", "jira_get_issue_sla", "jira_get_issue_development_info",
   "jira_get_service_desk_for_project", "jira_get_request_type_fields",
   "assets_get_schema", "assets_get_object_type", "assets_validate_aql", "assets_get_object", "assets_object_references",
