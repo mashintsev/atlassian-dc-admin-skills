@@ -1,0 +1,10 @@
+{
+  "totalSize": 1,
+  "result": [
+    {
+      "name": "sample-editor",
+      "displayName": "Sample Editor",
+      "displayableEmail": "sample-editor@example.invalid"
+    }
+  ]
+}

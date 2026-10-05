@@ -2,8 +2,8 @@
 
 ## 1. Regression fixtures and user identity
 
-- [ ] 1.1 Add synthetic modern/legacy user-search and space-category/permission fixtures, including the 67/52/50/51 cardinality dataset; verify no production hosts, emails, user keys, space names or authentication material appear in fixtures.
-- [ ] 1.2 Correct `confluence_find_users` mapping in `users.ts` for modern and legacy fields, retaining actionable identifiers and reporting unknown identity shapes; verify modern results no longer produce empty full/JSON items and legacy results still work.
+- [x] 1.1 Add synthetic modern/legacy user-search and space-category/permission fixtures, including the 67/52/50/51 cardinality dataset; verify no production hosts, emails, user keys, space names or authentication material appear in fixtures.
+- [x] 1.2 Correct `confluence_find_users` mapping in `users.ts` for modern and legacy fields, retaining actionable identifiers and reporting unknown identity shapes; verify modern results no longer produce empty full/JSON items and legacy results still work.
 - [ ] 1.3 Add exact active user resolution for the preparation workflow, including email-shaped usernames and exact-email fallback; verify ambiguous, truncated, email-mismatched, unavailable and inactive cases block grants in fake-server tests.
 - [ ] 1.4 Move JSON/full plan-save notifications off stdout in `cli.ts`; verify dry-run-with-plan stdout parses as one JSON document and compact output remains readable.
 

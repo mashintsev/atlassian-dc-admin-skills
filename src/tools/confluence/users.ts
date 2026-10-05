@@ -32,10 +32,24 @@ export const confluenceUserTools: ToolDef[] = [
         "max-results": args.limit ?? 50,
       });
       const results: any[] = data?.result ?? [];
+      const items = results.map((u) => {
+        const username = u?.username ?? u?.name;
+        const userKey = u?.userKey ?? u?.key;
+        const displayName = u?.title ?? u?.displayName;
+        const email = u?.displayableEmail ?? u?.email;
+        return {
+          ...(username !== undefined ? { username } : {}),
+          ...(userKey !== undefined ? { userKey } : {}),
+          ...(displayName !== undefined ? { displayName } : {}),
+          ...(email !== undefined ? { email } : {}),
+          ...(!username && !userKey ? { diagnostic: "unrecognized identity shape: no username or user key" } : {}),
+        };
+      });
       return {
         total: data?.totalSize ?? null,
         returned: results.length,
-        items: results.map((u) => ({ username: u.name, displayName: u.displayName, email: u.displayableEmail })),
+        items,
+        unrecognizedIdentityCount: items.filter((u) => "diagnostic" in u).length,
       };
     },
   },

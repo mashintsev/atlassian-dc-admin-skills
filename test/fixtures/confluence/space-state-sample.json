@@ -1,0 +1,33 @@
+{
+  "space": {
+    "id": "synthetic-space-id",
+    "key": "SAMPLE",
+    "metadata": {
+      "labels": {
+        "results": [
+          {
+            "prefix": "team",
+            "name": "sample-category"
+          },
+          {
+            "prefix": "global",
+            "name": "sample-content-label"
+          }
+        ],
+        "_links": {}
+      }
+    }
+  },
+  "permissions": [
+    {
+      "subject": {
+        "type": "group",
+        "name": "sample-team"
+      },
+      "operation": {
+        "operationKey": "read",
+        "targetType": "space"
+      }
+    }
+  ]
+}

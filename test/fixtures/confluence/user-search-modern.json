@@ -1,0 +1,10 @@
+{
+  "totalSize": 1,
+  "result": [
+    {
+      "username": "sample-admin",
+      "userKey": "SYNTHETIC-USER-KEY",
+      "title": "Sample Administrator"
+    }
+  ]
+}
