@@ -61,7 +61,7 @@ export function buildCql(query: string, spaces: string[] = []): string {
   if (spaces.length) {
     const order = /\s+ORDER\s+BY\s+.*$/i.exec(cql);
     const base = order ? cql.slice(0, order.index) : cql;
-    const filter = spaces.map((k) => `space = "${k.replace(/"/g, '\\"')}"`).join(" OR ");
+    const filter = spaces.map((k) => `space = "${k.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`).join(" OR ");
     cql = `(${base}) AND (${filter})${order ? order[0] : ""}`;
   }
   return cql;
