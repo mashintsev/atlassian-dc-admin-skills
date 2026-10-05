@@ -38,6 +38,8 @@ atlassian-dc-admin/          the skill (copy or symlink this folder)
   REFERENCE.md               all tools with arguments (generated) and endpoint sources
   .env.example               configuration template
   scripts/atlassian-admin.mjs  bundled CLI (build output, committed)
+.claude/skills/devsecops/    reusable DevSecOps skill for Claude Code projects
+.agents/skills/devsecops/    matching skill for Codex projects
 src/
   config.ts client.ts errors.ts json.ts runner.ts cli.ts
   format.ts                  compact/json output, pruning, --fields, exit codes
@@ -46,6 +48,12 @@ src/
 test/unit/*.test.ts          node:test suites with a fake fetch (no network)
 scripts/gen-reference.ts     regenerates the tool table in REFERENCE.md
 ```
+
+## DevSecOps skill
+
+The repository includes a reusable `devsecops` skill for project-level security engineering and reviews. It guides agents to adapt to the project's stack, use existing security checks, validate changes, and report evidence without weakening controls or touching live systems without authorization.
+
+The skill is available to Claude Code in `.claude/skills/devsecops/` and to Codex in `.agents/skills/devsecops/`. To use it in another project, copy the relevant directory into that project's matching `.claude/skills/` or `.agents/skills/` directory.
 
 ## Install the skill
 
