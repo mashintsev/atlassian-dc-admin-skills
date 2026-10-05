@@ -38,7 +38,7 @@ function requireActiveUser(user: any, email?: string): ResolvedConfluenceUser {
     throw new ValidationError("Resolved Confluence user has no stable username and user key");
   }
   const status = typeof user?.status === "string" ? user.status.toLowerCase() : undefined;
-  if (status !== "active" && user?.active !== true) {
+  if (status !== "active" && !(status === undefined && user?.active === true)) {
     throw new ValidationError(`Confluence user '${username}' is inactive or its status is unavailable`);
   }
   const actualEmail = userEmail(user);
@@ -91,17 +91,22 @@ export async function resolveConfluenceGrantUser(
   }
   if (!Array.isArray(search?.result)) throw new ValidationError("Confluence user search returned an unknown response shape");
   const results: any[] = search.result;
-  if (Number.isFinite(search.totalSize) && search.totalSize > results.length) {
+  if (!Number.isFinite(search.totalSize)) {
+    throw new ValidationError("Confluence user search did not report a total; exact email uniqueness cannot be established");
+  }
+  if (search.totalSize > results.length) {
     throw new ValidationError("Confluence user search was truncated; exact email uniqueness cannot be established");
   }
-  if (results.length >= maxResults && !Number.isFinite(search.totalSize)) {
-    throw new ValidationError("Confluence user search reached its safety limit; exact email uniqueness cannot be established");
+  if (search.totalSize < results.length || search.totalSize > maxResults) {
+    throw new ValidationError("Confluence user search returned inconsistent or capped results; exact email uniqueness cannot be established");
   }
 
+  if (results.some((candidate) => !userEmail(candidate))) {
+    throw new ValidationError("A user search result has no email evidence; exact uniqueness cannot be established");
+  }
+  const emailCandidates = results.filter((candidate) => userEmail(candidate)!.toLowerCase() === email.toLowerCase());
   const matching: ResolvedConfluenceUser[] = [];
-  for (const candidate of results) {
-    const candidateEmail = userEmail(candidate);
-    if (!candidateEmail || candidateEmail.toLowerCase() !== email.toLowerCase()) continue;
+  for (const candidate of emailCandidates) {
     const candidateUsername = usernameFromSearchResult(candidate);
     if (!candidateUsername) throw new ValidationError("An exact-email search match has no usable username");
     let hydrated: any;

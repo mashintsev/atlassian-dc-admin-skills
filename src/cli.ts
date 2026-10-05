@@ -29,8 +29,20 @@ import { EXIT, exitCodeFor, OUTPUT_FORMATS, render, renderError, type OutputForm
 import { exceedsResponseLimit, maxResponseChars } from "./json.js";
 import { ConfirmationError, confirmChanges } from "./confirm.js";
 import { addToPlan, applyPlan, readPlan, renderOutcomes, renderPlan } from "./plan.js";
+import {
+  applySpaceWorkflow,
+  prepareSpaceUpdates,
+  prepareSpaceWorkflowApply,
+  readSpaceWorkflowPlan,
+  renderSpaceWorkflowOutcomes,
+  renderSpaceWorkflowPlan,
+  saveSpaceWorkflowVerification,
+  verifySpaceWorkflow,
+  workflowConfirmationItems,
+} from "./spaceWorkflow.js";
 import { argsSchema, createContext, runToolByName, type RunResult } from "./runner.js";
 import { ALL_TOOLS, findTool } from "./tools/index.js";
+import { spaceCategoryNameSchema } from "./tools/confluence/spaceCategories.js";
 
 const USAGE = `Usage:
   atlassian-admin list [jira|confluence|both|<text>] [--writes|--reads] [--long]
@@ -41,6 +53,8 @@ const USAGE = `Usage:
   atlassian-admin <write tool> [key=value ...] --plan=FILE
   atlassian-admin plan FILE
   atlassian-admin apply FILE [--only=1,3]
+  atlassian-admin prepare-space-updates group=GROUP category=NAME username=USER|email=EMAIL --plan=FILE [type=global|personal] [status=current|archived] [previous_outcomes=FILE]
+  atlassian-admin verify FILE
 Write tools only describe the request unless called with dry_run=false (or applied from a plan).
 Every dry_run=false call and every apply needs the user's interactive confirmation.`;
 
@@ -232,36 +246,186 @@ async function main(argv: string[]): Promise<number> {
     return EXIT.OK;
   }
 
+  if (command === "prepare-space-updates") {
+    let parsed: ReturnType<typeof parseArgs>;
+    try {
+      parsed = parseArgs(rest);
+    } catch (e: any) {
+      print(renderError({ type: "UsageError", message: e.message }, "compact"));
+      return EXIT.VALIDATION;
+    }
+    const allowed = new Set(["group", "category", "username", "email", "type", "status", "previous_outcomes"]);
+    const unknown = Object.keys(parsed.args).filter((key) => !allowed.has(key));
+    const { group, category, username, email, type, status, previous_outcomes } = parsed.args;
+    const categoryCheck = spaceCategoryNameSchema.safeParse(category);
+    if (unknown.length || !parsed.options.plan || parsed.options.out !== undefined ||
+        parsed.options.fields !== undefined || parsed.options.only !== undefined || parsed.options.flags.size > 0 ||
+        typeof group !== "string" || !group ||
+        !categoryCheck.success || (!!username === !!email) ||
+        (username !== undefined && (typeof username !== "string" || !username)) ||
+        (email !== undefined && (typeof email !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))) ||
+        (type !== undefined && type !== "global" && type !== "personal") ||
+        (status !== undefined && status !== "current" && status !== "archived") ||
+        (previous_outcomes !== undefined && (typeof previous_outcomes !== "string" || !previous_outcomes))) {
+      const details = [
+        ...unknown.map((key) => `unknown argument '${key}'`),
+        ...(!parsed.options.plan ? ["--plan=FILE is required"] : []),
+        ...(parsed.options.out !== undefined ? ["--out is not supported; the plan file holds the complete workflow"] : []),
+        ...(parsed.options.fields !== undefined || parsed.options.only !== undefined || parsed.options.flags.size > 0
+          ? ["unsupported CLI options for preparation"] : []),
+        ...(!group ? ["group is required"] : []),
+        ...(!categoryCheck.success ? ["category is required and must satisfy the supported category naming rules"] : []),
+        ...(!!username === !!email ? ["provide exactly one of username or email"] : []),
+        ...(email !== undefined && (typeof email !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) ? ["email must be a valid email address"] : []),
+        ...(type !== undefined && type !== "global" && type !== "personal" ? ["type must be global or personal"] : []),
+        ...(status !== undefined && status !== "current" && status !== "archived" ? ["status must be current or archived"] : []),
+        ...(previous_outcomes !== undefined && (typeof previous_outcomes !== "string" || !previous_outcomes) ? ["previous_outcomes must be a file path"] : []),
+      ];
+      print(renderError({ type: "UsageError", message: details.join("; ") }, "compact"));
+      return EXIT.VALIDATION;
+    }
+    const { ctx, close } = createContext();
+    try {
+      const result = await prepareSpaceUpdates(ctx, {
+        group: group as string,
+        category: category as string,
+        ...(username ? { username } : {}),
+        ...(email ? { email } : {}),
+        ...(type ? { type } : {}),
+        ...(status ? { status } : {}),
+        ...(previous_outcomes ? { previousOutcomes: previous_outcomes as string } : {}),
+      }, parsed.options.plan);
+      if (parsed.options.format === "compact") {
+        const summary = result.summary;
+        print([
+          `prepared space workflow plan ${summary.file}`,
+          `target:${summary.target} group:${summary.group} spaces:${summary.selected}/${summary.inspected}`,
+          `items:${summary.totalItems} categories:${summary.categoryItems} permission-grants:${summary.permissionItems}`,
+          `complete-for-caller:${summary.completeForCaller} site-wide:${summary.siteWideComplete}`,
+        ].join("\n"));
+      } else {
+        print(JSON.stringify(result.summary, null, parsed.options.format === "full" ? 2 : 0));
+      }
+      return EXIT.OK;
+    } catch (e: any) {
+      print(renderError({ type: e?.name ?? "Error", message: String(e?.message ?? e) }, parsed.options.format));
+      return EXIT.VALIDATION;
+    } finally {
+      await close();
+    }
+  }
+
   if (command === "plan" || command === "apply") {
     const file = rest.find((a) => !a.startsWith("--"));
     if (!file) {
       print(`ERROR UsageError | ${command} needs a plan file\nhint: <write tool> ... --plan=FILE`);
       return EXIT.VALIDATION;
     }
-    let plan;
+    let plan: ReturnType<typeof readPlan> | undefined;
+    let spacePlan: ReturnType<typeof readSpaceWorkflowPlan> | undefined;
     try {
-      plan = readPlan(file);
+      const filePath = resolve(file);
+      if (existsSync(filePath)) {
+        const candidate = JSON.parse(readFileSync(filePath, "utf8"));
+        if (candidate?.version === 2) spacePlan = readSpaceWorkflowPlan(file);
+        else plan = readPlan(file);
+      } else {
+        plan = readPlan(file);
+      }
     } catch (e: any) {
       print(renderError({ type: "UsageError", message: e.message }, "compact"));
       return EXIT.VALIDATION;
     }
     if (command === "plan") {
-      print(renderPlan(plan, file));
+      print(spacePlan ? renderSpaceWorkflowPlan(spacePlan, file) : renderPlan(plan!, file));
       return EXIT.OK;
     }
     const { options } = parseArgs(rest.filter((a) => a.startsWith("--")));
-    const candidates = plan.items.filter((i) => !options.only?.length || options.only.includes(i.n));
-    let approved: number[];
-    try {
-      approved = confirmChanges(candidates.map((i) => ({ n: i.n, summary: i.summary, detail: `${i.request.method} ${i.request.url}` })));
-    } catch (e) {
-      return printConfirmError(e);
+    const onlyArg = rest.find((argument) => argument.startsWith("--only="));
+    if (onlyArg) {
+      const raw = onlyArg.slice("--only=".length).split(",");
+      const validValues = raw.length > 0 && raw.every((value) => /^[1-9]\d*$/.test(value));
+      const planItems = spacePlan?.items ?? plan?.items ?? [];
+      const validItems = options.only?.every((number) => planItems.some((item) => item.n === number));
+      if (!validValues || !options.only?.length || !validItems) {
+        print("ERROR UsageError | --only must be a comma-separated list of item numbers in the plan");
+        return EXIT.VALIDATION;
+      }
     }
     const { ctx, close } = createContext();
     try {
-      const outcomes = await applyPlan(ctx, plan, approved);
+      if (spacePlan) {
+        try {
+          const preview = await prepareSpaceWorkflowApply(ctx, spacePlan, file, options.only);
+          let approved: number[];
+          try {
+            approved = confirmChanges(workflowConfirmationItems(preview), "Confluence space workflow — confirm updates");
+          } catch (error) {
+            return printConfirmError(error);
+          }
+          const result = await applySpaceWorkflow(ctx, preview, approved);
+          if (options.format === "compact") {
+            print(renderSpaceWorkflowOutcomes(result));
+          } else {
+            print(JSON.stringify({
+              summary: result.summary,
+              outcomes: result.outcome.items,
+              verification: result.verification,
+            }, null, options.format === "full" ? 2 : 0));
+          }
+          return result.verification.overallVerified ? EXIT.OK : EXIT.GENERIC;
+        } catch (error: any) {
+          print(renderError({ type: error?.name ?? "Error", message: String(error?.message ?? error) }, options.format));
+          return error?.name === "ValidationError" ? EXIT.VALIDATION : EXIT.GENERIC;
+        }
+      }
+      const genericPlan = plan!;
+      const candidates = genericPlan.items.filter((i) => !options.only?.length || options.only.includes(i.n));
+      let approved: number[];
+      try {
+        approved = confirmChanges(candidates.map((i) => ({ n: i.n, summary: i.summary, detail: `${i.request.method} ${i.request.url}` })));
+      } catch (e) {
+        return printConfirmError(e);
+      }
+      const outcomes = await applyPlan(ctx, genericPlan, approved);
       print(renderOutcomes(outcomes));
       return outcomes.every((o) => o.status === "done") ? EXIT.OK : EXIT.GENERIC;
+    } finally {
+      await close();
+    }
+  }
+
+  if (command === "verify") {
+    const file = rest.find((argument) => !argument.startsWith("--"));
+    if (!file) {
+      print("ERROR UsageError | verify needs a version-2 space workflow plan file");
+      return EXIT.VALIDATION;
+    }
+    const { options } = parseArgs(rest.filter((argument) => argument.startsWith("--")));
+    let workflowPlan;
+    try {
+      workflowPlan = readSpaceWorkflowPlan(file);
+    } catch (error: any) {
+      print(renderError({ type: "UsageError", message: String(error?.message ?? error) }, options.format));
+      return EXIT.VALIDATION;
+    }
+    const { ctx, close } = createContext();
+    try {
+      const verification = await verifySpaceWorkflow(ctx, workflowPlan, file);
+      saveSpaceWorkflowVerification(file, verification);
+      if (options.format === "compact") {
+        print([
+          `verified:${verification.overallVerified} spaces:${verification.verifiedSpaces}/${verification.checkedSpaces}`,
+          `item states: ${Object.entries(verification.itemCounts).map(([key, value]) => `${key}:${value}`).join(" ")}`,
+          `verification report: ${resolve(`${file}.verification.json`)}`,
+        ].join("\n"));
+      } else {
+        print(JSON.stringify({ ...verification, reportFile: resolve(`${file}.verification.json`) }, null, options.format === "full" ? 2 : 0));
+      }
+      return verification.overallVerified ? EXIT.OK : EXIT.GENERIC;
+    } catch (error: any) {
+      print(renderError({ type: error?.name ?? "Error", message: String(error?.message ?? error) }, options.format));
+      return error?.name === "ValidationError" ? EXIT.VALIDATION : EXIT.GENERIC;
     } finally {
       await close();
     }

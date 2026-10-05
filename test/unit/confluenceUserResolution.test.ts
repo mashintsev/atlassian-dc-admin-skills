@@ -43,6 +43,29 @@ describe("Confluence grant user resolution", () => {
     );
   });
 
+  it("blocks exact-email results with incomplete identity or email evidence", async () => {
+    const missingTotal = testContext((call) => {
+      if (call.url.includes("/rest/api/user")) return { status: 404 };
+      return { body: { result: [{ username: "person", displayableEmail: "person@example.invalid" }] } };
+    });
+    await assert.rejects(
+      resolveConfluenceGrantUser(missingTotal.ctx.client("confluence"), { email: "person@example.invalid" }),
+      /did not report a total/,
+    );
+
+    const missingEmail = testContext((call) => {
+      if (call.url.includes("/rest/api/user")) return { status: 404 };
+      return { body: { totalSize: 2, result: [
+        { username: "person", displayableEmail: "person@example.invalid" },
+        { username: "possible-match" },
+      ] } };
+    });
+    await assert.rejects(
+      resolveConfluenceGrantUser(missingEmail.ctx.client("confluence"), { email: "person@example.invalid" }),
+      /no email evidence/,
+    );
+  });
+
   it("blocks ambiguous exact-email matches", async () => {
     const { ctx } = testContext((call) => {
       const url = new URL(call.url);
@@ -87,6 +110,14 @@ describe("Confluence grant user resolution", () => {
     }));
     await assert.rejects(
       resolveConfluenceGrantUser(inactive.ctx.client("confluence"), { username: "person" }),
+      /inactive/,
+    );
+
+    const contradictory = testContext(() => ({
+      body: { username: "person", userKey: "USER-KEY", status: "inactive", active: true },
+    }));
+    await assert.rejects(
+      resolveConfluenceGrantUser(contradictory.ctx.client("confluence"), { username: "person" }),
       /inactive/,
     );
   });

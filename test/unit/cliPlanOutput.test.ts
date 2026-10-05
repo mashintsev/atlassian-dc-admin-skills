@@ -23,6 +23,13 @@ describe("CLI plan-save output", () => {
     assert.match(result.stderr, /planned #1/);
   });
 
+  it("keeps full JSON stdout to one parseable document", () => {
+    const result = runPlan("full");
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotThrow(() => JSON.parse(result.stdout));
+    assert.match(result.stderr, /planned #1/);
+  });
+
   it("keeps compact plan output readable", () => {
     const result = runPlan("compact");
     assert.equal(result.status, 0, result.stderr);

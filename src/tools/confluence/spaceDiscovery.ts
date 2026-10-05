@@ -24,7 +24,7 @@ function sameResourcePath(client: AtlassianClient, path: string, next: unknown):
   const base = new URL(client.config.baseUrl);
   const basePath = base.pathname.replace(/\/+$/, "");
   const url = new URL(next, `${client.config.baseUrl}${path}`);
-  if (url.origin !== base.origin) return undefined;
+  if (url.origin !== base.origin || url.username || url.password) return undefined;
   const expected = `${basePath}${path}`;
   if (url.pathname !== expected && url.pathname !== path) return undefined;
   return `${path}${url.search}`;
@@ -93,7 +93,7 @@ async function enumerateScope(
       issues.push(`${type}/${status} space listing failed: ${String((error as Error)?.message ?? error)}`);
       break;
     }
-    if (!Array.isArray(data?.results)) {
+    if (!Array.isArray(data?.results) || !data?._links || typeof data._links !== "object" || Array.isArray(data._links)) {
       issues.push(`${type}/${status} space listing returned an unknown response shape`);
       break;
     }

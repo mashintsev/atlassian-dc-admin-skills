@@ -33,7 +33,7 @@ export interface Plan {
   items: PlanItem[];
 }
 
-function digestOf(dry: any): string {
+export function digestOf(dry: any): string {
   const material = JSON.stringify({ request: dry?.request, followUps: dry?.followUps ?? null, objects: dry?.objects ?? null });
   return createHash("sha256").update(material).digest("hex").slice(0, 16);
 }
@@ -42,7 +42,9 @@ export function readPlan(file: string): Plan {
   const path = resolve(file);
   if (!existsSync(path)) return { version: 1, items: [] };
   const data = JSON.parse(readFileSync(path, "utf8"));
-  if (!data || !Array.isArray(data.items)) throw new Error(`${file} is not a change plan`);
+  if (!data || data.version !== 1 || !Array.isArray(data.items)) {
+    throw new Error(`${file} is not a version-1 change plan`);
+  }
   return data as Plan;
 }
 

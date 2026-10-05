@@ -7,7 +7,7 @@ import { dryRunShape, guardedWrite } from "../util.js";
 const API = "/rest/api";
 const MAX_CATEGORY_PAGES = 50;
 const MAX_CATEGORIES = 1000;
-const categoryName = z.string().regex(
+export const spaceCategoryNameSchema = z.string().regex(
   /^[\p{Ll}\p{M}\p{N}_-]{1,255}$/u,
   "Category names must be 1–255 lowercase letters, combining marks, digits, underscores or hyphens",
 );
@@ -17,7 +17,7 @@ function continuationPath(baseUrl: string, spacePath: string, next: unknown): st
   const base = new URL(baseUrl);
   const basePath = base.pathname.replace(/\/+$/, "");
   const url = new URL(next, `${baseUrl}${spacePath}`);
-  if (url.origin !== base.origin) return undefined;
+  if (url.origin !== base.origin || url.username || url.password) return undefined;
   const expected = `${basePath}${spacePath}`;
   if (url.pathname !== expected && url.pathname !== spacePath) return undefined;
   return `${spacePath}${url.search}`;
@@ -38,6 +38,10 @@ async function readSpaceCategories(client: AtlassianClient, spaceKey: string) {
     const labels = data?.metadata?.labels;
     if (!labels || !Array.isArray(labels.results)) {
       issues.push(`page ${pages} has an unknown metadata.labels response shape`);
+      break;
+    }
+    if (!labels._links || typeof labels._links !== "object" || Array.isArray(labels._links)) {
+      issues.push(`page ${pages} has an unknown category continuation shape`);
       break;
     }
     if (labels.results.some((label: any) =>
@@ -87,7 +91,7 @@ export const confluenceSpaceCategoryTools: ToolDef[] = [
     product: "confluence",
     write: true,
     description: "Add a team-prefixed category to a space without replacing existing categories.",
-    inputShape: { space_key: z.string(), name: categoryName, ...dryRunShape },
+    inputShape: { space_key: z.string(), name: spaceCategoryNameSchema, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("confluence");
       const request = {
