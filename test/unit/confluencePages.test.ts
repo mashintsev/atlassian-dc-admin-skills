@@ -43,6 +43,7 @@ describe("helpers", () => {
   it("builds CQL from text and keeps ORDER BY after the space filter", () => {
     assert.equal(buildCql('release "plan"'), 'siteSearch ~ "release \\"plan\\""');
     assert.equal(buildCql("type=page ORDER BY lastmodified desc", ["DOC", "HR"]), '(type=page) AND (space = "DOC" OR space = "HR") ORDER BY lastmodified desc');
+    assert.equal(buildCql("type=page", [String.raw`A\ "B"`]), String.raw`(type=page) AND (space = "A\\ \"B\"")`);
   });
 
   it("replaces one section up to the next heading of the same level", () => {
