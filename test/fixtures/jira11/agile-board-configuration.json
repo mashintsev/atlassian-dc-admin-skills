@@ -1,0 +1,52 @@
+{
+  "id": 56,
+  "name": "DEMO board",
+  "type": "scrum",
+  "self": "https://jira.example.com/rest/agile/1.0/board/56/configuration",
+  "filter": {
+    "id": "10900",
+    "self": "https://jira.example.com/rest/api/2/filter/10900"
+  },
+  "columnConfig": {
+    "columns": [
+      {
+        "name": "To Do",
+        "statuses": [
+          {
+            "id": "10100",
+            "self": "https://jira.example.com/rest/api/2/status/10100"
+          }
+        ]
+      },
+      {
+        "name": "In Progress",
+        "statuses": [
+          {
+            "id": "3",
+            "self": "https://jira.example.com/rest/api/2/status/3"
+          }
+        ]
+      },
+      {
+        "name": "Done",
+        "statuses": [
+          {
+            "id": "10001",
+            "self": "https://jira.example.com/rest/api/2/status/10001"
+          }
+        ]
+      }
+    ],
+    "constraintType": "none"
+  },
+  "estimation": {
+    "type": "field",
+    "field": {
+      "fieldId": "customfield_10400",
+      "displayName": "Story Points"
+    }
+  },
+  "ranking": {
+    "rankCustomFieldId": 10019
+  }
+}

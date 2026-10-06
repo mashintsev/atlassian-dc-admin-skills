@@ -1,0 +1,26 @@
+[
+  {
+    "id": 86,
+    "icon": 10500,
+    "name": "Internal only",
+    "issueType": {
+      "self": "https://jira.example.com/rest/api/2/issuetype/10001",
+      "id": "10001",
+      "description": "",
+      "iconUrl": "https://jira.example.com/secure/viewavatar?size=xsmall&avatarId=10300",
+      "name": "Service Request",
+      "subtask": false,
+      "avatarId": 10300
+    },
+    "description": "Internal only description",
+    "descriptionHtml": "<p>Internal only description</p>",
+    "groups": [],
+    "order": 0,
+    "projectId": 10100,
+    "usedByEmailSettings": false,
+    "helpText": "",
+    "helpTextHtml": "",
+    "restrictionStatus": "OPEN",
+    "portalId": 1
+  }
+]

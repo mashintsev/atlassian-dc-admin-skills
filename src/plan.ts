@@ -9,13 +9,26 @@
  * Before executing an item, apply repeats its dry run and compares the request with the one
  * that was planned (and approved). If the instance changed in between (other page version,
  * other resolved ids...), the item is skipped as `drifted` instead of sending something else.
+ * A dry run may carry `identity` (the request with names in place of ids that only exist
+ * after an earlier item ran) and `state` (the target state the change was computed from);
+ * the comparison then uses them. An item whose target state already holds is recorded as
+ * `already-satisfied`. Outcomes are written back into the plan file, so `plan` shows what
+ * is left and a later `apply` runs only the remaining items.
  */
 
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { runToolByName } from "./runner.js";
+import { runToolByName, type RunResult } from "./runner.js";
 import type { ToolContext } from "./tools/types.js";
+
+export type OutcomeStatus = "done" | "already-satisfied" | "failed" | "drifted" | "declined";
+
+export interface ItemOutcome {
+  status: OutcomeStatus;
+  at: string;
+  detail?: string;
+}
 
 export interface PlanItem {
   n: number;
@@ -26,6 +39,8 @@ export interface PlanItem {
   /** Fingerprint of the dry-run request (method, url, body, follow-up steps). */
   digest: string;
   plannedAt: string;
+  /** Last recorded outcome of `apply` (absent until the item was applied or declined). */
+  outcome?: ItemOutcome;
 }
 
 export interface Plan {
@@ -34,8 +49,23 @@ export interface Plan {
 }
 
 export function digestOf(dry: any): string {
-  const material = JSON.stringify({ request: dry?.request, followUps: dry?.followUps ?? null, objects: dry?.objects ?? null });
+  // identity/state only take part when a tool provides them, so older plans keep their digests
+  const material = JSON.stringify({
+    // identity describes the whole operation, follow-up steps included
+    request: dry?.identity ?? dry?.request,
+    followUps: dry?.identity !== undefined ? null : (dry?.followUps ?? null),
+    objects: dry?.objects ?? null,
+    ...(dry?.state !== undefined ? { state: dry.state } : {}),
+  });
   return createHash("sha256").update(material).digest("hex").slice(0, 16);
+}
+
+/** Write the plan through a temporary file, so a crash or a concurrent reader never sees half a plan. */
+function writePlan(file: string, plan: Plan): void {
+  const path = resolve(file);
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(plan, null, 2));
+  renameSync(tmp, path);
 }
 
 export function readPlan(file: string): Plan {
@@ -61,49 +91,106 @@ export function addToPlan(file: string, tool: string, args: Record<string, unkno
     plannedAt: new Date().toISOString(),
   };
   plan.items.push(item);
-  writeFileSync(resolve(file), JSON.stringify(plan, null, 2));
+  writePlan(file, plan);
   return item;
+}
+
+const FINISHED: ReadonlySet<OutcomeStatus> = new Set(["done", "already-satisfied"]);
+
+export function isFinished(item: PlanItem): boolean {
+  return !!item.outcome && FINISHED.has(item.outcome.status);
+}
+
+/**
+ * Add a tool's dry-run result to the plan. A batch (several independent changes from one call)
+ * becomes one item per change; already-satisfied results and entries are not planned.
+ */
+export function addResultToPlan(file: string, tool: string, args: Record<string, unknown>, value: any): PlanItem[] {
+  if (value?.already_satisfied) return [];
+  if (Array.isArray(value?.batch)) {
+    return value.batch.filter((b: any) => !b.value?.already_satisfied).map((b: any) => addToPlan(file, b.tool, b.args, b.value));
+  }
+  return [addToPlan(file, tool, args, value)];
 }
 
 export function renderPlan(plan: Plan, file: string): string {
   if (plan.items.length === 0) return `plan ${file}: empty`;
-  const lines = [`plan ${file}: ${plan.items.length} change(s). Approve each, or all at once with: apply ${file}`];
-  for (const it of plan.items) lines.push(`${it.n}. ${it.summary} | ${it.request.method} ${it.request.url}`);
+  const remaining = plan.items.filter((i) => !isFinished(i)).length;
+  const lines = [`plan ${file}: ${plan.items.length} change(s), remaining ${remaining}. Approve each, or all at once with: apply ${file}`];
+  for (const it of plan.items) {
+    const mark = it.outcome ? `[${it.outcome.status}] ` : "";
+    const detail = it.outcome?.detail && !FINISHED.has(it.outcome.status) ? ` | ${it.outcome.detail}` : "";
+    lines.push(`${it.n}. ${mark}${it.summary} | ${it.request.method} ${it.request.url}${detail}`);
+  }
   return lines.join("\n");
+}
+
+function saveOutcome(file: string | undefined, n: number, outcome: ItemOutcome): void {
+  if (!file) return;
+  // re-read so outcomes of other items written meanwhile are kept
+  const plan = readPlan(file);
+  const item = plan.items.find((i) => i.n === n);
+  if (!item) return;
+  item.outcome = outcome;
+  writePlan(file, plan);
+}
+
+/** Record the items the user unticked in the confirmation checklist. */
+export function recordDeclined(file: string, numbers: number[]): void {
+  const at = new Date().toISOString();
+  for (const n of numbers) saveOutcome(file, n, { status: "declined", at });
 }
 
 export interface ApplyOutcome {
   n: number;
   summary: string;
-  status: "done" | "failed" | "drifted";
+  /** `skipped`: finished in an earlier apply, not run again. */
+  status: OutcomeStatus | "skipped";
   detail?: string;
 }
 
-export async function applyPlan(ctx: ToolContext, plan: Plan, only?: number[]): Promise<ApplyOutcome[]> {
+type Runner = (name: string, args: Record<string, unknown>, ctx: ToolContext) => Promise<RunResult>;
+
+/** Items `apply` would run: the selection (or all), minus items finished earlier. */
+export function pendingItems(plan: Plan, only?: number[]): PlanItem[] {
+  return plan.items.filter((i) => (!only?.length || only.includes(i.n)) && !isFinished(i));
+}
+
+/**
+ * Execute plan items in order. With `file`, each outcome is saved into the plan as soon as
+ * it is known, and items finished in an earlier apply are skipped.
+ */
+export async function applyPlan(ctx: ToolContext, plan: Plan, only?: number[], file?: string, run: Runner = runToolByName): Promise<ApplyOutcome[]> {
   const out: ApplyOutcome[] = [];
   for (const it of plan.items.filter((i) => !only?.length || only.includes(i.n))) {
-    const again = await runToolByName(it.tool, { ...it.args, dry_run: true }, ctx);
-    if (!again.ok) {
-      out.push({ n: it.n, summary: it.summary, status: "failed", detail: again.error.message });
+    if (isFinished(it)) {
+      out.push({ n: it.n, summary: it.summary, status: "skipped", detail: `${it.outcome!.status} earlier` });
       continue;
     }
-    if (digestOf(again.value) !== it.digest) {
-      out.push({ n: it.n, summary: it.summary, status: "drifted", detail: "the request differs from the approved one; re-plan it" });
-      continue;
-    }
-    const res = await runToolByName(it.tool, { ...it.args, dry_run: false }, ctx);
-    out.push(
-      res.ok
-        ? { n: it.n, summary: it.summary, status: "done" }
-        : { n: it.n, summary: it.summary, status: "failed", detail: res.error.message },
-    );
+    const outcome = await applyItem(ctx, it, run);
+    saveOutcome(file, it.n, { status: outcome.status as OutcomeStatus, at: new Date().toISOString(), detail: outcome.detail });
+    out.push(outcome);
   }
   return out;
 }
 
+async function applyItem(ctx: ToolContext, it: PlanItem, run: Runner): Promise<ApplyOutcome> {
+  const base = { n: it.n, summary: it.summary };
+  const again = await run(it.tool, { ...it.args, dry_run: true }, ctx);
+  if (!again.ok) return { ...base, status: "failed", detail: again.error.message };
+  if ((again.value as any)?.already_satisfied) return { ...base, status: "already-satisfied", detail: (again.value as any).reason };
+  if (digestOf(again.value) !== it.digest) {
+    return { ...base, status: "drifted", detail: "the request differs from the approved one; re-plan it" };
+  }
+  const res = await run(it.tool, { ...it.args, dry_run: false }, ctx);
+  return res.ok ? { ...base, status: "done" } : { ...base, status: "failed", detail: res.error.message };
+}
+
 export function renderOutcomes(outcomes: ApplyOutcome[]): string {
-  const done = outcomes.filter((o) => o.status === "done").length;
-  const lines = [`applied ${done}/${outcomes.length}`];
+  const run = outcomes.filter((o) => o.status !== "skipped");
+  const done = run.filter((o) => o.status === "done" || o.status === "already-satisfied").length;
+  const skipped = outcomes.length - run.length;
+  const lines = [`applied ${done}/${run.length}${skipped ? ` (${skipped} finished earlier, skipped)` : ""}`];
   for (const o of outcomes) lines.push(`${o.n}. ${o.status.toUpperCase()} | ${o.summary}${o.detail ? ` | ${o.detail}` : ""}`);
   return lines.join("\n");
 }

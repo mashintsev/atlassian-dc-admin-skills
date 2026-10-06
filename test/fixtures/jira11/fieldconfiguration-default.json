@@ -1,0 +1,139 @@
+{
+  "configName": "Default Field Configuration",
+  "total": 5,
+  "fields": [
+    {
+      "id": "customfield_10200",
+      "name": "Parent Link",
+      "required": false,
+      "hidden": false,
+      "hideable": true,
+      "requirable": true,
+      "rendererName": "Default Text Renderer",
+      "screens": [],
+      "actions": {
+        "edit": {
+          "name": "Edit",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItem!default.jspa?id=10000&fieldId=customfield_10200"
+        },
+        "screens": {
+          "name": "Screens",
+          "url": "https://jira.example.com/secure/admin/AssociateFieldToScreens!default.jspa?fieldId=customfield_10200&returnUrl=ConfigureFieldLayout!default.jspa?id=10000"
+        },
+        "renderer": {
+          "name": "Renderer",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItemRenderer!default.jspa?fieldId=customfield_10200&id=10000"
+        }
+      },
+      "managed": false,
+      "locked": false,
+      "description": "Links to a parent"
+    },
+    {
+      "id": "customfield_10201",
+      "name": "Epic Link",
+      "required": false,
+      "hidden": false,
+      "hideable": true,
+      "requirable": true,
+      "rendererName": "Default Text Renderer",
+      "screens": [],
+      "actions": {
+        "edit": {
+          "name": "Edit",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItem!default.jspa?id=10000&fieldId=customfield_10201"
+        },
+        "screens": {
+          "name": "Screens",
+          "url": "https://jira.example.com/secure/admin/AssociateFieldToScreens!default.jspa?fieldId=customfield_10201&returnUrl=ConfigureFieldLayout!default.jspa?id=10000"
+        },
+        "renderer": {
+          "name": "Renderer",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItemRenderer!default.jspa?fieldId=customfield_10201&id=10000"
+        }
+      },
+      "managed": false,
+      "locked": false,
+      "description": "Choose an epic"
+    },
+    {
+      "id": "labels",
+      "name": "Labels",
+      "required": false,
+      "hidden": false,
+      "hideable": true,
+      "requirable": true,
+      "rendererName": "Default Text Renderer",
+      "screens": [],
+      "actions": {
+        "edit": {
+          "name": "Edit",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItem!default.jspa?id=10000&fieldId=labels"
+        },
+        "screens": {
+          "name": "Screens",
+          "url": "https://jira.example.com/secure/admin/AssociateFieldToScreens!default.jspa?fieldId=labels&returnUrl=ConfigureFieldLayout!default.jspa?id=10000"
+        },
+        "renderer": {
+          "name": "Renderer",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItemRenderer!default.jspa?fieldId=labels&id=10000"
+        }
+      },
+      "managed": false,
+      "locked": false
+    },
+    {
+      "id": "components",
+      "name": "Component/s",
+      "required": false,
+      "hidden": true,
+      "hideable": true,
+      "requirable": true,
+      "rendererName": "Default Text Renderer",
+      "screens": [],
+      "actions": {
+        "edit": {
+          "name": "Edit",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItem!default.jspa?id=10000&fieldId=components"
+        },
+        "screens": {
+          "name": "Screens",
+          "url": "https://jira.example.com/secure/admin/AssociateFieldToScreens!default.jspa?fieldId=components&returnUrl=ConfigureFieldLayout!default.jspa?id=10000"
+        },
+        "renderer": {
+          "name": "Renderer",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItemRenderer!default.jspa?fieldId=components&id=10000"
+        }
+      },
+      "managed": false,
+      "locked": false
+    },
+    {
+      "id": "summary",
+      "name": "Summary",
+      "required": true,
+      "hidden": false,
+      "hideable": true,
+      "requirable": true,
+      "rendererName": "Default Text Renderer",
+      "screens": [],
+      "actions": {
+        "edit": {
+          "name": "Edit",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItem!default.jspa?id=10000&fieldId=summary"
+        },
+        "screens": {
+          "name": "Screens",
+          "url": "https://jira.example.com/secure/admin/AssociateFieldToScreens!default.jspa?fieldId=summary&returnUrl=ConfigureFieldLayout!default.jspa?id=10000"
+        },
+        "renderer": {
+          "name": "Renderer",
+          "url": "https://jira.example.com/secure/admin/EditFieldLayoutItemRenderer!default.jspa?fieldId=summary&id=10000"
+        }
+      },
+      "managed": false,
+      "locked": false
+    }
+  ],
+  "default": true
+}

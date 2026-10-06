@@ -1,0 +1,44 @@
+{
+  "id": 3,
+  "name": "Office hours",
+  "description": "",
+  "timeZone": "Europe/Moscow",
+  "holidays": [],
+  "workingTimes": [
+    {
+      "id": 11,
+      "day": "monday",
+      "start": 32400000,
+      "end": 61200000,
+      "disabled": false
+    },
+    {
+      "id": 12,
+      "day": "tuesday",
+      "start": 32400000,
+      "end": 61200000,
+      "disabled": false
+    },
+    {
+      "id": 13,
+      "day": "wednesday",
+      "start": 32400000,
+      "end": 61200000,
+      "disabled": false
+    },
+    {
+      "id": 14,
+      "day": "thursday",
+      "start": 32400000,
+      "end": 61200000,
+      "disabled": false
+    },
+    {
+      "id": 15,
+      "day": "friday",
+      "start": 32400000,
+      "end": 61200000,
+      "disabled": false
+    }
+  ]
+}

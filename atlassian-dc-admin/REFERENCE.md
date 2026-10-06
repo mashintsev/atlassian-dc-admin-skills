@@ -19,6 +19,7 @@ Never print or echo tokens.
 | `JIRA_PAT_TOKEN`, `CONFLUENCE_PAT_TOKEN` | Personal access token of an administrator (preferred) |
 | `<P>_USERNAME` + `<P>_PASSWORD` | Basic auth instead of a PAT |
 | `<P>_SSL_VERIFY` | `true` by default; `false` only for self-signed test instances |
+| `<P>_CA_FILE` | PEM file with extra trusted root certificates (a company CA in the TLS chain); verification stays on — prefer it over `SSL_VERIFY=false` |
 | `<P>_TIMEOUT` | Seconds, default 60 |
 | `<P>_PROXY_USER`/`<P>_PROXY_PASS` (or `<P>_PROXY_BASIC`), `<P>_TOKEN_HEADER` | Reverse-proxy gateway mode: the proxy takes `Authorization`, the PAT goes in `X-Atlassian-Pat` |
 | `ATLASSIAN_MAX_RESPONSE_CHARS` | Max printed output, default 60000 (`0` disables) |
@@ -63,6 +64,16 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | Workflow schemes in use / where a workflow is used | `jira_list_workflow_schemes --out=…`; `jira_find_workflow_usage workflow=…` (delegate on large instances) |
 | Swap a workflow in a scheme | `jira_find_workflow_usage` → `jira_replace_workflow_in_scheme` (active scheme: `update_draft_if_needed=true` → `jira_compare_workflow_scheme_draft` → publish in the UI) |
 | New workflow scheme for a project | `jira_create_workflow_scheme copy_from_scheme_id=…` → mappings → assign to the project in the Jira UI |
+| Where is a screen used | `jira_get_screen_usage screen_id=…` (scan; `--out` or a subagent on large instances) |
+| Remove or add fields on a screen | `jira_get_screen` → `jira_get_screen_usage` → `jira_remove_screen_field` / `jira_add_screen_field` / `jira_move_screen_field` (one plan item each) |
+| New custom field for a project | `jira_create_custom_field` → `jira_update_field_context context_id=default project_ids=…` → `jira_add_field_to_screens` — all with `--plan`, the field by name, then `apply` |
+| New JSM request type on the portal | `jira_create_request_type` → `jira_add_request_type_to_group` → `jira_add_request_type_field` / `jira_hide_request_type_field preset=…` (one plan; the request type by name) → `jira_get_request_type_form` |
+| JSM SLA with a 24×7 calendar | `jira_get_sla_conditions` → (`jira_create_sla_calendar working_hours=24x7` or use `calendar=24x7`, the built-in default) → `jira_create_sla goals=[…]` → `jira_get_sla_configuration` |
+| JSM queues | `jira_get_service_desk_queues` → `jira_create_queue` / `jira_update_queue` / `jira_delete_queue` / `jira_move_queue` (full order of ids, read back) |
+| Select options (e.g. Severity 1–4) | `jira_create_custom_field field_type=…:select` → `jira_set_custom_field_options field=… options=1,2,3,4` (one plan; the field by name) → `jira_get_custom_field_options` |
+| Field descriptions in a project | `jira_get_field_configuration project_key=… issue_type_id=…` → `jira_update_field_description` (dry run; entered in the UI via the edit link, re-run verifies) |
+| Board Detail View | `jira_get_board_configuration` → `jira_set_board_detail_fields remove_fields=… add_fields=…` |
+| JC-83-style rollout | field descriptions (manual) → screen removals per tab → custom fields + contexts + placements → board Detail View; plan everything, `apply`, then `plan FILE` for what remains |
 | License seats | `jira_application_roles`, `jira_set_user_application` |
 | Unused custom fields | `jira_list_custom_fields unused_only=true --out=…` → `jira_get_field_screens` / `jira_get_field_contexts` |
 | Space access review | `confluence_list_spaces --out=…` → `confluence_get_space_permissions` per space (delegate to a subagent) |
@@ -73,7 +84,7 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 ## Tools
 
 <!-- tools:start -->
-221 tools, 101 of them write tools (✎). Write tools also take `dry_run` (default true).
+265 tools, 137 of them write tools (✎). Write tools also take `dry_run` (default true).
 
 ### Jira admin — system
 
@@ -159,7 +170,7 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | `jira_compare_workflow_scheme_draft` | `scheme_id`: integer | What the draft of a workflow scheme changes compared with the published scheme (default workflow and per issue type id). |
 | `jira_replace_workflow_in_scheme` ✎ | `scheme_id`: integer, `from_workflow`: string, `to_workflow`: string, `update_draft_if_needed?`: boolean | Replace one workflow with another everywhere in a workflow scheme (its default and every issue type mapped to it), in one request. With update_draft_if_needed=true the change is computed from and written to the draft. |
 
-### Jira admin — fields and screens
+### Jira admin — custom fields
 
 | Tool | Arguments | Description |
 |---|---|---|
@@ -167,9 +178,32 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | `jira_get_field_contexts` | `field_id`: string | Contexts of a custom field: which projects and issue types each context applies to. |
 | `jira_get_field_screens` | `field_id`: string, `offset?`: integer, `limit?`: integer | Screens (and tabs) a field is placed on. |
 | `jira_delete_custom_fields` ✎ | `ids`: list\|string | Permanently delete custom fields and all their values. Irreversible; check usage first. |
+| `jira_list_fields` | `search?`: string, `offset?`: integer, `limit?`: integer | All system and custom fields with id, name, custom flag and schema type (no usage stats). |
+| `jira_create_custom_field` ✎ | `name`: string, `description?`: string, `field_type`: string, `searcher_key?`: string, `context_scope?`: global | Create a custom field. field_type: text-single-line, url, date-picker, or a full type key Jira lists; the searcher defaults to the type's first one. Looks for fields of the same name (case-insensitive) first: same type → already-satisfied with its id; other type or several matches → error. Jira gives the field a global default context; scope it with jira_update_field_context context_id=default. |
+| `jira_create_field_context` ✎ | `field_id`: string, `name`: string, `description?`: string, `project_ids?`: list\|string, `issue_type_ids?`: list\|string, `global?`: boolean | Add a context to a custom field: global=true or project_ids, and issue_type_ids (omit for all). An identical context (same name and scope) → already-satisfied. Internal Jira API; Jira 11.3.x only. |
+| `jira_update_field_context` ✎ | `field_id`: string, `context_id`: string, `name?`: string, `description?`: string, `project_ids?`: list\|string, `issue_type_ids?`: list\|string, `global?`: boolean, `all_issue_types?`: boolean | Change a custom field context's name, description or scope. context_id is the id or `default` (the field's only context, as Jira creates it with the field). The complete context is sent; attributes not given keep their stored values. Internal Jira API; Jira 11.3.x only. |
+| `jira_delete_field_context` ✎ | `field_id`: string, `context_id`: string | Remove a context from a custom field (its option values and default go with it). Already gone → already-satisfied. Internal Jira API; Jira 11.3.x only. |
+| `jira_add_field_to_screens` ✎ | `field_id`: string, `placements`: list | Place a field on several screen tabs: placements = [{screen_id, tab_id, position?}] (JSON). Each placement is its own change (jira_add_screen_field): the dry run lists them, --plan records each as a separate item, placements already in place are reported as satisfied. |
+| `jira_get_custom_field_options` | `field`: string, `context?`: string | Options of a select-type custom field per context (or one context): id, value, disabled, in stored order, with the projects and issue types each context covers. |
+| `jira_set_custom_field_options` ✎ | `field`: string, `context?`: string, `options`: list | Set the options of a select-type field's context: options = comma list of values or JSON [{value, id?, disabled?}] in order. A context without options gets them through the API (Severity 1–4 on a new field). For a context that already has options nothing is sent: the dry run is a manual change with the steps (add, rename by id, order, disable, enable) and the options page link; running again verifies. Options are never deleted. Jira 11.3.x only. |
+
+### Jira admin — field configurations
+
+| Tool | Arguments | Description |
+|---|---|---|
+| `jira_get_field_configuration` | `project_key`: string, `issue_type_id?`: string, `field_configuration_id?`: integer, `name_contains?`: string, `offset?`: integer, `limit?`: integer | The field configuration a project uses (per issue type, or field_configuration_id): its fields with description, hidden/visible and required/optional (paged, name_contains), and the projects that share it. Without issue_type_id, issue types are grouped by configuration (fields only when there is one). Field configuration schemes are not readable through REST. Internal and plugin APIs, verified on Jira 11.3. |
+| `jira_update_field_description` ✎ | `field_configuration_id`: integer, `field_id`: string, `description`: string | Prepare a change of one field's description in one field configuration (never the field's global name or description): the dry run shows old and new value, the projects sharing the configuration and the edit link. Jira serves that form only after websudo re-authentication, which a token cannot pass, so the change is entered in the UI; running the tool again verifies it (already-satisfied). |
+
+### Jira admin — screens
+
+| Tool | Arguments | Description |
+|---|---|---|
 | `jira_list_screens` | `search?`: string, `offset?`: integer, `limit?`: integer | Screens with id and name (server-side search and paging). |
 | `jira_get_screen` | `screen_id`: integer | A screen's tabs with their fields in order. |
-| `jira_list_fields` | `search?`: string, `offset?`: integer, `limit?`: integer | All system and custom fields with id, name, custom flag and schema type (no usage stats). |
+| `jira_get_screen_usage` | `screen_id`: integer, `scan_projects?`: integer, `offset?`: integer, `limit?`: integer | Where a screen is used: projects, issue types and operations (create/edit/view), the screen schemes and issue type screen schemes when Jira names them, and a sharing warning. Scans projects through the bundled 'Where is my field' and project-config plugins (internal APIs, verified on Jira 11.3); `complete` is false when the scan was cut or some projects could not be read. Large instances: --out or a subagent. |
+| `jira_add_screen_field` ✎ | `screen_id`: integer, `tab_id`: integer, `field_id`: string, `position?`: integer | Add a field to a screen tab, optionally at a 1-based position. Already on the tab → already-satisfied; on another tab of the screen → error. The dry run shows the order before/after and the projects using the screen; after the change the screen is read back. |
+| `jira_remove_screen_field` ✎ | `screen_id`: integer, `tab_id`: integer, `field_id`: string | Remove a field from a screen tab. Not on the tab → already-satisfied. The screen is read back after the change. |
+| `jira_move_screen_field` ✎ | `screen_id`: integer, `tab_id`: integer, `field_id`: string, `position?`: integer, `after_field_id?`: string | Move a field on a screen tab to a 1-based position or right after another field (after_field_id). Already there → already-satisfied. |
 
 ### Jira — issues, search, comments, transitions
 
@@ -215,6 +249,15 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | `jira_update_sprint` ✎ | `sprint_id`: integer, `name?`: string, `state?`: future\|active\|closed, `start_date?`: string, `end_date?`: string, `goal?`: string | Partially update a sprint. Start it with state=active (needs dates), close it with state=closed. |
 | `jira_add_issues_to_sprint` ✎ | `sprint_id`: integer, `issue_keys`: list\|string | Move issues into a sprint (up to 50 per call). |
 | `jira_move_issues_to_backlog` ✎ | `issue_keys`: list\|string | Move issues out of their sprints into the backlog (up to 50 per call). |
+
+### Jira — board configuration
+
+| Tool | Arguments | Description |
+|---|---|---|
+| `jira_get_board_configuration` | `board_id`: integer | A Jira Software board's configuration: saved filter (name, JQL), columns with their statuses, unmapped statuses, quick filters, card layout, Detail View fields in order, estimation, sub-filter, swimlanes, administrators and whether this account can edit it. Parts that cannot be read are listed under `unavailable`. Uses the internal board edit model (verified on Jira 11.3) besides the public agile API. |
+| `jira_set_board_detail_fields` ✎ | `board_id`: integer, `fields?`: list\|string, `add_fields?`: list\|string, `remove_fields?`: list\|string | Change a board's Detail View fields: `fields` = the complete target list in order, or add_fields / remove_fields (fields not named keep their place and order; added ones go last). Fields are ids or exact names the Detail View offers. Needs board admin rights; internal Jira Software API, Jira 11.3.x only. The Detail View is read back after the change. |
+| `jira_add_board_detail_field` ✎ | `board_id`: integer, `field`: string | Add one field to the end of a board's Detail View (already shown → already-satisfied). Board admin; Jira 11.3.x only. |
+| `jira_remove_board_detail_field` ✎ | `board_id`: integer, `field`: string | Remove one field from a board's Detail View; other fields keep their order (not shown → already-satisfied). Board admin; Jira 11.3.x only. |
 
 ### Jira — links and epics
 
@@ -274,6 +317,48 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 | `jira_get_request_types` | `service_desk_id`: string, `group_id?`: string, `offset?`: integer, `limit?`: integer | Request types of a service desk (id, name, issue type, groups); group_id narrows to one portal group. |
 | `jira_get_request_type_fields` | `service_desk_id`: string, `request_type_id`: string | Fields of a request type: id, required, type, valid values. Call before jira_create_customer_request. |
 | `jira_create_customer_request` ✎ | `service_desk_id`: string, `request_type_id`: string, `request_field_values`: object\|string, `raise_on_behalf_of?`: string, `request_participants?`: list\|string, `attachments?`: list\|string, `attachments_public?`: boolean, `allow_agent_fallback?`: boolean | Raise a customer request. request_field_values: object keyed by field id (summary, description, customfield_N); select fields accept option labels. Required fields are validated first. attachments: local file paths, attached publicly after creation. raise_on_behalf_of: username (fails when rejected; allow_agent_fallback=true retries once as the calling agent, which is a different request than the dry run showed). |
+
+### Jira Service Management — request types and forms
+
+| Tool | Arguments | Description |
+|---|---|---|
+| `jira_create_request_type` ✎ | `service_desk`: string, `name`: string, `issue_type`: string, `description?`: string, `help_text?`: string | Create a JSM request type for an issue type (id or name). Same name and issue type → already-satisfied; same name with another issue type → error. New request types are not in a portal group (hidden) until added to one. |
+| `jira_update_request_type` ✎ | `service_desk`: string, `request_type`: string, `name?`: string, `description?`: string, `help_text?`: string, `issue_type?`: string | Change a request type's name, description, help text and/or issue type. Internal JSM API, JSM 11.3.x only; read back after the change. |
+| `jira_delete_request_type` ✎ | `service_desk`: string, `request_type`: string | Delete a request type (irreversible: requests created from it keep their issue type but lose the request type). Already gone → already-satisfied. |
+| `jira_set_request_type_hidden` ✎ | `service_desk`: string, `request_type`: string, `hidden`: boolean, `group?`: string | Hide a request type from the portal (hidden=true removes it from all portal groups) or show it (hidden=false, needs group). Internal JSM API, JSM 11.3.x only. |
+| `jira_add_request_type_to_group` ✎ | `service_desk`: string, `request_type`: string, `group`: string, `position?`: integer | Add a request type to a portal group, optionally at a 1-based position. Internal JSM API, JSM 11.3.x only. |
+| `jira_remove_request_type_from_group` ✎ | `service_desk`: string, `request_type`: string, `group`: string | Remove a request type from a portal group (no groups left → hidden from the portal). Internal JSM API, JSM 11.3.x only. |
+| `jira_move_request_type_in_group` ✎ | `service_desk`: string, `request_type`: string, `group`: string, `position?`: integer, `after?`: string | Move a request type within a portal group to a 1-based position or right after another request type. Internal JSM API, JSM 11.3.x only. |
+| `jira_get_request_type_form` | `service_desk`: string, `request_type`: string | A request type's form: visible fields in order (label, description, required), hidden fields with their preset values, and fields that can still be added. Internal JSM API. |
+| `jira_add_request_type_field` ✎ | `service_desk`: string, `request_type`: string, `field`: string, `label?`: string, `description?`: string, `required?`: boolean, `position?`: integer | Add a field to a request type's form (optionally label, description, required, 1-based position). Already visible there → already-satisfied. Internal JSM API, JSM 11.3.x only. |
+| `jira_remove_request_type_field` ✎ | `service_desk`: string, `request_type`: string, `field`: string | Remove a field (visible or hidden) from a request type's form. Not on the form → already-satisfied. Internal JSM API, JSM 11.3.x only. |
+| `jira_move_request_type_field` ✎ | `service_desk`: string, `request_type`: string, `field`: string, `position?`: integer, `after?`: string | Move a visible field of a request type's form to a 1-based position or right after another field. Internal JSM API, JSM 11.3.x only. |
+| `jira_update_request_type_field` ✎ | `service_desk`: string, `request_type`: string, `field`: string, `label?`: string, `description?`: string, `required?`: boolean | Change a visible form field's label, description and/or required flag. Internal JSM API, JSM 11.3.x only. |
+| `jira_hide_request_type_field` ✎ | `service_desk`: string, `request_type`: string, `field`: string, `preset?`: string | Hide a form field from customers, optionally with a preset value (preset = value or comma list). A field Jira requires needs a preset. Internal JSM API, JSM 11.3.x only. |
+| `jira_show_request_type_field` ✎ | `service_desk`: string, `request_type`: string, `field`: string | Show a hidden form field to customers again. Already visible → already-satisfied. Internal JSM API, JSM 11.3.x only. |
+
+### Jira Service Management — queues
+
+| Tool | Arguments | Description |
+|---|---|---|
+| `jira_create_queue` ✎ | `service_desk`: string, `name`: string, `jql`: string, `columns`: list\|string | Create a service desk queue with JQL and ordered columns. Same name and settings → already-satisfied; same name otherwise → error. |
+| `jira_update_queue` ✎ | `service_desk`: string, `queue`: string, `name?`: string, `jql?`: string, `columns?`: list\|string | Change a queue's name, JQL and/or columns. The dry run shows old and new values. |
+| `jira_delete_queue` ✎ | `service_desk`: string, `queue`: string | Delete a queue. Already gone → already-satisfied. |
+| `jira_move_queue` ✎ | `service_desk`: string, `queue`: string, `position?`: integer, `after?`: string | Move a queue to a 1-based position or right after another queue. Sends the full order of queue ids to POST …/queue/reorder and reads the order back. |
+
+### Jira Service Management — SLAs and calendars
+
+| Tool | Arguments | Description |
+|---|---|---|
+| `jira_get_sla_configuration` | `service_desk`: string, `offset?`: integer, `limit?`: integer | SLA metrics of a service desk: start, pause and stop conditions, and goals in order (JQL, target, calendar). Internal JSM API. |
+| `jira_get_sla_conditions` | `service_desk`: string | Conditions an SLA can use in this service desk: start/stop events and pause conditions, by name. Internal JSM API. |
+| `jira_list_sla_calendars` | `service_desk`: string | SLA calendars of a service desk with time zone, working hours, holidays and the SLAs that use them (the built-in Default 24/7 calendar included). Internal JSM API. |
+| `jira_create_sla` ✎ | `service_desk`: string, `name`: string, `start`: list\|string, `pause?`: list\|string, `stop`: list\|string, `goals`: list, `customer_visible?`: boolean | Create an SLA metric: start/pause/stop conditions by name and goals in order. Same name and settings → already-satisfied; same name otherwise → error. Calendars by name (also one planned earlier), id, or 24x7. Internal JSM API, JSM 11.3.x only. |
+| `jira_update_sla` ✎ | `service_desk`: string, `sla`: string, `name?`: string, `start?`: list\|string, `pause?`: list\|string, `stop?`: list\|string, `goals?`: list, `customer_visible?`: boolean | Change an SLA metric's name, conditions, goals or customer visibility (given parts replace the stored ones). JSM recalculates the SLA on existing requests. Internal JSM API, JSM 11.3.x only. |
+| `jira_delete_sla` ✎ | `service_desk`: string, `sla`: string | Delete an SLA metric (irreversible: the SLA values recorded on requests are lost). Already gone → already-satisfied. Internal JSM API, JSM 11.3.x only. |
+| `jira_create_sla_calendar` ✎ | `service_desk`: string, `name`: string, `time_zone`: string, `working_hours`: string, `description?`: string, `holidays?`: list | Create an SLA calendar: name, time_zone (e.g. Europe/Moscow), working_hours (24x7, or e.g. 'mon-fri 09:00-18:00'), optional holidays (JSON list as JSM stores them). Same name and settings → already-satisfied. Internal JSM API, JSM 11.3.x only. |
+| `jira_update_sla_calendar` ✎ | `service_desk`: string, `calendar`: string, `name?`: string, `time_zone?`: string, `working_hours?`: string, `description?`: string, `holidays?`: list | Change an SLA calendar's name, description, time zone, working hours or holidays. SLAs using it are recalculated. Internal JSM API, JSM 11.3.x only. |
+| `jira_delete_sla_calendar` ✎ | `service_desk`: string, `calendar`: string | Delete an SLA calendar. Refused while SLA goals use it. Already gone → already-satisfied. Internal JSM API, JSM 11.3.x only. |
 
 ### Jira Assets — schemas, object types, attributes, statuses
 
@@ -456,6 +541,41 @@ empty values), flatten `{name: …}` wrappers of nested fields and shorten times
 - **Reindex types** (`jira_start_reindex`): `BACKGROUND_PREFERRED` (default), `BACKGROUND`, `FOREGROUND` (locks Jira).
 - **Audit log** (`atlassian_audit_events`): `from`/`to` are ISO-8601 timestamps; page with `page_cursor`
   (the `nextPageCursor` of the previous result) until `lastPage` is true.
+
+- **Internal and plugin APIs** (verified on Jira 11.3.6; changes refused on other versions with `Unsupported`):
+  `jira_create_field_context` / `jira_update_field_context` / `jira_delete_field_context` (`/rest/internal/2/field/*/context`),
+  `jira_set_board_detail_fields` / `jira_add_board_detail_field` / `jira_remove_board_detail_field` (Jira Software
+  `/rest/greenhopper/1.0/detailviewfield`). Reads that use them: `jira_get_field_configuration`
+  (`/rest/internal/2/fieldConfiguration`, "Where is my field"), `jira_get_screen_usage` ("Where is my field",
+  `/rest/projectconfig/1`), `jira_get_board_configuration` (`rapidviewconfig/editmodel`). Screen field changes and
+  custom field creation use the public REST API.
+- **Field references**: `field_id` in screen, context and placement tools takes `customfield_N`, a system field id or the
+  exact field name, also of a field that an earlier item of the same plan creates. Context changes for a field given by
+  name do not include the stored context in drift detection.
+- **JSM request types**: create and delete use the public Service Desk API. Changes, portal groups and forms use JSM's
+  internal API (JSM 11.3.x only). Portal visibility is group membership: a request type in no group is hidden;
+  `jira_set_request_type_hidden hidden=false` needs `group`. A field Jira requires can be hidden only with a `preset`
+  (the preset call carries Jira's XSRF token).
+- **JSM SLAs** (`jira_create_sla`, `jira_update_sla`): conditions by name (`jira_get_sla_conditions`: start/stop
+  events, pause conditions); `goals` is a JSON list in order `[{jql?, target, calendar?}]`, target like `4h`, `2d 4h`
+  (a day is 24 h) or minutes; the goal without `jql` (all remaining issues) goes last; `calendar` is a name, an id, or
+  `24x7` (the built-in Default 24/7 calendar). Changing conditions or goals makes JSM recalculate the SLA on existing
+  requests; deleting an SLA loses its recorded values. Calendars: `working_hours=24x7` or e.g. `mon-fri 09:00-18:00`;
+  a calendar used by goals cannot be deleted. Internal JSM API, JSM 11.3.x only.
+- **Select options** (`jira_set_custom_field_options`): `options` is a comma list or JSON `[{value, id?, disabled?}]` in
+  order. Only a context without options is written through the API (Jira's options resource sets names for a new
+  field's context, chosen by project + issue type). For a context that has options the dry run is a manual change: steps
+  (add, rename by id, order, disable, enable) and the options page link; re-running verifies. Options are never deleted;
+  options marked disabled are created enabled and must be disabled in the UI.
+- **Screen positions** are 1-based within the tab. Adding a field already on another tab of the screen is an error.
+- **Board Detail View**: `fields` is the complete ordered list; `add_fields` go last, `remove_fields` leave the others in
+  place. Fields must be ones the board's Detail View offers (`jira_get_board_configuration` → detailView).
+- **Field descriptions in a field configuration** are prepared, not sent: Jira serves that admin form only after websudo
+  re-authentication, which a token cannot pass. The dry run gives the edit link; re-running reports `ALREADY-SATISFIED`
+  once the description was entered.
+- **Plans**: `apply` saves each item's outcome in the plan file; `plan FILE` shows them with a "remaining" count, and a
+  second `apply FILE` runs only items that are not done or already satisfied. `jira_add_field_to_screens --plan` adds one
+  item per placement.
 
 ## Where the endpoints come from
 

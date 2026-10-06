@@ -201,6 +201,12 @@ function writeResult(r: Record<string, any>): string {
       const body = step.body === undefined ? "" : ` ${JSON.stringify(step.body)}`;
       lines.push(`then${step.label ? ` (${step.label})` : ""}: ${step.method} ${step.url}${body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}…` : body}`);
     }
+    if (r.warning) lines.push(`warning: ${r.warning}`);
+    if (r.manual) {
+      lines.push(`manual change: ${r.manual.reason}`);
+      lines.push("Nothing is sent. Enter the change in the Jira UI, then re-run to verify.");
+      return lines.join("\n");
+    }
     lines.push("Nothing changed. After user approval re-run with dry_run=false.");
     return lines.join("\n");
   }
@@ -215,7 +221,12 @@ function isWriteResult(v: unknown): v is Record<string, any> {
   return !!v && typeof v === "object" && "dry_run" in (v as object) && "request" in (v as object);
 }
 
+function isAlreadySatisfiedResult(v: unknown): v is Record<string, any> {
+  return !!v && typeof v === "object" && (v as any).already_satisfied === true;
+}
+
 export function toCompact(value: unknown): string {
+  if (isAlreadySatisfiedResult(value)) return `ALREADY-SATISFIED | ${value.summary} | ${value.reason}`;
   if (isWriteResult(value)) return writeResult(value);
   const v = prune(value);
   if (v === undefined || v === null || (typeof v === "object" && isEmpty(v))) return "(empty)";
@@ -228,6 +239,7 @@ export function toCompact(value: unknown): string {
 /** Render a successful result in the chosen format. */
 export function render(value: unknown, format: OutputFormat, fields?: string): string {
   if (format === "full") return JSON.stringify(value ?? null);
+  if (isAlreadySatisfiedResult(value)) return format === "json" ? JSON.stringify(prune(value)) : toCompact(value);
   if (isWriteResult(value)) return format === "json" ? JSON.stringify(prune(value)) : writeResult(value);
   const projected = projectFields(prune(value), fields);
   return format === "json" ? JSON.stringify(projected ?? null) : toCompact(projected);

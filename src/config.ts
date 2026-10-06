@@ -19,6 +19,8 @@ export interface ProductConfig {
   product: Product;
   baseUrl: string;
   verifySsl: boolean;
+  /** PEM file with extra trusted root certificates (e.g. a company CA); verification stays on. */
+  caFile?: string;
   timeoutMs: number;
   headers: Record<string, string>;
 }
@@ -180,6 +182,7 @@ function truthy(value: string | undefined, def: boolean): boolean {
  *   <P>_PAT_TOKEN              personal access token (preferred), or
  *   <P>_USERNAME/<P>_PASSWORD  Basic auth
  *   <P>_SSL_VERIFY             default true
+ *   <P>_CA_FILE                PEM file with extra trusted root certificates (company CA)
  *   <P>_TIMEOUT                seconds, default 60
  *   <P>_PROXY_BASIC | <P>_PROXY_USER/<P>_PROXY_PASS, <P>_TOKEN_HEADER
  *                              gateway mode: the proxy takes Authorization, the PAT
@@ -224,11 +227,15 @@ export function loadConfig(product: Product, env?: NodeJS.ProcessEnv): ProductCo
     throw new ConfigurationError(`Set ${P}_PAT_TOKEN, or ${P}_USERNAME and ${P}_PASSWORD`);
   }
 
+  const caFile = get("CA_FILE");
+  if (caFile !== undefined && !existsSync(caFile)) throw new ConfigurationError(`${P}_CA_FILE points to a missing file: ${caFile}`);
+
   const timeoutS = Number(get("TIMEOUT") ?? 60);
   return {
     product,
     baseUrl,
     verifySsl: truthy(get("SSL_VERIFY"), true),
+    caFile,
     timeoutMs: (Number.isFinite(timeoutS) && timeoutS > 0 ? timeoutS : 60) * 1000,
     headers,
   };

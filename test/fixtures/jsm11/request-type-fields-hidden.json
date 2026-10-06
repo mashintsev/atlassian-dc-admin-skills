@@ -1,0 +1,22 @@
+[
+  {
+    "id": 505,
+    "fieldId": "duedate",
+    "fieldType": "duedate",
+    "label": "Due date",
+    "description": "",
+    "sdRequired": false,
+    "jiraRequired": false,
+    "displayed": false,
+    "usedByEmail": false,
+    "defaultValue": "",
+    "order": 0,
+    "jiraName": "Due date",
+    "descriptionHtml": "",
+    "values": {
+      "duedate": [
+        "2026-12-31"
+      ]
+    }
+  }
+]

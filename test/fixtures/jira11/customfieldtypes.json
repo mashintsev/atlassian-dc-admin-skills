@@ -1,0 +1,74 @@
+{
+  "categories": [
+    {
+      "id": "ALL",
+      "name": "All"
+    },
+    {
+      "id": "STANDARD",
+      "name": "Standard"
+    }
+  ],
+  "types": [
+    {
+      "name": "Date Picker",
+      "description": "",
+      "key": "com.atlassian.jira.plugin.system.customfieldtypes:datepicker",
+      "categories": [
+        "ALL",
+        "STANDARD"
+      ],
+      "options": false,
+      "cascading": false,
+      "searchers": [
+        "com.atlassian.jira.plugin.system.customfieldtypes:daterange"
+      ],
+      "isManaged": false
+    },
+    {
+      "name": "Text Field (single line)",
+      "description": "",
+      "key": "com.atlassian.jira.plugin.system.customfieldtypes:textfield",
+      "categories": [
+        "ALL",
+        "STANDARD"
+      ],
+      "options": false,
+      "cascading": false,
+      "searchers": [
+        "com.atlassian.jira.plugin.system.customfieldtypes:textsearcher"
+      ],
+      "isManaged": false
+    },
+    {
+      "name": "URL Field",
+      "description": "",
+      "key": "com.atlassian.jira.plugin.system.customfieldtypes:url",
+      "categories": [
+        "ALL",
+        "STANDARD"
+      ],
+      "options": false,
+      "cascading": false,
+      "searchers": [
+        "com.atlassian.jira.plugin.system.customfieldtypes:exacttextsearcher"
+      ],
+      "isManaged": false
+    },
+    {
+      "name": "Select List (single choice)",
+      "description": "",
+      "key": "com.atlassian.jira.plugin.system.customfieldtypes:select",
+      "categories": [
+        "ALL",
+        "STANDARD"
+      ],
+      "options": true,
+      "cascading": false,
+      "searchers": [
+        "com.atlassian.jira.plugin.system.customfieldtypes:multiselectsearcher"
+      ],
+      "isManaged": false
+    }
+  ]
+}

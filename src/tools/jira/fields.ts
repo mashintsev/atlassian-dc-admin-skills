@@ -1,5 +1,5 @@
 /**
- * Jira DC custom fields and screens.
+ * Jira DC custom fields (screens live in screens.ts).
  *
  * The usage audit is adapted from mcp-atlassian-for-admins
  * (list_custom_fields_usage in src/tools/fields.ts, MIT); deletion is dry-run guarded.
@@ -130,40 +130,6 @@ export const jiraFieldTools: ToolDef[] = [
         params: { ids: args.ids },
         summary: `PERMANENTLY delete custom fields ${args.ids.join(", ")} and their values`,
       });
-    },
-  },
-  {
-    name: "jira_list_screens",
-    product: "jira",
-    description: "Screens with id and name (server-side search and paging).",
-    inputShape: { search: z.string().optional(), ...pageShape(100) },
-    async handler({ client }, args) {
-      const offset = args.offset ?? 0;
-      const limit = args.limit ?? 100;
-      const data = await client("jira").get(`${API}/screens`, { startAt: offset, maxResults: limit, search: args.search });
-      const values = (Array.isArray(data) ? data : (data?.values ?? [])).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        description: s.description ?? "",
-      }));
-      return serverPage(values, offset, limit, data?.total, data?.isLast);
-    },
-  },
-  {
-    name: "jira_get_screen",
-    product: "jira",
-    description: "A screen's tabs with their fields in order.",
-    inputShape: { screen_id: z.coerce.number().int() },
-    async handler({ client }, args) {
-      const c = client("jira");
-      // one call per tab; screens have few tabs
-      const tabs: any[] = (await c.get(`${API}/screens/${args.screen_id}/tabs`)) ?? [];
-      const fields = await Promise.all(tabs.map((t) => c.get(`${API}/screens/${args.screen_id}/tabs/${t.id}/fields`)));
-      return tabs.map((t, i) => ({
-        id: t.id,
-        name: t.name,
-        fields: (fields[i] ?? []).map((f: any) => ({ id: f.id, name: f.name, type: f.type })),
-      }));
     },
   },
   {

@@ -28,7 +28,7 @@ import { checkAvailableServices, findProjectConfig, loadDotenv, PROJECT_CONFIG_F
 import { EXIT, exitCodeFor, OUTPUT_FORMATS, render, renderError, type OutputFormat } from "./format.js";
 import { exceedsResponseLimit, maxResponseChars } from "./json.js";
 import { ConfirmationError, confirmChanges } from "./confirm.js";
-import { addToPlan, applyPlan, readPlan, renderOutcomes, renderPlan } from "./plan.js";
+import { addResultToPlan, applyPlan, pendingItems, readPlan, recordDeclined, renderOutcomes, renderPlan } from "./plan.js";
 import {
   applySpaceWorkflowWithConfirmation,
   prepareSpaceUpdates,
@@ -379,14 +379,21 @@ async function main(argv: string[]): Promise<number> {
         }
       }
       const genericPlan = plan!;
-      const candidates = genericPlan.items.filter((i) => !options.only?.length || options.only.includes(i.n));
+      // items finished in an earlier apply are neither asked for nor run again
+      const candidates = pendingItems(genericPlan, options.only);
+      if (candidates.length === 0) {
+        print(`${renderPlan(genericPlan, file)}\nnothing left to apply`);
+        return EXIT.OK;
+      }
       let approved: number[];
       try {
         approved = confirmChanges(candidates.map((i) => ({ n: i.n, summary: i.summary, detail: `${i.request.method} ${i.request.url}` })));
       } catch (e) {
+        if (e instanceof ConfirmationError && e.name === "ConfirmationDeclined") recordDeclined(file, candidates.map((i) => i.n));
         return printConfirmError(e);
       }
-      const outcomes = await applyPlan(ctx, genericPlan, approved);
+      recordDeclined(file, candidates.filter((i) => !approved.includes(i.n)).map((i) => i.n));
+      const outcomes = await applyPlan(ctx, genericPlan, approved, file);
       print(renderOutcomes(outcomes));
       return outcomes.every((o) => o.status === "done") ? EXIT.OK : EXIT.GENERIC;
     } finally {
@@ -459,16 +466,49 @@ async function main(argv: string[]): Promise<number> {
         return dry.exitCode;
       }
       const d: any = dry.value;
-      try {
-        confirmChanges([{ n: 1, summary: d.summary, detail: `${d.request?.method} ${d.request?.url}` }]);
-      } catch (e) {
-        return printConfirmError(e);
+      if (d?.already_satisfied) {
+        // nothing would be sent: no approval needed
+        print(output(dry, parsed.options));
+        return EXIT.OK;
+      }
+      if (Array.isArray(d?.batch)) {
+        // several independent changes: one checklist, then each approved change on its own
+        let approved: number[];
+        try {
+          approved = confirmChanges(d.batch.map((b: any, i: number) => ({ n: i + 1, summary: b.value.summary, detail: `${b.value.request?.method} ${b.value.request?.url}` })));
+        } catch (e) {
+          return printConfirmError(e);
+        }
+        const lines: string[] = [];
+        let failed = false;
+        for (const [i, b] of d.batch.entries()) {
+          if (!approved.includes(i + 1)) { lines.push(`${i + 1}. DECLINED | ${b.value.summary}`); continue; }
+          const r = await runToolByName(b.tool, { ...b.args, dry_run: false }, ctx);
+          failed ||= !r.ok;
+          lines.push(r.ok ? `${i + 1}. DONE | ${b.value.summary}` : `${i + 1}. FAILED | ${b.value.summary} | ${r.error.message}`);
+        }
+        for (const note of d.satisfied ?? []) lines.push(`-. ALREADY-SATISFIED | ${note}`);
+        print(lines.join("\n"));
+        return failed ? EXIT.GENERIC : EXIT.OK;
+      }
+      // a manual change sends nothing either; the tool reports what to do in the UI
+      if (!(d?.manual && d?.request?.method === "MANUAL")) {
+        try {
+          confirmChanges([{ n: 1, summary: d.summary, detail: `${d.request?.method} ${d.request?.url}` }]);
+        } catch (e) {
+          return printConfirmError(e);
+        }
       }
     }
     const res = await runToolByName(command, parsed.args, ctx);
+    if (res.ok && parsed.options.plan && (res.value as any)?.already_satisfied) {
+      print(`${output(res, parsed.options)}`);
+      process.stderr.write(`not planned in ${parsed.options.plan}: already satisfied\n`);
+      return res.exitCode;
+    }
     if (res.ok && parsed.options.plan && (res.value as any)?.dry_run === true) {
-      const item = addToPlan(parsed.options.plan, command, parsed.args, res.value);
-      const notice = `planned #${item.n} in ${parsed.options.plan}`;
+      const items = addResultToPlan(parsed.options.plan, command, parsed.args, res.value);
+      const notice = `planned ${items.map((i) => `#${i.n}`).join(", ")} in ${parsed.options.plan}`;
       const rendered = output(res, parsed.options);
       if (parsed.options.format === "compact" || parsed.options.out) {
         print(`${rendered}\n${notice}`);

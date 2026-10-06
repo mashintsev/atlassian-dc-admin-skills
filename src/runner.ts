@@ -7,7 +7,7 @@
 import { z } from "zod";
 import { AtlassianClient, type FetchLike } from "./client.js";
 import { ConfigurationError, loadConfig, type Product } from "./config.js";
-import { isHttpStatusError, ValidationError } from "./errors.js";
+import { isHttpStatusError, PermissionError, UnsupportedError, ValidationError, VerificationError } from "./errors.js";
 import { exitCodeFor, type ToolError } from "./format.js";
 import { findTool } from "./tools/index.js";
 import type { ToolContext, ToolDef } from "./tools/types.js";
@@ -52,6 +52,9 @@ export function toToolError(e: any, tool?: ToolDef): ToolError {
   if (isHttpStatusError(e)) {
     return { type: `HTTP${e.status}`, message: e.message, status: e.status, hint: HINTS[e.status] };
   }
+  if (e instanceof PermissionError) return { type: e.name, message: e.message, status: 403, hint: HINTS[403] };
+  if (e instanceof VerificationError) return { type: e.name, message: e.message, state: e.state, hint: "re-read the target; the change may be partly applied" };
+  if (e instanceof UnsupportedError) return { type: e.name, message: e.message, ...(e.details ?? {}) };
   if (e instanceof ValidationError || e instanceof ConfigurationError) {
     return { type: e.name, message: e.message, hint: e instanceof ConfigurationError ? "run: check" : undefined };
   }

@@ -1,0 +1,7 @@
+{
+  "self": "https://jira.example.com/rest/api/2/customFieldOption/10603",
+  "value": "4",
+  "disabled": true,
+  "id": 10603,
+  "childrenIds": []
+}

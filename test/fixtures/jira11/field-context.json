@@ -1,0 +1,38 @@
+[
+  {
+    "self": "https://jira.example.com/rest/internal/2/field/customfield_10300/context/10400",
+    "id": 10400,
+    "name": "Default context",
+    "description": "",
+    "field": {
+      "id": "customfield_10300",
+      "name": "Release URL",
+      "custom": true,
+      "orderable": true,
+      "navigable": true,
+      "searchable": true,
+      "clauseNames": [
+        "cf[10300]",
+        "Release URL"
+      ],
+      "schema": {
+        "type": "string",
+        "custom": "com.atlassian.jira.plugin.system.customfieldtypes:url",
+        "customId": 10300
+      }
+    },
+    "allProjects": false,
+    "projects": [
+      {
+        "id": "10100",
+        "key": "DEMO",
+        "name": "Demo Project"
+      }
+    ],
+    "allIssueTypes": true,
+    "issueTypes": [],
+    "fieldConfigIds": [
+      10500
+    ]
+  }
+]

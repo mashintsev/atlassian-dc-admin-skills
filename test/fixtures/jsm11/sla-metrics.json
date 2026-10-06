@@ -1,0 +1,114 @@
+{
+  "jqlHelpUrl": "https://docs.example.com/jql",
+  "timeMetrics": [
+    {
+      "projectKey": "BANK",
+      "id": 8,
+      "name": "Time to first response",
+      "customerVisible": false,
+      "customFieldId": 10120,
+      "config": {
+        "definition": {
+          "start": [
+            {
+              "pluginKey": "com.atlassian.servicedesk",
+              "factoryKey": "issue-created-sla-condition-factory",
+              "conditionId": "issue-created-hit-condition",
+              "type": "Start",
+              "name": "Issue Created",
+              "missing": false
+            }
+          ],
+          "pause": [
+            {
+              "pluginKey": "com.atlassian.servicedesk",
+              "factoryKey": "status-sla-condition-factory",
+              "conditionId": "10015",
+              "type": "Pause",
+              "name": "Status: In Review",
+              "missing": false
+            }
+          ],
+          "stop": [
+            {
+              "pluginKey": "com.atlassian.servicedesk",
+              "factoryKey": "assignee-sla-condition-factory",
+              "conditionId": "assignee-set-hit-condition",
+              "type": "Stop",
+              "name": "Assignee: From Unassigned",
+              "missing": false
+            },
+            {
+              "pluginKey": "com.atlassian.servicedesk",
+              "factoryKey": "status-sla-condition-factory",
+              "conditionId": "10016",
+              "type": "Stop",
+              "name": "Entered Status: Done",
+              "missing": false
+            }
+          ],
+          "inconsistent": false
+        },
+        "goals": [
+          {
+            "id": 17,
+            "jqlQuery": "",
+            "duration": 3600000,
+            "defaultGoal": true,
+            "timeMetricId": 0
+          }
+        ]
+      }
+    },
+    {
+      "projectKey": "BANK",
+      "id": 6,
+      "name": "Time to resolution",
+      "customerVisible": true,
+      "customFieldId": 10121,
+      "config": {
+        "definition": {
+          "start": [
+            {
+              "pluginKey": "com.atlassian.servicedesk",
+              "factoryKey": "issue-created-sla-condition-factory",
+              "conditionId": "issue-created-hit-condition",
+              "type": "Start",
+              "name": "Issue Created",
+              "missing": false
+            }
+          ],
+          "pause": [],
+          "stop": [
+            {
+              "pluginKey": "com.atlassian.servicedesk",
+              "factoryKey": "resolution-sla-condition-factory",
+              "conditionId": "resolution-set-hit-condition",
+              "type": "Stop",
+              "name": "Resolution: Set",
+              "missing": false
+            }
+          ],
+          "inconsistent": false
+        },
+        "goals": [
+          {
+            "id": 96,
+            "jqlQuery": "priority = Highest",
+            "duration": 14400000,
+            "defaultGoal": false,
+            "timeMetricId": 0,
+            "calendarId": 3
+          },
+          {
+            "id": 97,
+            "jqlQuery": "",
+            "duration": 172800000,
+            "defaultGoal": true,
+            "timeMetricId": 0
+          }
+        ]
+      }
+    }
+  ]
+}

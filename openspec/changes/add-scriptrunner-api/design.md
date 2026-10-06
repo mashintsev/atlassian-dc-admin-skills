@@ -6,6 +6,8 @@ See [proposal.md](proposal.md) for motivation and scope. The repository implemen
 
 The Jira endpoint contract, supported plugin versions, and which of the requested resource types expose REST management operations are not established by this repository. Implementation must verify these before promising coverage.
 
+Research for task 1.1 found that Adaptavist documents no public REST API for managing listeners, jobs, Behaviours, Fragments, fields, REST Endpoints, Resources, or Mail Handlers in ScriptRunner for Jira Data Center (features and release notes 8.x–10.x). The only documented programmatic Script Registry access is `POST /rest/scriptrunner/latest/canned/com.onresolve.scriptrunner.canned.jira.admin.ScriptRegistry`, which runs a built-in script and returns script source, so it is excluded. `/rest/scriptrunner-jira/1.0/fields` returns Jira field metadata for pickers and is not a ScriptRunner field-management API. References: https://docs.adaptavist.com/sr4js/latest/features/script-registry, https://docs.adaptavist.com/sr4js/latest/release-notes/release-9.x, https://docs.adaptavist.com/sr4js/8.x/features.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -19,14 +21,15 @@ The Jira endpoint contract, supported plugin versions, and which of the requeste
 - Manage ScriptRunner for Confluence or other products.
 - Execute scripts, trigger jobs, or introduce arbitrary HTTP access.
 - Invent endpoints or broaden compatibility claims without evidence.
+- Use the canned Script Registry endpoint or any endpoint that runs a script.
 
 ## Decisions
 
 ### Verify endpoint coverage before defining tool contracts
 
-Build a resource-by-resource support matrix from official Adaptavist documentation and the target Jira/ScriptRunner version pairs before implementing tool operations. For each requested resource, record supported reads and mutations, request/response shapes, permissions, and known version bounds. Implement only verified operations; explicitly return unsupported for unavailable operations rather than emulating them through guessed routes or UI automation.
+Because no public management API is documented, the evidence for an operation is a capture, not vendor documentation. Build a resource-by-resource support matrix from sanitized captures taken on the user's instance. Each entry records the HTTP method, path, request and response shapes, the exact Jira and ScriptRunner version pair, the capture date, and the permission required. Read endpoints are captured from read-only GET requests or from a HAR of ScriptRunner's admin UI. Mutation endpoints are captured only from the user performing that action in the UI on a non-production instance. Support is recorded for exact version pairs only, never ranges. The matrix is typed in source and mirrored in `REFERENCE.md`. Implement only operations in the matrix; explicitly return unsupported for anything else rather than emulating it through guessed routes or UI automation.
 
-This allows useful partial coverage without falsely implying that every ScriptRunner module has a public REST API. Treat the API contract as version-sensitive and keep supported versions explicit. Alternative: assume a single stable API surface for every edition/version; rejected because the repository contains no evidence for that contract.
+This allows useful partial coverage without falsely implying that every ScriptRunner module has a public REST API. These internal endpoints may change in any release, so the contract is treated as version-specific. Alternative: assume a single stable API surface for every edition/version; rejected because the vendor publishes no such contract.
 
 ### Discover and validate runtime versions centrally
 
@@ -42,7 +45,7 @@ Implement each supported configuration mutation as a specific `ToolDef` handler 
 
 ### Minimize source disclosure
 
-Apply a field allowlist and recursive sensitive-field redaction to every list/detail response and every write-facing output, including dry-run previews, confirmation prompts, and mutation results. Never return raw request or response bodies. The sanitizer MUST remove nested script/source/code and credential, password, secret, or token fields, and script source MUST be omitted from default listings. Do not add source retrieval as part of this capability. Use fake REST responses for tests and keep examples synthetic; do not place customer scripts, credentials, or instance data in fixtures.
+Apply a field allowlist and recursive sensitive-field redaction to every list/detail response and every write-facing output, including dry-run previews, confirmation prompts, and mutation results. Never return raw request or response bodies. The sanitizer MUST remove nested script/source/code and credential, password, secret, or token fields, and script source MUST be omitted from default listings. Do not add source retrieval as part of this capability. Use fake REST responses for tests and keep examples synthetic; do not place customer scripts, credentials, or instance data in fixtures. Fixtures derived from captures keep the captured structure but replace every value with a synthetic one.
 
 ### Validate contract and safety with isolated tests
 
@@ -54,6 +57,7 @@ Use the existing injectable REST client and unit test conventions to cover paths
 - Script source and configuration may contain secrets → allowlist and redact outputs across reads and writes, avoid real-instance fixtures, and prohibit executable-definition mutations.
 - Configuration writes can change instance behavior → use existing dry-run and explicit-confirmation safeguards, narrowly typed inputs, and exact request previews.
 - Some requested areas may have no supported REST API → expose supported reads/actions only and report the gap clearly rather than promising full CRUD.
+- Internal endpoints are unofficial and an upgrade can break them → support exact captured pairs only, fail closed on any other pair with a message that names the observed pair and says a new capture is needed, and label these operations as unofficial.
 
 ## Migration Plan
 

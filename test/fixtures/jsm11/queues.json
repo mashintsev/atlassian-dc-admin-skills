@@ -1,0 +1,50 @@
+{
+  "size": 3,
+  "start": 0,
+  "limit": 50,
+  "isLastPage": true,
+  "values": [
+    {
+      "id": "65",
+      "name": "Assigned to me",
+      "jql": "project = BANK AND resolution is EMPTY AND assignee = currentUser()",
+      "fields": [
+        "issuetype",
+        "issuekey",
+        "summary",
+        "status"
+      ],
+      "_links": {
+        "self": "https://jira.example.com/rest/servicedeskapi/servicedesk/3/queue/65"
+      }
+    },
+    {
+      "id": "66",
+      "name": "Unassigned",
+      "jql": "project = BANK AND resolution is EMPTY AND assignee is EMPTY",
+      "fields": [
+        "issuetype",
+        "issuekey",
+        "summary",
+        "created"
+      ],
+      "_links": {
+        "self": "https://jira.example.com/rest/servicedeskapi/servicedesk/3/queue/66"
+      }
+    },
+    {
+      "id": "67",
+      "name": "All open",
+      "jql": "project = BANK AND resolution is EMPTY",
+      "fields": [
+        "issuekey",
+        "summary",
+        "status",
+        "assignee"
+      ],
+      "_links": {
+        "self": "https://jira.example.com/rest/servicedeskapi/servicedesk/3/queue/67"
+      }
+    }
+  ]
+}

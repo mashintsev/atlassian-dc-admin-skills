@@ -1,0 +1,59 @@
+[
+  {
+    "self": "https://jira.example.com/rest/internal/2/field/customfield_10700/context/10800",
+    "id": 10800,
+    "name": "Default Configuration Scheme for Severity",
+    "description": "",
+    "field": {
+      "id": "customfield_10700",
+      "name": "Severity",
+      "custom": true,
+      "schema": {
+        "type": "option",
+        "custom": "com.atlassian.jira.plugin.system.customfieldtypes:select",
+        "customId": 10700
+      }
+    },
+    "allProjects": true,
+    "projects": [],
+    "allIssueTypes": true,
+    "issueTypes": [],
+    "fieldConfigIds": [
+      10900
+    ]
+  },
+  {
+    "self": "https://jira.example.com/rest/internal/2/field/customfield_10700/context/10801",
+    "id": 10801,
+    "name": "Bank incidents",
+    "description": "",
+    "field": {
+      "id": "customfield_10700",
+      "name": "Severity",
+      "custom": true,
+      "schema": {
+        "type": "option",
+        "custom": "com.atlassian.jira.plugin.system.customfieldtypes:select",
+        "customId": 10700
+      }
+    },
+    "allProjects": false,
+    "projects": [
+      {
+        "id": "10100",
+        "key": "DEMO",
+        "name": "Demo Project"
+      }
+    ],
+    "allIssueTypes": false,
+    "issueTypes": [
+      {
+        "id": "10004",
+        "name": "Incident"
+      }
+    ],
+    "fieldConfigIds": [
+      10901
+    ]
+  }
+]

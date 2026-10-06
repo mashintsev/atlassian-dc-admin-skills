@@ -17,11 +17,11 @@ import type { ToolDef } from "../types.js";
 import { boolArg, dryRunShape, guardedWrite, listArg, pageShape, serverPage } from "../util.js";
 import { compactIssue } from "./shape.js";
 
-const SD = "/rest/servicedeskapi";
-const OPT_IN = { "X-ExperimentalApi": "opt-in" };
+export const SD = "/rest/servicedeskapi";
+export const OPT_IN = { "X-ExperimentalApi": "opt-in" };
 const PAGE_MAX = 50;
 
-function sdGet(client: AtlassianClient, path: string, params?: Record<string, any>) {
+export function sdGet(client: AtlassianClient, path: string, params?: Record<string, any>) {
   return client.get(`${SD}${path}`, params, undefined, OPT_IN);
 }
 
@@ -30,7 +30,7 @@ function sdGet(client: AtlassianClient, path: string, params?: Record<string, an
  * GET /servicedesk/{id} only takes the numeric id (ServiceDeskResource 21.3.2), so finding the desk
  * of a project needs the listing; stopping early keeps it to one page on most instances.
  */
-async function findInPages(client: AtlassianClient, path: string, match: (v: any) => boolean, maxPages = 20): Promise<any | undefined> {
+export async function findInPages(client: AtlassianClient, path: string, match: (v: any) => boolean, maxPages = 20): Promise<any | undefined> {
   for (let start = 0, page = 0; page < maxPages; page++) {
     const data = await sdGet(client, path, { start, limit: PAGE_MAX });
     const values: any[] = data?.values ?? [];

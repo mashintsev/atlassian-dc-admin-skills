@@ -145,6 +145,22 @@ export async function guardedWrite(client: AtlassianClient, args: { dry_run?: bo
   return { dry_run: false, product: client.product, summary: req.summary, request, result: result ?? null };
 }
 
+/** Result of a write whose target state already holds: nothing to send, nothing to approve. */
+export interface AlreadySatisfied {
+  already_satisfied: true;
+  summary: string;
+  reason: string;
+  [k: string]: unknown;
+}
+
+export function alreadySatisfied(summary: string, reason: string, extra: Record<string, unknown> = {}): AlreadySatisfied {
+  return { already_satisfied: true, summary, reason, ...extra };
+}
+
+export function isAlreadySatisfied(v: unknown): v is AlreadySatisfied {
+  return !!v && typeof v === "object" && (v as any).already_satisfied === true;
+}
+
 /** Pick a subset of keys, skipping missing ones. */
 export function pick<T extends Record<string, any>>(obj: T | undefined | null, keys: string[]): Record<string, any> {
   const out: Record<string, any> = {};

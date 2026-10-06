@@ -1,0 +1,28 @@
+{
+  "viewScreen": {
+    "sharedWithProjects": [
+      {
+        "id": 10100,
+        "key": "DEMO",
+        "name": "Demo Project",
+        "archived": false
+      },
+      {
+        "id": 10101,
+        "key": "OPS",
+        "name": "Operations",
+        "archived": false
+      }
+    ],
+    "sharedWithIssueTypes": [
+      "10001",
+      "10002"
+    ],
+    "totalProjectsCount": 2,
+    "screenId": 10433,
+    "screenName": "DEMO: View Screen",
+    "canEdit": true,
+    "state": "editable",
+    "hiddenProjectsCount": 0
+  }
+}

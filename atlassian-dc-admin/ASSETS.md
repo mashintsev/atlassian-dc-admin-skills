@@ -30,7 +30,7 @@ Check a query with `assets_validate_aql` first when unsure. Page with `page`/`li
 
 ## Writes
 
-Confirmation works as for every write tool (see SKILL.md: dry run → choose "each" or "all at once" → dialog). Assets specifics:
+Confirmation works as for every write tool (see SKILL.md: dry run → choose "each" or "all at once" → dialog), and so does the closing UI check plan for admins after changes are applied (SKILL.md, Writes step 7). Assets specifics:
 
 - `assets_bulk_update` dry run lists every matched object; it refuses above `max_objects` (default 50).
 - Prefer `assets_archive_object` (Assets 10+) over `assets_delete_object`.

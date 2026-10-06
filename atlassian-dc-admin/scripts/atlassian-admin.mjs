@@ -3425,8 +3425,8 @@ var require_webidl = __commonJS({
       return new TypeError(`${message.header}: ${message.message}`);
     };
     webidl.errors.conversionFailed = function(context) {
-      const plural2 = context.types.length === 1 ? "" : " one of";
-      const message = `${context.argument} could not be converted to${plural2}: ${context.types.join(", ")}.`;
+      const plural4 = context.types.length === 1 ? "" : " one of";
+      const message = `${context.argument} could not be converted to${plural4}: ${context.types.join(", ")}.`;
       return webidl.errors.exception({
         header: context.prefix,
         message
@@ -10991,9 +10991,9 @@ var require_pluralizer = __commonJS({
       this: "these"
     };
     module.exports = class Pluralizer {
-      constructor(singular, plural2) {
+      constructor(singular, plural4) {
         this.singular = singular;
-        this.plural = plural2;
+        this.plural = plural4;
       }
       pluralize(count) {
         const one = count === 1;
@@ -16806,8 +16806,8 @@ var require_util7 = __commonJS({
           return false;
         }
       }
-      const num = Number.parseInt(value, 10);
-      return num >= 8 && num <= 15;
+      const num2 = Number.parseInt(value, 10);
+      return num2 >= 8 && num2 <= 15;
     }
     var hasIntl = typeof process.versions.icu === "string";
     var fatalDecoder = hasIntl ? new TextDecoder("utf-8", { fatal: true }) : void 0;
@@ -18902,9 +18902,9 @@ var require_UIEvent = __commonJS({
     }
     UIEvent.prototype = Object.create(Event2.prototype, {
       constructor: { value: UIEvent },
-      initUIEvent: { value: function(type, bubbles, cancelable, view, detail) {
+      initUIEvent: { value: function(type, bubbles, cancelable, view2, detail) {
         this.initEvent(type, bubbles, cancelable);
-        this.view = view;
+        this.view = view2;
         this.detail = detail;
       } }
     });
@@ -18927,8 +18927,8 @@ var require_MouseEvent = __commonJS({
     }
     MouseEvent.prototype = Object.create(UIEvent.prototype, {
       constructor: { value: MouseEvent },
-      initMouseEvent: { value: function(type, bubbles, cancelable, view, detail, screenX, screenY, clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, relatedTarget) {
-        this.initEvent(type, bubbles, cancelable, view, detail);
+      initMouseEvent: { value: function(type, bubbles, cancelable, view2, detail, screenX, screenY, clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, relatedTarget) {
+        this.initEvent(type, bubbles, cancelable, view2, detail);
         this.screenX = screenX;
         this.screenY = screenY;
         this.clientX = clientX;
@@ -20875,7 +20875,7 @@ var require_select = __commonJS({
     var compareDocumentPosition = function(a, b) {
       return a.compareDocumentPosition(b);
     };
-    var order = function(a, b) {
+    var order2 = function(a, b) {
       return compareDocumentPosition(a, b) & 2 ? 1 : -1;
     };
     var next2 = function(el) {
@@ -20968,8 +20968,8 @@ var require_select = __commonJS({
       regex = regex.replace(name, val.source || val);
       return new RegExp(regex);
     };
-    var truncateUrl = function(url2, num) {
-      return url2.replace(/^(?:\w+:\/\/|\/+)/, "").replace(/(?:\/+|\/*#.*?)$/, "").split("/", num).join("/");
+    var truncateUrl = function(url2, num2) {
+      return url2.replace(/^(?:\w+:\/\/|\/+)/, "").replace(/(?:\/+|\/*#.*?)$/, "").split("/", num2).join("/");
     };
     var parseNth = function(param_, test) {
       var param = param_.replace(/\s+/g, ""), cap;
@@ -21556,7 +21556,7 @@ var require_select = __commonJS({
             }
           }
         }
-        results.sort(order);
+        results.sort(order2);
       }
       return results;
     };
@@ -35493,7 +35493,7 @@ var require_lib = __commonJS({
 });
 
 // src/cli.ts
-import { appendFileSync, existsSync as existsSync7, mkdirSync as mkdirSync3, readFileSync as readFileSync8, writeFileSync as writeFileSync5 } from "fs";
+import { appendFileSync, existsSync as existsSync7, mkdirSync as mkdirSync3, readFileSync as readFileSync9, writeFileSync as writeFileSync5 } from "fs";
 import { spawnSync as spawnSync2 } from "child_process";
 import { dirname as dirname2, resolve as resolve9 } from "path";
 
@@ -37515,8 +37515,8 @@ function anchor(source) {
 }
 var date = /* @__PURE__ */ anchor(dateSource);
 function timeSource(args) {
-  const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
-  const regex = typeof args.precision === "number" ? args.precision === -1 ? `${hhmm}` : args.precision === 0 ? `${hhmm}:[0-5]\\d` : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}` : args.seconds ? `${hhmm}:[0-5]\\d(?:\\.\\d+)?` : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+  const hhmm2 = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
+  const regex = typeof args.precision === "number" ? args.precision === -1 ? `${hhmm2}` : args.precision === 0 ? `${hhmm2}:[0-5]\\d` : `${hhmm2}:[0-5]\\d\\.\\d{${args.precision}}` : args.seconds ? `${hhmm2}:[0-5]\\d(?:\\.\\d+)?` : `${hhmm2}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
 function time(args) {
@@ -46167,8 +46167,8 @@ var error43 = () => {
       case "not_multiple_of":
         return `N\xFAmero inv\xE1lido: deve ser m\xFAltiplo de ${issue2.divisor}`;
       case "unrecognized_keys": {
-        const plural2 = issue2.keys.length > 1 ? "s" : "";
-        return `Chave${plural2} inv\xE1lida${plural2}: ${joinValues(issue2.keys, ", ")}`;
+        const plural4 = issue2.keys.length > 1 ? "s" : "";
+        return `Chave${plural4} inv\xE1lida${plural4}: ${joinValues(issue2.keys, ", ")}`;
       }
       case "invalid_key":
         return `Entrada inv\xE1lida n${translateOriginWithArticle(issue2.origin, "definite")}`;
@@ -46312,8 +46312,8 @@ var error44 = () => {
       case "not_multiple_of":
         return `N\xFAmero inv\xE1lido: deve ser m\xFAltiplo de ${issue2.divisor}`;
       case "unrecognized_keys": {
-        const plural2 = issue2.keys.length > 1 ? "s" : "";
-        return `Chave${plural2} inv\xE1lida${plural2}: ${joinValues(issue2.keys, ", ")}`;
+        const plural4 = issue2.keys.length > 1 ? "s" : "";
+        return `Chave${plural4} inv\xE1lida${plural4}: ${joinValues(issue2.keys, ", ")}`;
       }
       case "invalid_key":
         return `Entrada inv\xE1lida n${translateOriginWithArticle(issue2.origin, "definite")}`;
@@ -49687,9 +49687,9 @@ function generateDiscriminatedUnionCheck(doc, ctx, def, accessor) {
       }
       claimed.add(value);
     }
-    const conditions = Array.from(values, (value) => literalEquality(ctx, discVar, value));
+    const conditions2 = Array.from(values, (value) => literalEquality(ctx, discVar, value));
     const prefix = firstBranch ? "if" : "else if";
-    doc.write(`${prefix} (${conditions.join(" || ")}) {`);
+    doc.write(`${prefix} (${conditions2.join(" || ")}) {`);
     doc.indented((d) => {
       const branchOutput = generateCheck(d, ctx, option, accessor);
       d.write(`${outputVar} = ${branchOutput};`);
@@ -55290,11 +55290,14 @@ function loadConfig(product, env) {
   } else {
     throw new ConfigurationError(`Set ${P2}_PAT_TOKEN, or ${P2}_USERNAME and ${P2}_PASSWORD`);
   }
+  const caFile = get("CA_FILE");
+  if (caFile !== void 0 && !existsSync(caFile)) throw new ConfigurationError(`${P2}_CA_FILE points to a missing file: ${caFile}`);
   const timeoutS = Number(get("TIMEOUT") ?? 60);
   return {
     product,
     baseUrl,
     verifySsl: truthy(get("SSL_VERIFY"), true),
+    caFile,
     timeoutMs: (Number.isFinite(timeoutS) && timeoutS > 0 ? timeoutS : 60) * 1e3,
     headers
   };
@@ -55474,6 +55477,12 @@ function writeResult(r) {
       const body = step.body === void 0 ? "" : ` ${JSON.stringify(step.body)}`;
       lines.push(`then${step.label ? ` (${step.label})` : ""}: ${step.method} ${step.url}${body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}\u2026` : body}`);
     }
+    if (r.warning) lines.push(`warning: ${r.warning}`);
+    if (r.manual) {
+      lines.push(`manual change: ${r.manual.reason}`);
+      lines.push("Nothing is sent. Enter the change in the Jira UI, then re-run to verify.");
+      return lines.join("\n");
+    }
     lines.push("Nothing changed. After user approval re-run with dry_run=false.");
     return lines.join("\n");
   }
@@ -55484,7 +55493,11 @@ function writeResult(r) {
 function isWriteResult(v) {
   return !!v && typeof v === "object" && "dry_run" in v && "request" in v;
 }
+function isAlreadySatisfiedResult(v) {
+  return !!v && typeof v === "object" && v.already_satisfied === true;
+}
 function toCompact(value) {
+  if (isAlreadySatisfiedResult(value)) return `ALREADY-SATISFIED | ${value.summary} | ${value.reason}`;
   if (isWriteResult(value)) return writeResult(value);
   const v = prune(value);
   if (v === void 0 || v === null || typeof v === "object" && isEmpty(v)) return "(empty)";
@@ -55495,6 +55508,7 @@ function toCompact(value) {
 }
 function render(value, format, fields) {
   if (format === "full") return JSON.stringify(value ?? null);
+  if (isAlreadySatisfiedResult(value)) return format === "json" ? JSON.stringify(prune(value)) : toCompact(value);
   if (isWriteResult(value)) return format === "json" ? JSON.stringify(prune(value)) : writeResult(value);
   const projected = projectFields(prune(value), fields);
   return format === "json" ? JSON.stringify(projected ?? null) : toCompact(projected);
@@ -55702,11 +55716,13 @@ function declined(message = "The user did not approve the change") {
 
 // src/plan.ts
 import { createHash } from "crypto";
-import { existsSync as existsSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync3 } from "fs";
+import { existsSync as existsSync5, readFileSync as readFileSync7, renameSync, writeFileSync as writeFileSync3 } from "fs";
 import { resolve as resolve7 } from "path";
 
 // src/client.ts
 var import_undici = __toESM(require_undici(), 1);
+import { readFileSync as readFileSync2 } from "fs";
+import { rootCertificates } from "tls";
 
 // src/errors.ts
 var ERROR_DETAIL_MAX_CHARS = 500;
@@ -55756,6 +55772,28 @@ var ValidationError = class extends Error {
     this.name = "ValidationError";
   }
 };
+var VerificationError = class extends Error {
+  state;
+  constructor(message, state) {
+    super(message);
+    this.name = "VerificationError";
+    this.state = state;
+  }
+};
+var UnsupportedError = class extends Error {
+  details;
+  constructor(message, details) {
+    super(message);
+    this.name = "Unsupported";
+    this.details = details;
+  }
+};
+var PermissionError = class extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "PermissionDenied";
+  }
+};
 
 // src/client.ts
 var PAGINATION_MAX = 1e3;
@@ -55793,6 +55831,10 @@ async function boundedAll(thunks, limit = MAX_CONCURRENCY) {
 function isJiraUserKey(input2) {
   return /^JIRAUSER\d+$/i.test(input2);
 }
+function tlsOptions(config2) {
+  if (!config2.caFile) return { rejectUnauthorized: config2.verifySsl };
+  return { rejectUnauthorized: config2.verifySsl, ca: [...rootCertificates, readFileSync2(config2.caFile, "utf8")] };
+}
 var AtlassianClient = class _AtlassianClient {
   product;
   config;
@@ -55804,7 +55846,7 @@ var AtlassianClient = class _AtlassianClient {
     if (fetchImpl) {
       this.fetchImpl = fetchImpl;
     } else {
-      this.agent = new import_undici.Agent({ keepAliveTimeout: 3e4, connect: { rejectUnauthorized: config2.verifySsl } });
+      this.agent = new import_undici.Agent({ keepAliveTimeout: 3e4, connect: tlsOptions(config2) });
       this.fetchImpl = import_undici.fetch;
     }
   }
@@ -55845,6 +55887,17 @@ var AtlassianClient = class _AtlassianClient {
   async request(method, path, opts = {}) {
     const res = await this.send(method, this.url(path, opts.params), opts);
     return parse3(await res.text());
+  }
+  /**
+   * Jira's XSRF token for resources that check `atl_token` (double submit: the token goes back
+   * as the `atlassian.xsrf.token` cookie and as the parameter). Read from the cookie Jira sets
+   * on any response; undefined when Jira sets none.
+   */
+  async xsrfToken() {
+    const res = await this.send("GET", this.url("/rest/api/2/serverInfo"), {});
+    await res.text();
+    const cookies = res.headers.get("set-cookie") ?? "";
+    return /atlassian\.xsrf\.token=([^;,\s]+)/.exec(cookies)?.[1];
   }
   /** GET a binary body (attachments, exports). `path` may be an absolute URL on the same host. */
   async getBytes(pathOrUrl, params) {
@@ -55897,7 +55950,7 @@ function parse3(text) {
 }
 
 // src/tools/util.ts
-import { existsSync as existsSync2, readFileSync as readFileSync2, statSync } from "fs";
+import { existsSync as existsSync2, readFileSync as readFileSync3, statSync } from "fs";
 import { basename, resolve as resolve2 } from "path";
 var nameFilterShape = {
   name_contains: external_exports.string().optional().describe("Only items whose name contains this text (case-insensitive)")
@@ -55962,7 +56015,7 @@ async function guardedWrite(client, args, req) {
   let form;
   if (fileList) {
     form = new FormData();
-    for (const f of fileList) form.append(f.field, new Blob([readFileSync2(f.path)]), f.name);
+    for (const f of fileList) form.append(f.field, new Blob([readFileSync3(f.path)]), f.name);
   }
   const result = await client.request(req.method, req.path, {
     params: req.params,
@@ -55972,6 +56025,9 @@ async function guardedWrite(client, args, req) {
     headers: req.headers
   });
   return { dry_run: false, product: client.product, summary: req.summary, request, result: result ?? null };
+}
+function alreadySatisfied(summary, reason, extra = {}) {
+  return { already_satisfied: true, summary, reason, ...extra };
 }
 function pick2(obj, keys) {
   const out = {};
@@ -57339,12 +57395,12 @@ var jiraFieldTools = [
       const c = client("jira");
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 50;
-      let projectIds;
+      let projectIds2;
       if (args.project_key) {
         const p = await c.get(`${API6}/project/${seg(args.project_key)}`);
-        projectIds = [Number(p.id)];
+        projectIds2 = [Number(p.id)];
       }
-      const filters = { search: args.search, projectIds };
+      const filters = { search: args.search, projectIds: projectIds2 };
       const compact = (f) => ({
         id: f.id,
         name: f.name,
@@ -57424,39 +57480,6 @@ var jiraFieldTools = [
     }
   },
   {
-    name: "jira_list_screens",
-    product: "jira",
-    description: "Screens with id and name (server-side search and paging).",
-    inputShape: { search: external_exports.string().optional(), ...pageShape(100) },
-    async handler({ client }, args) {
-      const offset = args.offset ?? 0;
-      const limit = args.limit ?? 100;
-      const data = await client("jira").get(`${API6}/screens`, { startAt: offset, maxResults: limit, search: args.search });
-      const values = (Array.isArray(data) ? data : data?.values ?? []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        description: s.description ?? ""
-      }));
-      return serverPage(values, offset, limit, data?.total, data?.isLast);
-    }
-  },
-  {
-    name: "jira_get_screen",
-    product: "jira",
-    description: "A screen's tabs with their fields in order.",
-    inputShape: { screen_id: external_exports.coerce.number().int() },
-    async handler({ client }, args) {
-      const c = client("jira");
-      const tabs = await c.get(`${API6}/screens/${args.screen_id}/tabs`) ?? [];
-      const fields = await Promise.all(tabs.map((t) => c.get(`${API6}/screens/${args.screen_id}/tabs/${t.id}/fields`)));
-      return tabs.map((t, i) => ({
-        id: t.id,
-        name: t.name,
-        fields: (fields[i] ?? []).map((f) => ({ id: f.id, name: f.name, type: f.type }))
-      }));
-    }
-  },
-  {
     name: "jira_list_fields",
     product: "jira",
     description: "All system and custom fields with id, name, custom flag and schema type (no usage stats).",
@@ -57466,6 +57489,1188 @@ var jiraFieldTools = [
       const needle = args.search?.toLowerCase();
       const items = fields.filter((f) => !needle || String(f.name).toLowerCase().includes(needle) || String(f.id).includes(needle)).map((f) => ({ id: f.id, name: f.name, custom: f.custom, type: f.schema?.custom ?? f.schema?.type ?? null }));
       return paginate(items, args, 100);
+    }
+  }
+];
+
+// src/tools/jira/fieldRefs.ts
+async function allFields(client) {
+  return await client.get("/rest/api/2/field") ?? [];
+}
+function describeField(f, ref) {
+  return { id: f.id, name: f.name, custom: !!f.custom, type: f.schema?.custom ?? f.schema?.type, ref };
+}
+async function resolveField(client, given, opts = {}) {
+  const value = String(given).trim();
+  const fields = opts.fields ?? await allFields(client);
+  const byId = fields.find((f) => f.id === value);
+  if (byId) return describeField(byId, value);
+  if (/^customfield_\d+$/.test(value)) throw new ValidationError(`Field ${value} does not exist`);
+  const byName = fields.filter((f) => String(f.name ?? "").toLowerCase() === value.toLowerCase());
+  if (byName.length > 1) {
+    throw new ValidationError(`Field name '${value}' is ambiguous: ${byName.map((f) => `${f.id} (${f.name})`).join(", ")}; pass the id`);
+  }
+  if (byName.length === 1) return describeField(byName[0], { field: value });
+  if (opts.allowPending) return { ref: { field: value }, name: value, pending: true };
+  throw new ValidationError(`Field '${value}' not found`);
+}
+function fieldPlaceholder(f) {
+  return f.id ?? `{${f.name}}`;
+}
+
+// src/tools/jira/screens.ts
+var API7 = "/rest/api/2";
+var SCREEN_PAGE = 100;
+var MAX_SCREENS = 5e3;
+var MAX_PROJECT_SCAN2 = 2e3;
+var DEFAULT_PROJECT_SCAN = 100;
+function screensOf(data) {
+  if (Array.isArray(data)) return data;
+  return data?.screens ?? data?.values ?? [];
+}
+var screenLists = /* @__PURE__ */ new WeakMap();
+function allScreens(client) {
+  let p = screenLists.get(client);
+  if (!p) {
+    p = (async () => {
+      const out = [];
+      for (let startAt = 0; out.length < MAX_SCREENS; startAt += SCREEN_PAGE) {
+        const data = await client.get(`${API7}/screens`, { startAt, maxResults: SCREEN_PAGE });
+        const page = screensOf(data);
+        out.push(...page.map((s) => ({ id: Number(s.id), name: String(s.name) })));
+        if (page.length < SCREEN_PAGE || data?.total != null && out.length >= data.total) break;
+      }
+      return out;
+    })();
+    screenLists.set(client, p);
+  }
+  return p;
+}
+async function readScreen(client, screenId) {
+  const tabs = await client.get(`${API7}/screens/${screenId}/tabs`) ?? [];
+  const fields = await Promise.all(tabs.map((t) => client.get(`${API7}/screens/${screenId}/tabs/${t.id}/fields`)));
+  return tabs.map((t, i) => ({
+    id: Number(t.id),
+    name: t.name,
+    fields: (fields[i] ?? []).map((f) => ({ id: f.id, name: f.name, type: f.type }))
+  }));
+}
+function parseWhereIsMyField(data) {
+  const out = {};
+  for (const line2 of data?.statusLines ?? []) {
+    const summary = line2?.summary?.[0]?.message;
+    const params = (line2?.details ?? []).flatMap((d) => d?.parameters ?? []);
+    const plain = params.filter((p) => p?.type === "plain").map((p) => String(p.value));
+    const links = params.filter((p) => p?.type === "link").map((p) => String(p.href ?? ""));
+    const idFrom = (page) => links.map((h2) => new RegExp(`/${page}\\.jspa\\?id=(\\d+)`).exec(h2)?.[1]).find(Boolean);
+    if (summary === "Field configuration") out.fieldConfiguration = plain[1];
+    if (summary === "Field Screen") {
+      out.screenName = plain[1];
+      out.screenId = idFrom("ConfigureFieldScreen");
+      out.screenSchemeId = idFrom("ConfigureFieldScreenScheme");
+      out.issueTypeScreenSchemeId = idFrom("ConfigureIssueTypeScreenScheme");
+    }
+  }
+  return out;
+}
+async function probeField(client) {
+  const data = await client.get(`${API7}/customFields`, { startAt: 1, maxResults: 1 });
+  return data?.values?.[0]?.id;
+}
+function whereIsMyField(client, probe, project, issueTypeId, op) {
+  return client.get(`/rest/whereismycf/1.0/fields/${seg(probe)}`, { projectKey: project, issueTypeId, issueOperation: op });
+}
+var OPERATIONS = [{ name: "create", id: 0 }, { name: "edit", id: 1 }];
+var forbiddenOrMissing = (e) => isHttpStatusError(e) && (e.status === 403 || e.status === 404);
+async function scanUsage(client, scanProjects) {
+  const [screens, probe, projectList2] = await Promise.all([
+    allScreens(client),
+    probeField(client),
+    client.get(`${API7}/project`)
+  ]);
+  const byName = new Map(screens.map((s) => [s.name, s.id]));
+  const projects = (projectList2 ?? []).slice(0, scanProjects);
+  const unreadable = /* @__PURE__ */ new Set();
+  let unresolved = 0;
+  const perProject = await boundedAll(projects.map((p) => async () => {
+    let issueTypes;
+    try {
+      issueTypes = (await client.get(`${API7}/project/${seg(p.key)}`))?.issueTypes ?? [];
+    } catch (e) {
+      if (forbiddenOrMissing(e)) {
+        unreadable.add(p.key);
+        return [];
+      }
+      throw e;
+    }
+    const uses = [];
+    for (const it2 of issueTypes) {
+      const base = { project: p.key, issueType: it2.name, issueTypeId: String(it2.id) };
+      try {
+        const view2 = await client.get(`/rest/projectconfig/1/issuetype/${seg(p.key)}/${seg(it2.id)}/fields`);
+        if (view2?.viewScreen) uses.push({ ...base, operation: "view", screenId: Number(view2.viewScreen.screenId), screenName: view2.viewScreen.screenName });
+      } catch (e) {
+        if (!forbiddenOrMissing(e)) throw e;
+        unreadable.add(p.key);
+      }
+      if (!probe) {
+        unresolved += OPERATIONS.length;
+        continue;
+      }
+      for (const op of OPERATIONS) {
+        try {
+          const w = parseWhereIsMyField(await whereIsMyField(client, probe, p.key, String(it2.id), op.id));
+          const screenId = w.screenId ? Number(w.screenId) : w.screenName ? byName.get(w.screenName) : void 0;
+          if (screenId === void 0) unresolved++;
+          uses.push({
+            ...base,
+            operation: op.name,
+            screenId: screenId ?? null,
+            screenName: w.screenName,
+            screenSchemeId: w.screenSchemeId,
+            issueTypeScreenSchemeId: w.issueTypeScreenSchemeId
+          });
+        } catch (e) {
+          if (!forbiddenOrMissing(e)) throw e;
+          unreadable.add(p.key);
+        }
+      }
+    }
+    return uses;
+  }), 4);
+  return {
+    uses: perProject.flat(),
+    scannedProjects: projects.length,
+    totalProjects: (projectList2 ?? []).length,
+    truncatedScan: (projectList2 ?? []).length > projects.length || void 0,
+    unreadableProjects: unreadable.size || void 0,
+    unresolved: unresolved || void 0
+  };
+}
+var usageScans = /* @__PURE__ */ new WeakMap();
+function screenUsageScan(client, scanProjects = DEFAULT_PROJECT_SCAN) {
+  let byCap = usageScans.get(client);
+  if (!byCap) usageScans.set(client, byCap = /* @__PURE__ */ new Map());
+  let p = byCap.get(scanProjects);
+  if (!p) byCap.set(scanProjects, p = scanUsage(client, scanProjects));
+  return p;
+}
+var plural2 = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+function summarizeUsage(scan, screenId) {
+  const uses = scan.uses.filter((u) => u.screenId === screenId);
+  const projects = [...new Set(uses.map((u) => u.project))];
+  const issueTypes = new Set(uses.map((u) => u.issueType));
+  const combos = new Set(uses.map((u) => `${u.project}/${u.issueTypeId}`));
+  const shared = projects.length > 1 || combos.size > 1;
+  return {
+    uses,
+    projects,
+    screenSchemes: [...new Set(uses.map((u) => u.screenSchemeId).filter(Boolean))],
+    issueTypeScreenSchemes: [...new Set(uses.map((u) => u.issueTypeScreenSchemeId).filter(Boolean))],
+    warning: shared ? `Shared screen: used by ${plural2(projects.length, "project")} and ${plural2(issueTypes.size, "issue type")}; a change affects all of them` : void 0,
+    complete: !scan.truncatedScan && !scan.unreadableProjects && !scan.unresolved
+  };
+}
+var scanShape = {
+  scan_projects: external_exports.coerce.number().int().min(1).max(MAX_PROJECT_SCAN2).optional().describe(`Projects to scan (default ${DEFAULT_PROJECT_SCAN}, max ${MAX_PROJECT_SCAN2}); each costs 1 + 3 requests per issue type`)
+};
+async function loadTab(client, screenId, tabId) {
+  const [tabs, screens] = await Promise.all([readScreen(client, screenId), allScreens(client)]);
+  const tab = tabs.find((t) => t.id === tabId);
+  if (!tab) throw new ValidationError(`Screen ${screenId} has no tab ${tabId}; tabs: ${tabs.map((t) => `${t.id} (${t.name})`).join(", ")}`);
+  const name = screens.find((s) => s.id === screenId)?.name ?? String(screenId);
+  return { screen: { id: screenId, name }, tab, tabs, order: tab.fields.map((f) => f.id) };
+}
+var fieldsPath = (s, t) => `${API7}/screens/${s}/tabs/${t}/fields`;
+function moveStep(client, s, t, field, desired) {
+  const i = desired.indexOf(field);
+  const json2 = i === 0 ? { position: "First" } : { after: client.url(`${fieldsPath(s, t)}/${seg(desired[i - 1])}`) };
+  return { method: "POST", path: `${fieldsPath(s, t)}/${seg(field)}/move`, json: json2 };
+}
+function insertAt(list, field, position) {
+  const rest = list.filter((id2) => id2 !== field);
+  const i = position === void 0 ? rest.length : Math.min(position - 1, rest.length);
+  return [...rest.slice(0, i), field, ...rest.slice(i)];
+}
+async function affectedProjects(client, screenId) {
+  try {
+    const s = summarizeUsage(await screenUsageScan(client), screenId);
+    return { projects: s.projects, warning: s.warning, complete: s.complete };
+  } catch (e) {
+    return { unavailable: String(e?.message ?? e) };
+  }
+}
+function affectedLine(a) {
+  if (a.unavailable) return `affected projects unknown: ${a.unavailable}`;
+  const list = a.projects.length ? a.projects.join(", ") : "none found";
+  return `affected projects: ${list}${a.complete ? "" : " (incomplete scan)"}${a.warning ? `; ${a.warning}` : ""}`;
+}
+function anchorOf(desired, id2) {
+  const i = desired.indexOf(id2);
+  return i <= 0 ? "first" : desired[i - 1];
+}
+async function runChange(client, dryRun, c) {
+  const described = c.steps.map((s) => ({ method: s.method, url: client.url(s.path), body: s.json }));
+  if (dryRun) {
+    const affected = await affectedProjects(client, c.st.screen.id);
+    return {
+      dry_run: true,
+      product: client.product,
+      summary: c.summary,
+      warning: affectedLine(affected),
+      request: described[0],
+      followUps: described.slice(1),
+      identity: c.identity,
+      state: c.state,
+      before: c.st.order,
+      after: c.desired,
+      affectedProjects: affected,
+      note: "Nothing was changed. Confirm with the user, then re-run with dry_run=false."
+    };
+  }
+  for (const s of c.steps) await client.request(s.method, s.path, { json: s.json });
+  const screen = await readScreen(client, c.st.screen.id);
+  const actual = screen.find((t) => t.id === c.st.tab.id)?.fields.map((f) => f.id) ?? [];
+  if (JSON.stringify(actual) !== JSON.stringify(c.desired)) {
+    throw new VerificationError(
+      `Tab ${c.st.tab.name} of ${c.st.screen.name} does not show the intended order after the change`,
+      { expected: c.desired, actual }
+    );
+  }
+  return { dry_run: false, product: client.product, summary: c.summary, request: described[0], result: screen };
+}
+var tabShape = {
+  screen_id: external_exports.coerce.number().int(),
+  tab_id: external_exports.coerce.number().int(),
+  field_id: external_exports.coerce.string().min(1).describe("Field id (customfield_N, labels...) or exact field name")
+};
+var positionArg = external_exports.coerce.number().int().min(1).describe("1-based position on the tab");
+function fieldLabel(f) {
+  return f.name ?? f.id ?? "?";
+}
+async function addScreenField(client, args) {
+  const dryRun = args.dry_run !== false;
+  const [st2, field] = await Promise.all([
+    loadTab(client, args.screen_id, args.tab_id),
+    resolveField(client, args.field_id, { allowPending: dryRun })
+  ]);
+  const label = fieldLabel(field);
+  const where = `${st2.screen.name} / ${st2.tab.name}`;
+  if (field.id) {
+    const other = st2.tabs.find((t) => t.id !== st2.tab.id && t.fields.some((f) => f.id === field.id));
+    if (other) throw new ValidationError(`${label} is already on tab ${other.name} (${other.id}) of ${st2.screen.name}; move or remove it there first`);
+  }
+  const id2 = fieldPlaceholder(field);
+  if (args.position !== void 0 && args.position > st2.order.length + 1) {
+    throw new ValidationError(`Position ${args.position} is beyond the end of tab ${st2.tab.name} (${st2.order.length} fields)`);
+  }
+  const present = !!field.id && st2.order.includes(field.id);
+  const desired = present && args.position === void 0 ? st2.order : insertAt(st2.order, id2, args.position);
+  if (present && JSON.stringify(desired) === JSON.stringify(st2.order)) {
+    return alreadySatisfied(`Add ${label} to ${where}`, `${label} is already on the tab${args.position ? ` at position ${args.position}` : ""}`);
+  }
+  const steps2 = [];
+  if (!present) steps2.push({ method: "POST", path: fieldsPath(st2.screen.id, st2.tab.id), json: { fieldId: id2 } });
+  if (desired.indexOf(id2) !== desired.length - 1 || present) steps2.push(moveStep(client, st2.screen.id, st2.tab.id, id2, desired));
+  const at2 = args.position ? ` at position ${args.position}` : "";
+  return runChange(client, dryRun, {
+    op: "add",
+    st: st2,
+    field,
+    label,
+    steps: steps2,
+    desired,
+    summary: `${present ? "Move" : "Add"} ${label} ${present ? "on" : "to"} ${where}${at2}`,
+    identity: { op: "add", screen: st2.screen.id, tab: st2.tab.id, field: field.ref, position: args.position ?? null },
+    state: { present, anchor: args.position === void 0 ? null : anchorOf(desired, id2) }
+  });
+}
+var jiraScreenTools = [
+  {
+    name: "jira_list_screens",
+    product: "jira",
+    description: "Screens with id and name (server-side search and paging).",
+    inputShape: { search: external_exports.coerce.string().optional(), ...pageShape(100) },
+    async handler({ client }, args) {
+      const offset = args.offset ?? 0;
+      const limit = args.limit ?? 100;
+      const data = await client("jira").get(`${API7}/screens`, { startAt: offset, maxResults: limit, search: args.search });
+      const values = screensOf(data).map((s) => ({ id: s.id, name: s.name, description: s.description ?? "" }));
+      return serverPage(values, offset, limit, data?.total, data?.isLast);
+    }
+  },
+  {
+    name: "jira_get_screen",
+    product: "jira",
+    description: "A screen's tabs with their fields in order.",
+    inputShape: { screen_id: external_exports.coerce.number().int() },
+    async handler({ client }, args) {
+      return readScreen(client("jira"), args.screen_id);
+    }
+  },
+  {
+    name: "jira_get_screen_usage",
+    product: "jira",
+    description: "Where a screen is used: projects, issue types and operations (create/edit/view), the screen schemes and issue type screen schemes when Jira names them, and a sharing warning. Scans projects through the bundled 'Where is my field' and project-config plugins (internal APIs, verified on Jira 11.3); `complete` is false when the scan was cut or some projects could not be read. Large instances: --out or a subagent.",
+    inputShape: { screen_id: external_exports.coerce.number().int(), ...scanShape, ...pageShape(100) },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const [scan, screens] = await Promise.all([screenUsageScan(c, args.scan_projects ?? DEFAULT_PROJECT_SCAN), allScreens(c)]);
+      const s = summarizeUsage(scan, args.screen_id);
+      const { uses: _uses, ...meta3 } = scan;
+      const items = s.uses.map((u) => ({ project: u.project, issueType: u.issueType, operation: u.operation }));
+      return {
+        screen: { id: args.screen_id, name: screens.find((x2) => x2.id === args.screen_id)?.name ?? null },
+        ...paginate(items, args, 100),
+        projects: s.projects,
+        screenSchemes: s.screenSchemes,
+        issueTypeScreenSchemes: s.issueTypeScreenSchemes,
+        warning: s.warning,
+        ...meta3,
+        complete: s.complete
+      };
+    }
+  },
+  {
+    name: "jira_add_screen_field",
+    product: "jira",
+    write: true,
+    description: "Add a field to a screen tab, optionally at a 1-based position. Already on the tab \u2192 already-satisfied; on another tab of the screen \u2192 error. The dry run shows the order before/after and the projects using the screen; after the change the screen is read back.",
+    inputShape: { ...tabShape, position: positionArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      return addScreenField(client("jira"), args);
+    }
+  },
+  {
+    name: "jira_remove_screen_field",
+    product: "jira",
+    write: true,
+    description: "Remove a field from a screen tab. Not on the tab \u2192 already-satisfied. The screen is read back after the change.",
+    inputShape: { ...tabShape, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const dryRun = args.dry_run !== false;
+      const [st2, field] = await Promise.all([loadTab(c, args.screen_id, args.tab_id), resolveField(c, args.field_id, { allowPending: true })]);
+      const label = fieldLabel(field);
+      const where = `${st2.screen.name} / ${st2.tab.name}`;
+      if (!field.id || !st2.order.includes(field.id)) {
+        const other = field.id ? st2.tabs.find((t) => t.fields.some((f) => f.id === field.id)) : void 0;
+        return alreadySatisfied(`Remove ${label} from ${where}`, `${label} is not on the tab${other ? ` (it is on tab ${other.name})` : ""}`);
+      }
+      return runChange(c, dryRun, {
+        op: "remove",
+        st: st2,
+        field,
+        label,
+        steps: [{ method: "DELETE", path: `${fieldsPath(st2.screen.id, st2.tab.id)}/${seg(field.id)}` }],
+        desired: st2.order.filter((id2) => id2 !== field.id),
+        summary: `Remove ${label} from ${where}`,
+        identity: { op: "remove", screen: st2.screen.id, tab: st2.tab.id, field: field.ref },
+        state: { present: true }
+      });
+    }
+  },
+  {
+    name: "jira_move_screen_field",
+    product: "jira",
+    write: true,
+    description: "Move a field on a screen tab to a 1-based position or right after another field (after_field_id). Already there \u2192 already-satisfied.",
+    inputShape: {
+      ...tabShape,
+      position: positionArg.optional(),
+      after_field_id: external_exports.coerce.string().optional().describe("Place right after this field (id or exact name)"),
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      if (args.position === void 0 === (args.after_field_id === void 0)) {
+        throw new ValidationError("Pass exactly one of position or after_field_id");
+      }
+      const c = client("jira");
+      const dryRun = args.dry_run !== false;
+      const [st2, field, after] = await Promise.all([
+        loadTab(c, args.screen_id, args.tab_id),
+        resolveField(c, args.field_id),
+        args.after_field_id !== void 0 ? resolveField(c, args.after_field_id) : Promise.resolve(void 0)
+      ]);
+      const label = fieldLabel(field);
+      const where = `${st2.screen.name} / ${st2.tab.name}`;
+      if (!st2.order.includes(field.id)) throw new ValidationError(`${label} is not on ${where}`);
+      let desired;
+      if (after) {
+        if (!st2.order.includes(after.id)) throw new ValidationError(`${fieldLabel(after)} is not on ${where}`);
+        if (after.id === field.id) throw new ValidationError("after_field_id is the field itself");
+        const rest = st2.order.filter((id2) => id2 !== field.id);
+        desired = insertAt(rest, field.id, rest.indexOf(after.id) + 2);
+      } else {
+        if (args.position > st2.order.length) throw new ValidationError(`Position ${args.position} is beyond the end of tab ${st2.tab.name} (${st2.order.length} fields)`);
+        desired = insertAt(st2.order, field.id, args.position);
+      }
+      const target = after ? `after ${fieldLabel(after)}` : `position ${args.position}`;
+      if (JSON.stringify(desired) === JSON.stringify(st2.order)) {
+        return alreadySatisfied(`Move ${label} on ${where} to ${target}`, `${label} is already there`);
+      }
+      return runChange(c, dryRun, {
+        op: "move",
+        st: st2,
+        field,
+        label,
+        desired,
+        steps: [moveStep(c, st2.screen.id, st2.tab.id, field.id, desired)],
+        summary: `Move ${label} on ${where} to ${target}`,
+        identity: { op: "move", screen: st2.screen.id, tab: st2.tab.id, field: field.ref, position: args.position ?? null, after: after?.ref ?? null },
+        state: { present: true, anchor: anchorOf(st2.order, field.id) }
+      });
+    }
+  }
+];
+
+// src/jiraVersion.ts
+var VERIFIED_JIRA_VERSIONS = [{ label: "11.3.x", pattern: /^11\.3\./ }];
+var versions = /* @__PURE__ */ new WeakMap();
+function jiraVersion(client) {
+  let v = versions.get(client);
+  if (!v) {
+    v = client.get("/rest/api/2/serverInfo").then((info) => String(info?.version ?? ""));
+    versions.set(client, v);
+  }
+  return v;
+}
+async function requireJiraVersion(client, feature) {
+  const version2 = await jiraVersion(client);
+  if (!VERIFIED_JIRA_VERSIONS.some((v) => v.pattern.test(version2))) {
+    const allowed = VERIFIED_JIRA_VERSIONS.map((v) => v.label).join(", ");
+    throw new UnsupportedError(
+      `${feature} use internal Jira APIs verified only on Jira ${allowed}; this Jira is ${version2 || "of unknown version"}`,
+      { observedVersion: version2, verifiedVersions: allowed }
+    );
+  }
+  return version2;
+}
+var VERIFIED_JSM_VERSIONS = [{ label: "11.3.x", pattern: /^11\.3\./ }];
+var jsmVersions = /* @__PURE__ */ new WeakMap();
+function jsmVersion(client) {
+  let v = jsmVersions.get(client);
+  if (!v) {
+    v = client.get("/rest/servicedeskapi/info").then((info) => String(info?.version ?? ""));
+    jsmVersions.set(client, v);
+  }
+  return v;
+}
+async function requireJsmVersion(client, feature) {
+  const version2 = await jsmVersion(client);
+  if (!VERIFIED_JSM_VERSIONS.some((v) => v.pattern.test(version2))) {
+    const allowed = VERIFIED_JSM_VERSIONS.map((v) => v.label).join(", ");
+    throw new UnsupportedError(
+      `${feature} use internal JSM APIs verified only on JSM ${allowed}; this JSM is ${version2 || "of unknown version"}`,
+      { observedJsmVersion: version2, verifiedJsmVersions: allowed }
+    );
+  }
+  return version2;
+}
+
+// src/tools/jira/customFields.ts
+var API8 = "/rest/api/2";
+var INTERNAL = "/rest/internal/2";
+var TYPE_PREFIX = "com.atlassian.jira.plugin.system.customfieldtypes";
+var FIELD_TYPES = {
+  "text-single-line": `${TYPE_PREFIX}:textfield`,
+  url: `${TYPE_PREFIX}:url`,
+  "date-picker": `${TYPE_PREFIX}:datepicker`
+};
+async function fieldTypes(client) {
+  const data = await client.get("/rest/globalconfig/1/customfieldtypes");
+  return Array.isArray(data) ? data : data?.types ?? [];
+}
+function normalizeContext(c) {
+  return {
+    id: Number(c.id),
+    name: String(c.name ?? ""),
+    description: String(c.description ?? ""),
+    allProjects: !!c.allProjects,
+    projects: (c.projects ?? []).map((p) => String(p.id)).sort(),
+    allIssueTypes: !!c.allIssueTypes,
+    issueTypes: (c.issueTypes ?? []).map((t) => String(t.id)).sort()
+  };
+}
+async function readContexts(client, fieldId) {
+  const data = await client.get(`${INTERNAL}/field/${seg(fieldId)}/context`);
+  return (Array.isArray(data) ? data : data?.values ?? []).map(normalizeContext);
+}
+function contextBody(c) {
+  return {
+    name: c.name,
+    description: c.description,
+    allProjects: c.allProjects,
+    projects: c.allProjects ? [] : c.projects.map((id2) => ({ id: id2 })),
+    allIssueTypes: c.allIssueTypes,
+    issueTypes: c.allIssueTypes ? [] : c.issueTypes.map((id2) => ({ id: id2 }))
+  };
+}
+var sameScope = (a, b) => a.allProjects === b.allProjects && a.allIssueTypes === b.allIssueTypes && JSON.stringify(a.allProjects ? [] : a.projects) === JSON.stringify(b.allProjects ? [] : b.projects) && JSON.stringify(a.allIssueTypes ? [] : a.issueTypes) === JSON.stringify(b.allIssueTypes ? [] : b.issueTypes);
+async function projectIds(client, given) {
+  const ids = await Promise.all(given.map(async (p) => /^\d+$/.test(p) ? p : String((await client.get(`${API8}/project/${seg(p)}`)).id)));
+  return [...new Set(ids)].sort();
+}
+function scopeLabel(c) {
+  const projects = c.allProjects ? "all projects" : `projects ${c.projects.join(",")}`;
+  const types = c.allIssueTypes ? "all issue types" : `issue types ${c.issueTypes.join(",")}`;
+  return `${projects}; ${types}`;
+}
+function fieldLabel2(f) {
+  return f.id && f.name && f.name !== f.id ? `${f.name} (${f.id})` : f.name ?? f.id ?? "?";
+}
+var stateFor = (field, state) => typeof field.ref === "string" ? state : void 0;
+async function contextWrite(client, args, field, req, identity, state, check2) {
+  const dry = await guardedWrite(client, { dry_run: true }, req);
+  if (args.dry_run !== false) return { ...dry, identity, state: stateFor(field, state) };
+  await client.request(req.method, req.path, { json: req.json });
+  const after = await readContexts(client, field.id);
+  if (!check2(after)) throw new VerificationError(`The contexts of ${fieldLabel2(field)} do not show the change`, { contexts: after });
+  return { dry_run: false, product: client.product, summary: req.summary, request: dry.request, result: { contexts: after } };
+}
+var scopeShape = {
+  project_ids: listArg.optional().describe("Project ids or keys, comma-separated"),
+  issue_type_ids: listArg.optional().describe("Issue type ids, comma-separated; omit for all issue types"),
+  global: boolArg.optional().describe("All projects (cannot be combined with project_ids)")
+};
+var fieldArg = external_exports.coerce.string().min(1).describe("customfield_N or the exact field name (also of a field created earlier in the same plan)");
+async function pickContext(contexts, given) {
+  if (given === "default") {
+    if (contexts.length !== 1) {
+      throw new ValidationError(`context_id=default needs a field with exactly one context; it has ${contexts.length}: ${contexts.map((c) => `${c.id} (${c.name})`).join(", ")}`);
+    }
+    return contexts[0];
+  }
+  return contexts.find((c) => String(c.id) === given);
+}
+var jiraCustomFieldTools = [
+  {
+    name: "jira_create_custom_field",
+    product: "jira",
+    write: true,
+    description: "Create a custom field. field_type: text-single-line, url, date-picker, or a full type key Jira lists; the searcher defaults to the type's first one. Looks for fields of the same name (case-insensitive) first: same type \u2192 already-satisfied with its id; other type or several matches \u2192 error. Jira gives the field a global default context; scope it with jira_update_field_context context_id=default.",
+    inputShape: {
+      name: external_exports.string().trim().min(1).max(255),
+      description: external_exports.string().optional(),
+      field_type: external_exports.string().min(1),
+      searcher_key: external_exports.string().optional(),
+      context_scope: external_exports.enum(["global"]).optional().describe("Jira creates a global default context; narrow it afterwards as its own change"),
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const [types, fields] = await Promise.all([fieldTypes(c), allFields(c)]);
+      const key = FIELD_TYPES[args.field_type] ?? args.field_type;
+      const type = types.find((t) => t.key === key);
+      if (!type) {
+        throw new ValidationError(`Unsupported field_type '${args.field_type}'. Use ${Object.keys(FIELD_TYPES).join(", ")}, or a type key Jira lists in /rest/globalconfig/1/customfieldtypes`);
+      }
+      const searchers = type.searchers ?? [];
+      const searcherKey = args.searcher_key ?? searchers[0];
+      if (args.searcher_key && !searchers.includes(args.searcher_key)) {
+        throw new ValidationError(`searcher_key '${args.searcher_key}' does not fit ${key}; use one of: ${searchers.join(", ") || "(none)"}`);
+      }
+      const sameName2 = fields.filter((f) => String(f.name ?? "").toLowerCase() === args.name.toLowerCase());
+      const describe3 = (f) => `${f.id} (${f.name}, ${f.schema?.custom ?? f.schema?.type ?? "system"})`;
+      if (sameName2.length > 1) throw new ValidationError(`Several fields are named '${args.name}': ${sameName2.map(describe3).join(", ")}; resolve this in Jira first`);
+      if (sameName2.length === 1) {
+        const f = sameName2[0];
+        if (f.custom && f.schema?.custom === key) {
+          return alreadySatisfied(`Create custom field '${args.name}'`, `${f.id} '${f.name}' already exists with type ${key}`, { fieldId: f.id });
+        }
+        throw new ValidationError(`A field named '${args.name}' already exists with a different type: ${describe3(f)}; requested ${key}`);
+      }
+      const json2 = { name: args.name };
+      if (args.description !== void 0) json2.description = args.description;
+      json2.type = key;
+      if (searcherKey) json2.searcherKey = searcherKey;
+      const req = { method: "POST", path: `${API8}/field`, json: json2, summary: `Create custom field '${args.name}' (${type.name})` };
+      if (args.dry_run !== false) return guardedWrite(c, args, req);
+      const created = await c.request("POST", req.path, { json: json2 });
+      const stored = (await allFields(c)).find((f) => f.id === created?.id);
+      if (!stored) throw new VerificationError(`Jira did not list the new field ${created?.id ?? args.name}`, { created });
+      return { dry_run: false, product: c.product, summary: req.summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: stored.id, name: stored.name, type: stored.schema?.custom } };
+    }
+  },
+  {
+    name: "jira_create_field_context",
+    product: "jira",
+    write: true,
+    description: "Add a context to a custom field: global=true or project_ids, and issue_type_ids (omit for all). An identical context (same name and scope) \u2192 already-satisfied. Internal Jira API; Jira 11.3.x only.",
+    inputShape: {
+      field_id: fieldArg,
+      name: external_exports.string().trim().min(1),
+      description: external_exports.string().optional(),
+      ...scopeShape,
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJiraVersion(c, "Custom field context changes");
+      if (args.global && args.project_ids?.length) throw new ValidationError("Pass global=true or project_ids, not both");
+      if (!args.global && !args.project_ids?.length) throw new ValidationError("Pass global=true or project_ids");
+      const field = await resolveField(c, args.field_id, { allowPending: args.dry_run !== false });
+      const wanted = {
+        name: args.name,
+        description: args.description ?? "",
+        allProjects: !!args.global,
+        projects: args.global ? [] : await projectIds(c, args.project_ids),
+        allIssueTypes: !args.issue_type_ids?.length,
+        issueTypes: [...new Set(args.issue_type_ids ?? [])].sort()
+      };
+      const summary = `Add context '${args.name}' to ${fieldLabel2(field)}: ${scopeLabel(wanted)}`;
+      if (field.id) {
+        const existing = (await readContexts(c, field.id)).find((x2) => x2.name === args.name);
+        if (existing && sameScope(existing, wanted)) return alreadySatisfied(summary, `context ${existing.id} '${existing.name}' already has this scope`);
+        if (existing) throw new ValidationError(`${fieldLabel2(field)} already has a context '${args.name}' (${existing.id}) with ${scopeLabel(existing)}; use jira_update_field_context`);
+      }
+      return contextWrite(
+        c,
+        args,
+        field,
+        { method: "POST", path: `${INTERNAL}/field/${seg(fieldPlaceholder(field))}/context`, json: contextBody(wanted), summary },
+        { op: "create-context", field: field.ref, ...wanted },
+        void 0,
+        (after) => after.some((x2) => x2.name === wanted.name && sameScope(x2, wanted))
+      );
+    }
+  },
+  {
+    name: "jira_update_field_context",
+    product: "jira",
+    write: true,
+    description: "Change a custom field context's name, description or scope. context_id is the id or `default` (the field's only context, as Jira creates it with the field). The complete context is sent; attributes not given keep their stored values. Internal Jira API; Jira 11.3.x only.",
+    inputShape: {
+      field_id: fieldArg,
+      context_id: external_exports.coerce.string().min(1).describe("Context id, or `default`"),
+      name: external_exports.string().trim().min(1).optional(),
+      description: external_exports.string().optional(),
+      ...scopeShape,
+      all_issue_types: boolArg.optional().describe("true: all issue types (clears issue_type_ids)"),
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJiraVersion(c, "Custom field context changes");
+      if (args.global && args.project_ids?.length) throw new ValidationError("Pass global=true or project_ids, not both");
+      if (args.all_issue_types && args.issue_type_ids?.length) throw new ValidationError("Pass all_issue_types=true or issue_type_ids, not both");
+      const field = await resolveField(c, args.field_id, { allowPending: args.dry_run !== false });
+      const changes = {};
+      if (args.name !== void 0) changes.name = args.name;
+      if (args.description !== void 0) changes.description = args.description;
+      if (args.global) Object.assign(changes, { allProjects: true, projects: [] });
+      if (args.project_ids?.length) Object.assign(changes, { allProjects: false, projects: await projectIds(c, args.project_ids) });
+      if (args.all_issue_types) Object.assign(changes, { allIssueTypes: true, issueTypes: [] });
+      if (args.issue_type_ids?.length) Object.assign(changes, { allIssueTypes: false, issueTypes: [...new Set(args.issue_type_ids)].sort() });
+      if (!Object.keys(changes).length) throw new ValidationError("Nothing to change: pass name, description, global, project_ids, issue_type_ids or all_issue_types");
+      const identity = { op: "update-context", field: field.ref, context: args.context_id, ...changes };
+      if (!field.id) {
+        return {
+          ...await guardedWrite(c, { dry_run: true }, {
+            method: "PUT",
+            path: `${INTERNAL}/field/${seg(fieldPlaceholder(field))}/context/${seg(args.context_id)}`,
+            json: changes,
+            summary: `Update context ${args.context_id} of ${fieldLabel2(field)} (created earlier in the plan): ${Object.keys(changes).join(", ")}`
+          }),
+          identity
+        };
+      }
+      const contexts = await readContexts(c, field.id);
+      const stored = await pickContext(contexts, args.context_id);
+      if (!stored) throw new ValidationError(`${fieldLabel2(field)} has no context ${args.context_id}`);
+      const { id: id2, ...current } = stored;
+      const wanted = { ...current, ...changes };
+      const summary = `Update context ${id2} '${current.name}' of ${fieldLabel2(field)}: ${scopeLabel(current)} \u2192 ${scopeLabel(wanted)}${wanted.name !== current.name ? `, name '${wanted.name}'` : ""}`;
+      if (JSON.stringify(contextBody(wanted)) === JSON.stringify(contextBody(current))) {
+        return alreadySatisfied(summary, "the context already has these values");
+      }
+      return contextWrite(
+        c,
+        args,
+        field,
+        { method: "PUT", path: `${INTERNAL}/field/${seg(field.id)}/context/${id2}`, json: contextBody(wanted), summary },
+        identity,
+        stored,
+        (after) => after.some((x2) => x2.id === id2 && JSON.stringify(contextBody(x2)) === JSON.stringify(contextBody(wanted)))
+      );
+    }
+  },
+  {
+    name: "jira_delete_field_context",
+    product: "jira",
+    write: true,
+    description: "Remove a context from a custom field (its option values and default go with it). Already gone \u2192 already-satisfied. Internal Jira API; Jira 11.3.x only.",
+    inputShape: { field_id: fieldArg, context_id: external_exports.coerce.string().min(1), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJiraVersion(c, "Custom field context changes");
+      if (args.context_id === "default") throw new ValidationError("Deleting needs the context id, not `default`");
+      const field = await resolveField(c, args.field_id);
+      const contexts = await readContexts(c, field.id);
+      const stored = await pickContext(contexts, args.context_id);
+      const summary = `Delete context ${args.context_id}${stored ? ` '${stored.name}'` : ""} of ${fieldLabel2(field)}`;
+      if (!stored) return alreadySatisfied(summary, `${fieldLabel2(field)} has no context ${args.context_id}`);
+      return contextWrite(
+        c,
+        args,
+        field,
+        { method: "DELETE", path: `${INTERNAL}/field/${seg(field.id)}/context/${stored.id}`, summary },
+        { op: "delete-context", field: field.ref, context: args.context_id },
+        stored,
+        (after) => !after.some((x2) => x2.id === stored.id)
+      );
+    }
+  },
+  {
+    name: "jira_add_field_to_screens",
+    product: "jira",
+    write: true,
+    description: "Place a field on several screen tabs: placements = [{screen_id, tab_id, position?}] (JSON). Each placement is its own change (jira_add_screen_field): the dry run lists them, --plan records each as a separate item, placements already in place are reported as satisfied.",
+    inputShape: {
+      field_id: fieldArg,
+      placements: external_exports.preprocess(
+        (v) => typeof v === "string" ? JSON.parse(v) : v,
+        external_exports.array(external_exports.object({
+          screen_id: external_exports.coerce.number().int(),
+          tab_id: external_exports.coerce.number().int(),
+          position: external_exports.coerce.number().int().min(1).optional()
+        }).strict()).min(1)
+      ),
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const batch = [];
+      const satisfied = [];
+      for (const p of args.placements) {
+        const one = { screen_id: p.screen_id, tab_id: p.tab_id, field_id: args.field_id, ...p.position ? { position: p.position } : {} };
+        const value = await addScreenField(c, { ...one, dry_run: true });
+        if (value.already_satisfied) satisfied.push(`${value.summary}: ${value.reason}`);
+        else batch.push({ tool: "jira_add_screen_field", args: one, value });
+      }
+      const summary = `Place ${args.field_id} on ${args.placements.length} screen tab(s): ${batch.length} to add, ${satisfied.length} already in place`;
+      if (!batch.length) return alreadySatisfied(summary, satisfied.join("; "));
+      if (args.dry_run !== false) return { dry_run: true, product: c.product, summary, batch, satisfied, request: batch[0].value.request };
+      const results = [];
+      for (const b of batch) {
+        try {
+          results.push({ summary: b.value.summary, status: "done", result: await addScreenField(c, { ...b.args, dry_run: false }) });
+        } catch (e) {
+          results.push({ summary: b.value.summary, status: "failed", error: isHttpStatusError(e) || e instanceof Error ? e.message : String(e) });
+        }
+      }
+      return { dry_run: false, product: c.product, summary, request: batch[0].value.request, result: { placements: results, satisfied } };
+    }
+  }
+];
+
+// src/tools/jira/fieldOptions.ts
+var TYPE_PREFIX2 = "com.atlassian.jira.plugin.system.customfieldtypes";
+var OPTION_TYPES = ["select", "multiselect", "radiobuttons", "multicheckboxes", "cascadingselect"].map((t) => `${TYPE_PREFIX2}:${t}`);
+var MAX_OPTIONS = 1e3;
+function manualOptionSteps(stored, target) {
+  const values = target.map((t) => t.value);
+  const dup = values.find((v, i) => values.indexOf(v) !== i);
+  if (dup !== void 0) throw new ValidationError(`Option '${dup}' appears more than once in the target list`);
+  const matched = /* @__PURE__ */ new Map();
+  for (const t of target) {
+    let s;
+    if (t.id !== void 0) {
+      s = stored.find((o) => o.id === t.id);
+      if (!s) throw new ValidationError(`Option id ${t.id} does not exist in this context`);
+      const clash = stored.find((o) => o.value === t.value && o.id !== t.id);
+      if (clash) throw new ValidationError(`Option '${t.value}' already exists (id ${clash.id}); it cannot be the new name of option ${t.id}`);
+    } else {
+      s = stored.find((o) => o.value === t.value);
+    }
+    matched.set(t, s);
+  }
+  const used = new Set([...matched.values()].filter(Boolean).map((s) => s.id));
+  const kept = stored.filter((o) => !used.has(o.id)).map((o) => o.value);
+  const steps2 = [];
+  for (const [t, s] of matched) if (s && s.value !== t.value) steps2.push(`rename '${s.value}' to '${t.value}'`);
+  for (const [t, s] of matched) if (!s) steps2.push(`add '${t.value}'`);
+  for (const [t, s] of matched) {
+    const want = !!t.disabled;
+    if (s && s.disabled !== want) steps2.push(`${want ? "disable" : "enable"} '${t.value}'`);
+  }
+  const order2 = [...values, ...kept];
+  const renamed = stored.map((o) => [...matched].find(([, s]) => s?.id === o.id)?.[0].value ?? o.value);
+  const afterAdd = [...renamed, ...values.filter((v) => !renamed.includes(v))];
+  if (JSON.stringify(afterAdd) !== JSON.stringify(order2)) {
+    steps2.push(`order: ${values.map((v) => `'${v}'`).join(", ")}${kept.length ? `, then ${kept.map((v) => `'${v}'`).join(", ")}` : ""}`);
+  }
+  return { steps: steps2, kept, order: order2 };
+}
+async function contextsOf(client, fieldId) {
+  const data = await client.get(`/rest/internal/2/field/${seg(fieldId)}/context`);
+  return (Array.isArray(data) ? data : []).map((c) => ({
+    id: Number(c.id),
+    name: String(c.name ?? ""),
+    allProjects: !!c.allProjects,
+    projects: (c.projects ?? []).map((p) => String(p.id)),
+    allIssueTypes: !!c.allIssueTypes,
+    issueTypes: (c.issueTypes ?? []).map((t) => String(t.id)),
+    fieldConfigId: c.fieldConfigIds?.[0] !== void 0 ? Number(c.fieldConfigIds[0]) : void 0
+  }));
+}
+function pairOf(c) {
+  return { projectId: c.allProjects ? null : c.projects[0] ?? null, issueTypeId: c.allIssueTypes ? null : c.issueTypes[0] ?? null };
+}
+function specificity(c, pair) {
+  const p = c.allProjects ? 0 : pair.projectId !== null && c.projects.includes(pair.projectId) ? 2 : -1;
+  const t = c.allIssueTypes ? 0 : pair.issueTypeId !== null && c.issueTypes.includes(pair.issueTypeId) ? 1 : -1;
+  return p < 0 || t < 0 ? -1 : p + t;
+}
+function scopeLabel2(c) {
+  return `${c.allProjects ? "all projects" : `projects ${c.projects.join(",")}`}; ${c.allIssueTypes ? "all issue types" : `issue types ${c.issueTypes.join(",")}`}`;
+}
+function pickContext2(contexts, given) {
+  if (given === void 0 || given === "default") {
+    if (contexts.length !== 1) {
+      throw new ValidationError(`The field has ${contexts.length} contexts; pass context: ${contexts.map((c2) => `${c2.id} (${c2.name})`).join(", ")}`);
+    }
+    return contexts[0];
+  }
+  const c = contexts.find((x2) => String(x2.id) === given);
+  if (!c) throw new ValidationError(`The field has no context ${given}; contexts: ${contexts.map((x2) => `${x2.id} (${x2.name})`).join(", ")}`);
+  return c;
+}
+var numericId = (fieldId) => fieldId.replace(/^customfield_/, "");
+async function readOptions(client, fieldId, pair) {
+  const data = await client.get(`/rest/api/2/customFields/${numericId(fieldId)}/options`, {
+    projectIds: pair.projectId ?? void 0,
+    issueTypeIds: pair.issueTypeId ?? void 0,
+    maxResults: MAX_OPTIONS
+  });
+  return (data?.options ?? []).map((o) => ({ id: Number(o.id), value: String(o.value), disabled: !!o.disabled }));
+}
+function requireOptionType(field) {
+  if (!field.custom || !OPTION_TYPES.includes(String(field.type))) {
+    throw new ValidationError(`${field.name} (${field.id}) is of type ${field.type ?? "system"}, which has no options`);
+  }
+}
+var optionList = external_exports.preprocess(
+  (v) => {
+    if (typeof v !== "string") return v;
+    const text = v.trim();
+    if (text.startsWith("[")) return JSON.parse(text);
+    return text.split(",").map((s) => s.trim()).filter(Boolean);
+  },
+  external_exports.array(external_exports.union([
+    external_exports.object({ id: external_exports.coerce.number().int().optional(), value: external_exports.coerce.string().min(1), disabled: external_exports.boolean().optional() }).strict(),
+    external_exports.union([external_exports.string().min(1), external_exports.number()]).transform((v) => ({ value: String(v) }))
+  ]))
+);
+var fieldArg2 = external_exports.coerce.string().min(1).describe("customfield_N or the exact field name (also of a field created earlier in the same plan)");
+var contextArg = external_exports.coerce.string().optional().describe("Context id, or `default`: the field's only context (also when omitted)");
+var stateFor2 = (field, state) => typeof field.ref === "string" ? state : void 0;
+var jiraFieldOptionTools = [
+  {
+    name: "jira_get_custom_field_options",
+    product: "jira",
+    description: "Options of a select-type custom field per context (or one context): id, value, disabled, in stored order, with the projects and issue types each context covers.",
+    inputShape: { field: fieldArg2, context: contextArg },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const field = await resolveField(c, args.field);
+      requireOptionType(field);
+      const all = await contextsOf(c, field.id);
+      const chosen = args.context !== void 0 ? [pickContext2(all, args.context)] : all;
+      const contexts = [];
+      for (const ctx of chosen) {
+        contexts.push({ id: ctx.id, name: ctx.name, scope: scopeLabel2(ctx), options: await readOptions(c, field.id, pairOf(ctx)) });
+      }
+      return { field: { id: field.id, name: field.name, type: field.type }, contexts };
+    }
+  },
+  {
+    name: "jira_set_custom_field_options",
+    product: "jira",
+    write: true,
+    description: "Set the options of a select-type field's context: options = comma list of values or JSON [{value, id?, disabled?}] in order. A context without options gets them through the API (Severity 1\u20134 on a new field). For a context that already has options nothing is sent: the dry run is a manual change with the steps (add, rename by id, order, disable, enable) and the options page link; running again verifies. Options are never deleted. Jira 11.3.x only.",
+    inputShape: { field: fieldArg2, context: contextArg, options: optionList, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJiraVersion(c, "Custom field option changes");
+      const target = args.options;
+      if (!target.length) throw new ValidationError("Pass at least one option");
+      manualOptionSteps([], target.filter((t) => t.id === void 0));
+      const dryRun = args.dry_run !== false;
+      const field = await resolveField(c, args.field, { allowPending: dryRun });
+      const identity = { op: "set-options", field: field.ref, context: args.context ?? "default", options: target };
+      const disabledNote = (opts) => {
+        const off = opts.filter((t) => t.disabled).map((t) => `'${t.value}'`);
+        return off.length ? `${off.join(", ")} cannot be created disabled; disable ${off.length === 1 ? "it" : "them"} in the UI afterwards` : void 0;
+      };
+      if (!field.id) {
+        return {
+          ...await guardedWrite(c, { dry_run: true }, {
+            method: "POST",
+            path: `/rest/globalconfig/1/customfieldoptions/${seg(fieldPlaceholder(field))}/setOptions`,
+            json: { options: target.map((t) => ({ name: t.value })), issueContext: { projectId: null, issueTypeId: null } },
+            summary: `Set options of ${field.name} (created earlier in the plan): ${target.map((t) => t.value).join(", ")}`
+          }),
+          warning: disabledNote(target),
+          identity
+        };
+      }
+      requireOptionType(field);
+      const contexts = await contextsOf(c, field.id);
+      const ctx = pickContext2(contexts, args.context);
+      const pair = pairOf(ctx);
+      const mine = specificity(ctx, pair);
+      const rival = contexts.find((x2) => x2.id !== ctx.id && specificity(x2, pair) >= mine);
+      if (rival) {
+        throw new UnsupportedError(
+          `Context ${ctx.id} (${ctx.name}) cannot be addressed: the options resource selects a context by project and issue type, and that pair also selects context ${rival.id} (${rival.name})`
+        );
+      }
+      const stored = await readOptions(c, field.id, pair);
+      const label = `${field.name} in context ${ctx.id} '${ctx.name}' (${scopeLabel2(ctx)})`;
+      const plan = manualOptionSteps(stored, target);
+      if (!plan.steps.length) return alreadySatisfied(`Options of ${label}`, "the stored options already match");
+      const before = stored.map((o) => `${o.value}${o.disabled ? " (disabled)" : ""}`);
+      const after = plan.order.map((v) => `${v}${target.find((t) => t.value === v)?.disabled ? " (disabled)" : ""}`);
+      if (stored.length) {
+        const editUrl = c.url("/secure/admin/EditCustomFieldOptions!default.jspa", { fieldConfigId: ctx.fieldConfigId });
+        const reason = "Jira's options API only sets the options of an empty context; changes to existing options are made on the options page (behind websudo)";
+        if (!dryRun) {
+          throw new UnsupportedError(`Options of ${label} cannot be changed through the API: ${reason}. At ${editUrl}: ${plan.steps.join("; ")}`, { editUrl, steps: plan.steps });
+        }
+        return {
+          dry_run: true,
+          product: c.product,
+          summary: `Options of ${label}: ${plan.steps.join("; ")} (enter manually)`,
+          request: { method: "MANUAL", url: editUrl, body: { steps: plan.steps } },
+          manual: { reason, editUrl },
+          before,
+          after,
+          kept: plan.kept,
+          warning: plan.kept.length ? `kept (not in the target list): ${plan.kept.join(", ")}` : void 0,
+          identity,
+          state: stateFor2(field, stored)
+        };
+      }
+      const req = {
+        method: "POST",
+        path: `/rest/globalconfig/1/customfieldoptions/${seg(field.id)}/setOptions`,
+        json: { options: target.map((t) => ({ name: t.value })), issueContext: pair },
+        summary: `Set options of ${label}: ${target.map((t) => t.value).join(", ")}`
+      };
+      if (dryRun) return { ...await guardedWrite(c, args, req), before, after, warning: disabledNote(target), identity, state: stateFor2(field, stored) };
+      await c.request(req.method, req.path, { json: req.json });
+      const back = await readOptions(c, field.id, pair);
+      if (JSON.stringify(back.map((o) => o.value)) !== JSON.stringify(target.map((t) => t.value))) {
+        throw new VerificationError(`The options of ${label} do not read back as set`, { expected: target.map((t) => t.value), actual: back });
+      }
+      return { dry_run: false, product: c.product, summary: req.summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { options: back, note: disabledNote(target) } };
+    }
+  }
+];
+
+// src/tools/jira/fieldConfigurations.ts
+var CONFIG = "/rest/internal/2/fieldConfiguration";
+var FIRST_ID = 1e4;
+var ID_BLOCK = 100;
+var MAX_ID_READS = 2e3;
+var BLOCK_GAP = 3;
+var EMPTY_BLOCKS = 10;
+var CONFIG_PAGE = 100;
+async function readConfig(client, id2, params = {}) {
+  return client.get(`${CONFIG}/${id2}`, { page: params.page ?? 1, maxResults: params.maxResults ?? CONFIG_PAGE, query: params.query || void 0 });
+}
+var notFound = (e) => isHttpStatusError(e) && e.status === 404;
+var defaults = /* @__PURE__ */ new WeakMap();
+function defaultConfig(client) {
+  let p = defaults.get(client);
+  if (!p) {
+    p = readConfig(client, -1, { maxResults: 1 }).then((d) => {
+      const link = d?.fields?.[0]?.actions?.edit?.url;
+      const id2 = link ? Number(new URL(link).searchParams.get("id")) : void 0;
+      return { name: String(d?.configName ?? ""), editId: Number.isFinite(id2) ? id2 : void 0 };
+    });
+    defaults.set(client, p);
+  }
+  return p;
+}
+var idScans = /* @__PURE__ */ new WeakMap();
+function configIds(client) {
+  let p = idScans.get(client);
+  if (!p) {
+    p = (async () => {
+      const ids = /* @__PURE__ */ new Map();
+      let reads = 0;
+      let emptyBlocks = 0;
+      for (let block = FIRST_ID; emptyBlocks < EMPTY_BLOCKS && reads < MAX_ID_READS; block += ID_BLOCK) {
+        let found = false;
+        let missing = 0;
+        for (let id2 = block; id2 < block + ID_BLOCK && missing < BLOCK_GAP && reads < MAX_ID_READS; id2++) {
+          reads++;
+          try {
+            const d = await readConfig(client, id2, { maxResults: 1 });
+            missing = 0;
+            found = true;
+            if (d?.configName && !ids.has(d.configName)) ids.set(String(d.configName), id2);
+          } catch (e) {
+            if (!notFound(e)) throw e;
+            missing++;
+          }
+        }
+        emptyBlocks = found ? 0 : emptyBlocks + 1;
+      }
+      return { ids, complete: emptyBlocks >= EMPTY_BLOCKS };
+    })();
+    idScans.set(client, p);
+  }
+  return p;
+}
+async function sharedWith(client, id2, isDefault) {
+  const d = await client.get(`${CONFIG}/${isDefault ? -1 : id2}/projects`);
+  return (d?.associatedProjects ?? []).map((p) => p.key).sort();
+}
+async function identify(client, id2) {
+  const [d, def] = await Promise.all([readConfig(client, id2, { maxResults: 1 }), defaultConfig(client)]);
+  const name = String(d?.configName ?? "");
+  const isDefault = id2 === -1 || name === def.name;
+  return { id: isDefault && def.editId !== void 0 ? def.editId : id2, name, isDefault };
+}
+function fieldItem(f) {
+  return { id: f.id, name: f.name, description: f.description ?? "", hidden: !!f.hidden, required: !!f.required };
+}
+function pageFor2(offset, limit) {
+  return { page: Math.floor(offset / limit) + 1, skip: offset % limit };
+}
+async function fieldsPage(client, id2, isDefault, args) {
+  const offset = args.offset ?? 0;
+  const limit = args.limit ?? 50;
+  const { page, skip } = pageFor2(offset, limit);
+  const d = await readConfig(client, isDefault ? -1 : id2, { page, maxResults: limit, query: args.name_contains });
+  return serverPage((d?.fields ?? []).slice(skip).map(fieldItem), offset, limit, d?.total);
+}
+async function configItem(client, id2, fieldId, fieldName) {
+  for (let page = 1; page <= 20; page++) {
+    const d = await readConfig(client, id2, { page, maxResults: CONFIG_PAGE, query: fieldName });
+    const item = (d?.fields ?? []).find((f) => f.id === fieldId);
+    if (item) return { config: d, item };
+    if ((d?.fields ?? []).length < CONFIG_PAGE) break;
+  }
+  return void 0;
+}
+var plural3 = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+var jiraFieldConfigurationTools = [
+  {
+    name: "jira_get_field_configuration",
+    product: "jira",
+    description: "The field configuration a project uses (per issue type, or field_configuration_id): its fields with description, hidden/visible and required/optional (paged, name_contains), and the projects that share it. Without issue_type_id, issue types are grouped by configuration (fields only when there is one). Field configuration schemes are not readable through REST. Internal and plugin APIs, verified on Jira 11.3.",
+    inputShape: {
+      project_key: external_exports.string().min(1),
+      issue_type_id: external_exports.coerce.string().optional(),
+      field_configuration_id: external_exports.coerce.number().int().optional(),
+      ...nameFilterShape,
+      ...pageShape(50)
+    },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const result = (configurations2, hint) => ({
+        project: args.project_key,
+        fieldConfigurationScheme: null,
+        fieldConfigurationSchemeNote: "Jira has no REST resource for field configuration schemes",
+        configurations: configurations2,
+        hint
+      });
+      if (args.field_configuration_id !== void 0) {
+        const cfg = await identify(c, args.field_configuration_id);
+        return result([{
+          ...cfg,
+          default: cfg.isDefault,
+          isDefault: void 0,
+          sharedWith: await sharedWith(c, cfg.id, cfg.isDefault),
+          fields: await fieldsPage(c, cfg.id, cfg.isDefault, args)
+        }]);
+      }
+      const project = await c.get(`/rest/api/2/project/${encodeURIComponent(args.project_key)}`);
+      const types = (project?.issueTypes ?? []).filter((t) => !args.issue_type_id || String(t.id) === args.issue_type_id);
+      if (!types.length) throw new ValidationError(`Project ${args.project_key} has no issue type ${args.issue_type_id}`);
+      const probe = await probeField(c);
+      const groups = /* @__PURE__ */ new Map();
+      const failed = [];
+      for (const t of types) {
+        let name;
+        if (probe) {
+          try {
+            name = parseWhereIsMyField(await whereIsMyField(c, probe, args.project_key, String(t.id), 0)).fieldConfiguration;
+          } catch (e) {
+            if (!isHttpStatusError(e)) throw e;
+          }
+        }
+        if (name) groups.set(name, [...groups.get(name) ?? [], t.name]);
+        else failed.push(t.name);
+      }
+      const def = await defaultConfig(c);
+      const configurations = [];
+      for (const [name, issueTypes] of groups) {
+        const isDefault = name === def.name;
+        const scan = isDefault ? void 0 : await configIds(c);
+        const id2 = isDefault ? def.editId ?? -1 : scan.ids.get(name);
+        if (id2 === void 0) {
+          const how = scan.complete ? "all ids were read" : `the id scan stopped at its limit of ${MAX_ID_READS} reads`;
+          configurations.push({ id: null, name, issueTypes, unresolved: `no field configuration id found for '${name}' (${how}); pass field_configuration_id` });
+          continue;
+        }
+        configurations.push({ id: id2, name, default: isDefault, issueTypes, sharedWith: await sharedWith(c, id2, isDefault) });
+      }
+      if (failed.length) {
+        configurations.push({ id: null, name: null, issueTypes: failed, unresolved: "the bundled 'Where is my field' plugin did not name a field configuration; pass field_configuration_id" });
+      }
+      const resolved = configurations.filter((x2) => x2.id !== null);
+      if (configurations.length === 1 && resolved.length === 1) {
+        resolved[0].fields = await fieldsPage(c, resolved[0].id, resolved[0].default, args);
+        return result(configurations);
+      }
+      return result(configurations, configurations.length > 1 ? "Issue types use different field configurations: pass issue_type_id or field_configuration_id for the fields" : void 0);
+    }
+  },
+  {
+    name: "jira_update_field_description",
+    product: "jira",
+    write: true,
+    description: "Prepare a change of one field's description in one field configuration (never the field's global name or description): the dry run shows old and new value, the projects sharing the configuration and the edit link. Jira serves that form only after websudo re-authentication, which a token cannot pass, so the change is entered in the UI; running the tool again verifies it (already-satisfied).",
+    inputShape: {
+      field_configuration_id: external_exports.coerce.number().int(),
+      field_id: external_exports.coerce.string().min(1).describe("customfield_N, a system field id, or the exact field name"),
+      description: external_exports.string(),
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const field = await resolveField(c, args.field_id);
+      const cfg = await identify(c, args.field_configuration_id);
+      const found = await configItem(c, cfg.isDefault ? -1 : cfg.id, field.id, field.name ?? field.id);
+      if (!found) throw new ValidationError(`${field.name} (${field.id}) is not in field configuration ${cfg.name} (${cfg.id})`);
+      const before = String(found.item.description ?? "");
+      const editUrl = String(found.item.actions?.edit?.url ?? "");
+      const summary = `Description of ${field.name} in field configuration '${cfg.name}' (${cfg.id})`;
+      if (before === args.description) return alreadySatisfied(summary, "the stored description already matches");
+      const projects = await sharedWith(c, cfg.id, cfg.isDefault);
+      const reason = "Jira serves the field configuration edit form only after websudo re-authentication, which a personal access token cannot pass";
+      if (args.dry_run === false) {
+        throw new UnsupportedError(`${summary} cannot be changed through the API: ${reason}. Enter it at ${editUrl}`, { editUrl, description: args.description });
+      }
+      return {
+        dry_run: true,
+        product: c.product,
+        summary: `${summary}: "${before}" \u2192 "${args.description}" (enter manually)`,
+        request: { method: "MANUAL", url: editUrl, body: { description: args.description } },
+        manual: { reason, editUrl },
+        before,
+        after: args.description,
+        sharedWith: projects,
+        warning: projects.length > 1 ? `Field configuration is shared by ${plural3(projects.length, "project")} (${projects.join(", ")}); the description changes for all of them` : void 0,
+        identity: { op: "field-description", config: cfg.id, field: field.ref, description: args.description },
+        state: before,
+        note: "Nothing is sent. Enter the description at the edit link, then run the tool again to verify."
+      };
     }
   }
 ];
@@ -59288,7 +60493,7 @@ function isFlankedByWhitespace(side, node2, options) {
 var reduce = Array.prototype.reduce;
 function TurndownService(options) {
   if (!(this instanceof TurndownService)) return new TurndownService(options);
-  var defaults = {
+  var defaults2 = {
     rules,
     headingStyle: "setext",
     hr: "* * *",
@@ -59311,7 +60516,7 @@ function TurndownService(options) {
       return node2.isBlock ? "\n\n" + content + "\n\n" : content;
     }
   };
-  this.options = extend2({}, defaults, options);
+  this.options = extend2({}, defaults2, options);
   this.rules = new Rules(this.options);
 }
 TurndownService.prototype = {
@@ -59902,7 +61107,7 @@ function storageToMarkdown(storage, opts = {}) {
 }
 
 // src/tools/jira/shape.ts
-var API7 = "/rest/api/2";
+var API9 = "/rest/api/2";
 var AGILE = "/rest/agile/1.0";
 var DEFAULT_ISSUE_FIELDS = [
   "summary",
@@ -59971,7 +61176,7 @@ function discoverEpicFields(client) {
   let p = epicCache.get(client);
   if (!p) {
     p = (async () => {
-      const fields = await client.get(`${API7}/field`) ?? [];
+      const fields = await client.get(`${API9}/field`) ?? [];
       const out = {};
       for (const fld of fields) {
         const custom2 = String(fld.schema?.custom ?? "");
@@ -60013,11 +61218,11 @@ var jsonObjectArg = external_exports.preprocess((v) => {
 async function resolveUsername(client, input2) {
   const value = input2.trim();
   if (isJiraUserKey(value)) {
-    const u = await client.get(`${API7}/user`, { key: value });
+    const u = await client.get(`${API9}/user`, { key: value });
     return u?.name ?? value;
   }
   if (!value.includes("@") && !value.includes(" ")) return value;
-  const found = await client.get(`${API7}/user/search`, { username: value, includeActive: true, includeInactive: false, maxResults: 20 }) ?? [];
+  const found = await client.get(`${API9}/user/search`, { username: value, includeActive: true, includeInactive: false, maxResults: 20 }) ?? [];
   const needle = value.toLowerCase();
   const exact = found.find(
     (u) => [u.name, u.emailAddress, u.displayName].some((x2) => String(x2 ?? "").toLowerCase() === needle)
@@ -60031,10 +61236,10 @@ async function resolveUsername(client, input2) {
   return pickUser.name;
 }
 var fieldCache = /* @__PURE__ */ new WeakMap();
-function allFields(client) {
+function allFields2(client) {
   let p = fieldCache.get(client);
   if (!p) {
-    p = client.get(`${API7}/field`).then((f) => f ?? []);
+    p = client.get(`${API9}/field`).then((f) => f ?? []);
     fieldCache.set(client, p);
   }
   return p;
@@ -60078,7 +61283,7 @@ async function formatValue(client, def, id2, value, markup) {
   return value;
 }
 async function buildFields(client, input2, markup) {
-  const defs = await allFields(client);
+  const defs = await allFields2(client);
   const byId = new Map(defs.map((d) => [d.id, d]));
   const byName = new Map(defs.map((d) => [String(d.name).toLowerCase(), d]));
   const epic = await discoverEpicFields(client);
@@ -60124,13 +61329,13 @@ async function runPlan(client, args, summary, first, rest, keyOf) {
 var CREATEMETA_MAX_TYPES = 200;
 var CREATEMETA_MAX_FIELDS = 500;
 async function createMetaIssueTypes(client, projectKey) {
-  return client.getPaged(`${API7}/issue/createmeta/${seg(projectKey)}/issuetypes`, "values", {}, 50, CREATEMETA_MAX_TYPES);
+  return client.getPaged(`${API9}/issue/createmeta/${seg(projectKey)}/issuetypes`, "values", {}, 50, CREATEMETA_MAX_TYPES);
 }
 async function createMetaFields(client, projectKey, typeId) {
-  return client.getPaged(`${API7}/issue/createmeta/${seg(projectKey)}/issuetypes/${seg(typeId)}`, "values", {}, 50, CREATEMETA_MAX_FIELDS);
+  return client.getPaged(`${API9}/issue/createmeta/${seg(projectKey)}/issuetypes/${seg(typeId)}`, "values", {}, 50, CREATEMETA_MAX_FIELDS);
 }
 async function findCreateMetaField(client, projectKey, typeId, fieldId) {
-  const path = `${API7}/issue/createmeta/${seg(projectKey)}/issuetypes/${seg(typeId)}`;
+  const path = `${API9}/issue/createmeta/${seg(projectKey)}/issuetypes/${seg(typeId)}`;
   for (let start = 0; start < CREATEMETA_MAX_FIELDS; ) {
     const data = await client.get(path, { startAt: start, maxResults: 50 });
     const batch = data?.values ?? [];
@@ -60157,17 +61362,17 @@ function jqlWithProjects(jql, projects) {
   const quote = (k2) => /^[A-Z][A-Z0-9_]*$/.test(k2) ? k2 : `"${k2}"`;
   const clause = projects.length === 1 ? `project = ${quote(projects[0])}` : `project IN (${projects.map(quote).join(", ")})`;
   const m = /\s+ORDER\s+BY\s+[\s\S]*$/i.exec(` ${jql}`);
-  const order = m ? m[0].trim() : "";
+  const order2 = m ? m[0].trim() : "";
   const where = (m ? ` ${jql}`.slice(0, m.index) : jql).trim();
-  if (!where) return `${clause}${order ? ` ${order}` : ""}`;
-  return `(${where}) AND (${clause})${order ? ` ${order}` : ""}`;
+  if (!where) return `${clause}${order2 ? ` ${order2}` : ""}`;
+  return `(${where}) AND (${clause})${order2 ? ` ${order2}` : ""}`;
 }
 async function search(client, args, jql) {
   const offset = args.offset ?? 0;
   const limit = Math.min(args.limit ?? 20, SEARCH_MAX);
   const extra = args.fields ? `,${args.fields}` : "";
   const fields = args.include_description ? `${DEFAULT_ISSUE_FIELDS},description${extra}` : `${DEFAULT_ISSUE_FIELDS}${extra}`;
-  const data = await client.get(`${API7}/search`, {
+  const data = await client.get(`${API9}/search`, {
     jql,
     startAt: offset,
     maxResults: limit,
@@ -60210,7 +61415,7 @@ var jiraIssueTools = [
       if (include.has("attachment")) fieldList.push("attachment");
       if (args.fields) fieldList.push(args.fields);
       const expand = [args.expand, include.has("changelog") ? "changelog" : void 0].filter(Boolean).join(",") || void 0;
-      const issue2 = await c.get(`${API7}/issue/${key}`, {
+      const issue2 = await c.get(`${API9}/issue/${key}`, {
         fields: args.fields === "*all" ? "*all" : fieldList.join(","),
         expand
       });
@@ -60251,28 +61456,28 @@ var jiraIssueTools = [
         }));
       }
       if (args.comments) {
-        const data = await c.get(`${API7}/issue/${key}/comment`, { startAt: 0, maxResults: args.comments, orderBy: "-created" });
+        const data = await c.get(`${API9}/issue/${key}/comment`, { startAt: 0, maxResults: args.comments, orderBy: "-created" });
         out.comments = (data?.comments ?? []).map((cm) => compactComment(cm, args.markup !== "wiki"));
         out.commentTotal = data?.total;
       }
       const extras = [];
       if (include.has("transition")) {
-        extras.push(c.get(`${API7}/issue/${key}/transitions`).then((d) => {
+        extras.push(c.get(`${API9}/issue/${key}/transitions`).then((d) => {
           out.transitions = (d?.transitions ?? []).map((t) => ({ id: t.id, name: t.name, to: t.to?.name }));
         }));
       }
       if (include.has("watcher")) {
-        extras.push(c.get(`${API7}/issue/${key}/watchers`).then((d) => {
+        extras.push(c.get(`${API9}/issue/${key}/watchers`).then((d) => {
           out.watchers = (d?.watchers ?? []).map((w) => w.name);
         }));
       }
       if (include.has("remote_link")) {
-        extras.push(c.get(`${API7}/issue/${key}/remotelink`).then((d) => {
+        extras.push(c.get(`${API9}/issue/${key}/remotelink`).then((d) => {
           out.remoteLinks = (d ?? []).map((r) => ({ id: r.id, title: r.object?.title, url: r.object?.url, relationship: r.relationship }));
         }));
       }
       if (include.has("worklog")) {
-        extras.push(c.get(`${API7}/issue/${key}/worklog`).then((d) => {
+        extras.push(c.get(`${API9}/issue/${key}/worklog`).then((d) => {
           const w = d?.worklogs ?? [];
           out.worklogTotal = d?.total ?? w.length;
           out.worklogs = [...w].sort((a, b) => String(b.started ?? "").localeCompare(String(a.started ?? ""))).slice(0, extraLimit).map((x2) => ({ id: x2.id, author: x2.author?.name, started: x2.started, timeSpent: x2.timeSpent, comment: x2.comment }));
@@ -60324,7 +61529,7 @@ var jiraIssueTools = [
       const c = client("jira");
       const { body, followUps } = await buildCreate(c, args);
       const summary = `Create ${args.issue_type} in ${args.project_key}: ${args.summary}`;
-      return runPlan(c, args, summary, { method: "POST", path: `${API7}/issue`, json: body, summary }, followUps, (r) => r?.key);
+      return runPlan(c, args, summary, { method: "POST", path: `${API9}/issue`, json: body, summary }, followUps, (r) => r?.key);
     }
   },
   {
@@ -60349,7 +61554,7 @@ var jiraIssueTools = [
       }
       return guardedWrite(c, args, {
         method: "POST",
-        path: `${API7}/issue/bulk`,
+        path: `${API9}/issue/bulk`,
         json: { issueUpdates: updates },
         summary: `Create ${updates.length} issues (${[...new Set(args.issues.map((x2) => x2.project_key))].join(", ")})`
       });
@@ -60384,12 +61589,12 @@ var jiraIssueTools = [
         delete input2.status;
       }
       if (args.components) input2.components = args.components;
-      const steps = [];
+      const steps2 = [];
       const labels = [];
       if (Object.keys(input2).length) {
-        steps.push({
+        steps2.push({
           method: "PUT",
-          path: `${API7}/issue/${seg(key)}`,
+          path: `${API9}/issue/${seg(key)}`,
           params: { notifyUsers: args.notify === false ? false : void 0 },
           json: { fields: await buildFields(c, input2, args.markup) },
           summary: `update ${Object.keys(input2).join(", ")}`
@@ -60397,9 +61602,9 @@ var jiraIssueTools = [
       }
       if (transition) {
         const t = await resolveTransition(c, key, transition);
-        steps.push({
+        steps2.push({
           method: "POST",
-          path: `${API7}/issue/${seg(key)}/transitions`,
+          path: `${API9}/issue/${seg(key)}/transitions`,
           json: { transition: { id: t.id } },
           summary: `transition '${t.name}' \u2192 ${t.to ?? "?"}`
         });
@@ -60407,25 +61612,25 @@ var jiraIssueTools = [
       if (args.comment) {
         const body = { body: toWiki(args.comment, args.markup) };
         if (args.comment_visibility) body.visibility = args.comment_visibility;
-        steps.push({ method: "POST", path: `${API7}/issue/${seg(key)}/comment`, json: body, summary: "add comment" });
+        steps2.push({ method: "POST", path: `${API9}/issue/${seg(key)}/comment`, json: body, summary: "add comment" });
       }
       if (args.worklog) {
         const body = { timeSpent: args.worklog };
         if (args.worklog_started) body.started = args.worklog_started;
-        steps.push({ method: "POST", path: `${API7}/issue/${seg(key)}/worklog`, json: body, summary: `log ${args.worklog}` });
+        steps2.push({ method: "POST", path: `${API9}/issue/${seg(key)}/worklog`, json: body, summary: `log ${args.worklog}` });
       }
       if (args.attachments?.length) {
-        steps.push({
+        steps2.push({
           method: "POST",
-          path: `${API7}/issue/${seg(key)}/attachments`,
+          path: `${API9}/issue/${seg(key)}/attachments`,
           files: { field: "file", paths: args.attachments },
           summary: `attach ${args.attachments.length} file(s)`
         });
       }
-      if (steps.length === 0) throw new ValidationError("Nothing to update");
-      labels.push(...steps.map((s) => s.summary));
+      if (steps2.length === 0) throw new ValidationError("Nothing to update");
+      labels.push(...steps2.map((s) => s.summary));
       const summary = `Update ${key}: ${labels.join("; ")}`;
-      const [first, ...rest] = steps;
+      const [first, ...rest] = steps2;
       return runPlan(c, args, summary, { ...first, summary }, rest.map((s) => ({ label: s.summary, build: () => s })), () => key);
     }
   },
@@ -60440,7 +61645,7 @@ var jiraIssueTools = [
       const name = args.assignee ? await resolveUsername(c, args.assignee) : null;
       return guardedWrite(c, args, {
         method: "PUT",
-        path: `${API7}/issue/${seg(args.issue_key)}/assignee`,
+        path: `${API9}/issue/${seg(args.issue_key)}/assignee`,
         json: { name },
         summary: name ? `Assign ${args.issue_key} to ${name}` : `Unassign ${args.issue_key}`
       });
@@ -60455,7 +61660,7 @@ var jiraIssueTools = [
     async handler({ client }, args) {
       return guardedWrite(client("jira"), args, {
         method: "DELETE",
-        path: `${API7}/issue/${seg(args.issue_key)}`,
+        path: `${API9}/issue/${seg(args.issue_key)}`,
         params: { deleteSubtasks: args.delete_subtasks ? true : void 0 },
         summary: `PERMANENTLY delete ${args.issue_key}${args.delete_subtasks ? " and its subtasks" : ""}`
       });
@@ -60514,7 +61719,7 @@ var jiraIssueTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 20;
-      const data = await client("jira").get(`${API7}/issue/${seg(args.issue_key)}/comment`, {
+      const data = await client("jira").get(`${API9}/issue/${seg(args.issue_key)}/comment`, {
         startAt: offset,
         maxResults: limit,
         orderBy: args.oldest_first ? "created" : "-created"
@@ -60539,7 +61744,7 @@ var jiraIssueTools = [
       if (args.visibility) json2.visibility = args.visibility;
       return guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/issue/${seg(args.issue_key)}/comment`,
+        path: `${API9}/issue/${seg(args.issue_key)}/comment`,
         json: json2,
         summary: `Comment on ${args.issue_key}`
       });
@@ -60563,7 +61768,7 @@ var jiraIssueTools = [
       if (args.visibility) json2.visibility = args.visibility;
       return guardedWrite(client("jira"), args, {
         method: "PUT",
-        path: `${API7}/issue/${seg(args.issue_key)}/comment/${seg(args.comment_id)}`,
+        path: `${API9}/issue/${seg(args.issue_key)}/comment/${seg(args.comment_id)}`,
         json: json2,
         summary: `Edit comment ${args.comment_id} on ${args.issue_key}`
       });
@@ -60575,7 +61780,7 @@ var jiraIssueTools = [
     description: "Transitions available for an issue now: id, name, target status; with_fields adds the fields of its screen.",
     inputShape: { issue_key: external_exports.string(), with_fields: boolArg.optional() },
     async handler({ client }, args) {
-      const data = await client("jira").get(`${API7}/issue/${seg(args.issue_key)}/transitions`, {
+      const data = await client("jira").get(`${API9}/issue/${seg(args.issue_key)}/transitions`, {
         expand: args.with_fields ? "transitions.fields" : void 0
       });
       return (data?.transitions ?? []).map((t) => ({
@@ -60610,7 +61815,7 @@ var jiraIssueTools = [
       if (args.comment) json2.update = { comment: [{ add: { body: toWiki(args.comment, args.markup) } }] };
       return guardedWrite(c, args, {
         method: "POST",
-        path: `${API7}/issue/${seg(args.issue_key)}/transitions`,
+        path: `${API9}/issue/${seg(args.issue_key)}/transitions`,
         json: json2,
         summary: `Transition ${args.issue_key} via '${t.name}' \u2192 ${t.to ?? "?"}`
       });
@@ -60618,7 +61823,7 @@ var jiraIssueTools = [
   }
 ];
 async function resolveTransition(c, issueKey2, wanted) {
-  const data = await c.get(`${API7}/issue/${seg(issueKey2)}/transitions`);
+  const data = await c.get(`${API9}/issue/${seg(issueKey2)}/transitions`);
   const list = data?.transitions ?? [];
   const w = wanted.trim().toLowerCase();
   const t = list.find((x2) => String(x2.id) === wanted.trim()) ?? list.find((x2) => String(x2.name).toLowerCase() === w) ?? list.find((x2) => String(x2.to?.name ?? "").toLowerCase() === w);
@@ -60681,11 +61886,11 @@ async function buildCreate(c, args) {
       }
     }
     if (Object.keys(late).length) {
-      followUps.push({ label: "set epic fields", build: (key) => ({ method: "PUT", path: `${API7}/issue/${seg(key)}`, json: { fields: late }, summary: "set epic fields" }) });
+      followUps.push({ label: "set epic fields", build: (key) => ({ method: "PUT", path: `${API9}/issue/${seg(key)}`, json: { fields: late }, summary: "set epic fields" }) });
     }
   }
   if (assignee) {
-    followUps.push({ label: `assign ${assignee}`, build: (key) => ({ method: "PUT", path: `${API7}/issue/${seg(key)}/assignee`, json: { name: assignee }, summary: `assign ${assignee}` }) });
+    followUps.push({ label: `assign ${assignee}`, build: (key) => ({ method: "PUT", path: `${API9}/issue/${seg(key)}/assignee`, json: { name: assignee }, summary: `assign ${assignee}` }) });
   }
   return { body: { fields }, followUps };
 }
@@ -60716,7 +61921,7 @@ var jiraProjectMetaTools = [
     description: "Issue types you can create in a project: id, name, subtask flag (localized names included).",
     inputShape: { project_key: external_exports.string() },
     async handler({ client }, args) {
-      const types = await client("jira").getPaged(`${API7}/issue/createmeta/${seg(args.project_key)}/issuetypes`, "values", {}, 50, MAX_TYPES);
+      const types = await client("jira").getPaged(`${API9}/issue/createmeta/${seg(args.project_key)}/issuetypes`, "values", {}, 50, MAX_TYPES);
       return types.map((t) => ({
         id: t.id,
         name: t.name,
@@ -60738,7 +61943,7 @@ var jiraProjectMetaTools = [
       ...pageShape(100)
     },
     async handler({ client }, args) {
-      const path = `${API7}/issue/createmeta/${seg(args.project_key)}/issuetypes/${seg(args.issue_type_id)}`;
+      const path = `${API9}/issue/createmeta/${seg(args.project_key)}/issuetypes/${seg(args.issue_type_id)}`;
       const map2 = (f) => ({
         id: f.fieldId ?? f.key,
         name: f.name,
@@ -60770,14 +61975,14 @@ var jiraProjectMetaTools = [
     async handler({ client }, args) {
       const c = client("jira");
       const key = seg(args.project_key);
-      let types = await c.getPaged(`${API7}/issue/createmeta/${key}/issuetypes`, "values", {}, 50, MAX_TYPES);
+      let types = await c.getPaged(`${API9}/issue/createmeta/${key}/issuetypes`, "values", {}, 50, MAX_TYPES);
       if (args.issue_types?.length) {
         const want = new Set(args.issue_types.map((t) => t.toLowerCase()));
         types = types.filter((t) => want.has(String(t.id)) || want.has(String(t.name).toLowerCase()));
       }
       const skipped = types.length > MAX_FANOUT_TYPES ? types.slice(MAX_FANOUT_TYPES).map((t) => t.name) : [];
       types = types.slice(0, MAX_FANOUT_TYPES);
-      const perType = await boundedAll(types.map((t) => () => c.getPaged(`${API7}/issue/createmeta/${key}/issuetypes/${seg(t.id)}`, "values", {}, 50, MAX_FIELDS)));
+      const perType = await boundedAll(types.map((t) => () => c.getPaged(`${API9}/issue/createmeta/${key}/issuetypes/${seg(t.id)}`, "values", {}, 50, MAX_FIELDS)));
       const merged = /* @__PURE__ */ new Map();
       perType.forEach((fields, i) => {
         for (const f of fields) {
@@ -60808,7 +62013,7 @@ var jiraProjectMetaTools = [
     },
     async handler({ client }, args) {
       const c = client("jira");
-      const path = `${API7}/project/${seg(args.project_key)}/version`;
+      const path = `${API9}/project/${seg(args.project_key)}/version`;
       if (!args.unreleased_only && !args.name_contains) {
         const offset = args.offset ?? 0;
         const limit = args.limit ?? 50;
@@ -60826,7 +62031,7 @@ var jiraProjectMetaTools = [
     description: "Components of a project: id, name, lead, default assignee type, description.",
     inputShape: { project_key: external_exports.string(), name_contains: external_exports.string().optional(), ...pageShape(100) },
     async handler({ client }, args) {
-      const comps = await client("jira").get(`${API7}/project/${seg(args.project_key)}/components`) ?? [];
+      const comps = await client("jira").get(`${API9}/project/${seg(args.project_key)}/components`) ?? [];
       const items = comps.filter((cp) => contains(cp.name, args.name_contains)).map((cp) => ({
         id: cp.id,
         name: cp.name,
@@ -60854,7 +62059,7 @@ var jiraProjectMetaTools = [
     async handler({ client }, args) {
       return guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/version`,
+        path: `${API9}/version`,
         json: versionBody(args, args.project_key),
         summary: `Create version ${args.name} in ${args.project_key}`
       });
@@ -60879,13 +62084,13 @@ var jiraProjectMetaTools = [
       const bodies = items.map((v) => versionBody(v, args.project_key));
       const summary = `Create ${bodies.length} versions in ${args.project_key}: ${bodies.map((b) => b.name).join(", ")}`;
       if (args.dry_run !== false) {
-        const first = await guardedWrite(c, args, { method: "POST", path: `${API7}/version`, json: bodies[0], summary });
-        return { ...first, followUps: bodies.slice(1).map((b) => ({ method: "POST", url: c.url(`${API7}/version`), body: b })) };
+        const first = await guardedWrite(c, args, { method: "POST", path: `${API9}/version`, json: bodies[0], summary });
+        return { ...first, followUps: bodies.slice(1).map((b) => ({ method: "POST", url: c.url(`${API9}/version`), body: b })) };
       }
       const results = [];
       for (const body of bodies) {
         try {
-          const r = await guardedWrite(c, { dry_run: false }, { method: "POST", path: `${API7}/version`, json: body, summary: `Create version ${body.name}` });
+          const r = await guardedWrite(c, { dry_run: false }, { method: "POST", path: `${API9}/version`, json: body, summary: `Create version ${body.name}` });
           results.push({ name: body.name, id: r.result?.id, ok: true });
         } catch (e) {
           results.push({ name: body.name, ok: false, error: String(e?.message ?? e) });
@@ -60895,7 +62100,7 @@ var jiraProjectMetaTools = [
         dry_run: false,
         product: "jira",
         summary,
-        request: { method: "POST", url: c.url(`${API7}/version`), body: `${bodies.length} bodies` },
+        request: { method: "POST", url: c.url(`${API9}/version`), body: `${bodies.length} bodies` },
         result: { created: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length, items: results }
       };
     }
@@ -60920,7 +62125,7 @@ var jiraProjectMetaTools = [
       if (Object.keys(body).length === 0) throw new ValidationError("Pass at least one of name, description, start_date, release_date, released, archived");
       return guardedWrite(client("jira"), args, {
         method: "PUT",
-        path: `${API7}/version/${seg(args.version_id)}`,
+        path: `${API9}/version/${seg(args.version_id)}`,
         json: body,
         summary: `Update version ${args.version_id}: ${Object.keys(body).join(", ")}`
       });
@@ -61141,6 +62346,203 @@ var jiraAgileTools = [
   }
 ];
 
+// src/tools/jira/boardConfig.ts
+var GH = "/rest/greenhopper/1.0";
+async function settlePart(p) {
+  try {
+    return { value: await p };
+  } catch (e) {
+    if (isHttpStatusError(e)) return { error: `HTTP ${e.status}` };
+    throw e;
+  }
+}
+var num = (v) => v === "" || v === null || v === void 0 ? null : Number(v);
+async function readDetailView(client, board) {
+  const d = await client.get(`${GH}/detailviewfield/${board}/configured`);
+  return {
+    canEdit: !!d?.canEdit,
+    rows: (d?.currentFields ?? []).map((f) => ({ id: Number(f.id), fieldId: String(f.fieldId), name: String(f.name) })),
+    available: (d?.availableFields ?? []).map((f) => ({ fieldId: String(f.fieldId), name: String(f.name) }))
+  };
+}
+function resolveDetailFields(view2, given) {
+  const known = [...view2.rows, ...view2.available];
+  return given.map((g) => {
+    const v = g.trim();
+    const byName = [...new Map(known.filter((f) => f.name.toLowerCase() === v.toLowerCase()).map((f) => [f.fieldId, f])).values()];
+    if (!known.some((f) => f.fieldId === v) && byName.length > 1) {
+      throw new ValidationError(`Field name '${v}' is ambiguous in the Detail View: ${byName.map((f) => `${f.fieldId} (${f.name})`).join(", ")}; pass the id`);
+    }
+    const hit = known.find((f) => f.fieldId === v) ?? byName[0];
+    if (!hit) throw new ValidationError(`'${v}' is not a field the board's Detail View can show (not in its available fields)`);
+    return hit.fieldId;
+  });
+}
+var rowUrl = (client, board, id2) => client.url(`${GH}/detailviewfield/${board}/field/${id2}`);
+function plannedMoves(current, target) {
+  const sim = [...current];
+  const moves = [];
+  target.forEach((fieldId, i) => {
+    if (sim[i] === fieldId) return;
+    sim.splice(sim.indexOf(fieldId), 1);
+    sim.splice(i, 0, fieldId);
+    moves.push({ fieldId, after: i === 0 ? null : target[i - 1] });
+  });
+  return moves;
+}
+async function changeDetailView(client, board, dryRun, plan) {
+  await requireJiraVersion(client, "Board Detail View changes");
+  const view2 = await readDetailView(client, board);
+  if (!view2.canEdit) throw new PermissionError(`This account cannot edit board ${board} (not a board administrator)`);
+  const current = view2.rows.map((r) => r.fieldId);
+  const { target, identity, state } = plan(view2);
+  if (new Set(target).size !== target.length) throw new ValidationError("A field appears more than once in the target list");
+  const nameOf = (id2) => [...view2.rows, ...view2.available].find((f) => f.fieldId === id2)?.name ?? id2;
+  const summary = `Detail View of board ${board}: ${current.map(nameOf).join(", ")} \u2192 ${target.map(nameOf).join(", ")}`;
+  if (JSON.stringify(current) === JSON.stringify(target)) return alreadySatisfied(`Detail View of board ${board}`, "the Detail View already shows these fields in this order");
+  const removed = view2.rows.filter((r) => !target.includes(r.fieldId));
+  const added = target.filter((id2) => !current.includes(id2));
+  const afterAdd = [...current.filter((id2) => target.includes(id2)), ...added];
+  const moves = plannedMoves(afterAdd, target);
+  const steps2 = [
+    ...removed.map((r) => ({ method: "DELETE", url: rowUrl(client, board, r.id), label: `remove ${r.name}` })),
+    ...added.map((id2) => ({ method: "POST", url: client.url(`${GH}/detailviewfield/${board}/field`), body: { fieldId: id2 }, label: `add ${nameOf(id2)}` })),
+    ...moves.map((m) => ({ method: "POST", url: `${client.url(`${GH}/detailviewfield/${board}/field`)}/{${m.fieldId}}/move`, body: m.after ? { after: `{${m.after}}` } : { position: "First" }, label: `move ${nameOf(m.fieldId)} ${m.after ? `after ${nameOf(m.after)}` : "first"}` }))
+  ];
+  if (dryRun) {
+    return {
+      dry_run: true,
+      product: client.product,
+      summary,
+      request: steps2[0],
+      followUps: steps2.slice(1),
+      before: current.map(nameOf),
+      after: target.map(nameOf),
+      identity: { ...identity, board },
+      state,
+      note: "Nothing was changed. Confirm with the user, then re-run with dry_run=false."
+    };
+  }
+  for (const r of removed) await client.request("DELETE", `${GH}/detailviewfield/${board}/field/${r.id}`);
+  for (const id2 of added) await client.request("POST", `${GH}/detailviewfield/${board}/field`, { json: { fieldId: id2 } });
+  let rows2 = (await readDetailView(client, board)).rows;
+  for (const m of plannedMoves(rows2.map((r) => r.fieldId), target)) {
+    const row = rows2.find((r) => r.fieldId === m.fieldId);
+    const after = m.after ? rows2.find((r) => r.fieldId === m.after) : void 0;
+    if (!row || m.after && !after) break;
+    await client.request("POST", `${GH}/detailviewfield/${board}/field/${row.id}/move`, { json: after ? { after: rowUrl(client, board, after.id) } : { position: "First" } });
+    rows2 = (await readDetailView(client, board)).rows;
+  }
+  const final = (await readDetailView(client, board)).rows;
+  const actual = final.map((r) => r.fieldId);
+  if (JSON.stringify(actual) !== JSON.stringify(target)) {
+    throw new VerificationError(`The Detail View of board ${board} does not show the intended fields after the change`, { expected: target, actual });
+  }
+  return { dry_run: false, product: client.product, summary, request: steps2[0], result: { detailView: final.map((r) => ({ fieldId: r.fieldId, name: r.name })) } };
+}
+var boardShape = { board_id: external_exports.coerce.number().int() };
+var fieldArg3 = external_exports.coerce.string().min(1).describe("Field id or exact name as the Detail View lists it");
+var jiraBoardConfigTools = [
+  {
+    name: "jira_get_board_configuration",
+    product: "jira",
+    description: "A Jira Software board's configuration: saved filter (name, JQL), columns with their statuses, unmapped statuses, quick filters, card layout, Detail View fields in order, estimation, sub-filter, swimlanes, administrators and whether this account can edit it. Parts that cannot be read are listed under `unavailable`. Uses the internal board edit model (verified on Jira 11.3) besides the public agile API.",
+    inputShape: boardShape,
+    async handler({ client }, args) {
+      const c = client("jira");
+      const [agile, model] = await Promise.all([
+        settlePart(c.get(`/rest/agile/1.0/board/${args.board_id}/configuration`)),
+        settlePart(c.get(`${GH}/rapidviewconfig/editmodel`, { rapidViewId: args.board_id }))
+      ]);
+      const a = agile.value;
+      const m = model.value;
+      const unavailable = {};
+      if (!m) for (const part of ["filterJql", "quickFilters", "cardLayout", "detailView", "subFilter", "administrators", "swimlanes", "canEdit"]) unavailable[part] = `board edit model: ${model.error}`;
+      if (!a && !m) throw new ValidationError(`Board ${args.board_id} cannot be read: agile ${agile.error}, edit model ${model.error}`);
+      const columns = m?.rapidListConfig?.mappedColumns ? m.rapidListConfig.mappedColumns.map((col) => ({ name: col.name, statuses: (col.mappedStatuses ?? []).map((s) => s.name), min: num(col.min), max: num(col.max) })) : (a?.columnConfig?.columns ?? []).map((col) => ({ name: col.name, statuses: (col.statuses ?? []).map((s) => s.id), min: num(col.min), max: num(col.max) }));
+      const est = m?.estimationStatisticConfig?.currentEstimationStatistic;
+      return {
+        board: { id: args.board_id, name: m?.name ?? a?.name, type: a?.type },
+        canEdit: m ? !!m.canEdit : void 0,
+        filter: m?.filterConfig ? { id: m.filterConfig.id, name: m.filterConfig.name, jql: m.filterConfig.query, owner: m.filterConfig.owner?.userName } : { id: Number(a?.filter?.id) },
+        subFilter: m ? (m.subqueryConfig?.subqueries ?? []).map((s) => s.query).join(" AND ") || null : void 0,
+        columns,
+        constraint: a?.columnConfig?.constraintType,
+        unmappedStatuses: m ? (m.rapidListConfig?.unmappedStatuses ?? []).map((s) => s.name) : void 0,
+        quickFilters: m ? (m.quickFilterConfig?.quickFilters ?? []).map((q2) => ({ id: q2.id, name: q2.name, query: q2.query })) : void 0,
+        swimlanes: m ? { strategy: m.swimlanesConfig?.swimlaneStrategy, lanes: (m.swimlanesConfig?.swimlanes ?? []).map((l3) => l3.name) } : void 0,
+        cardLayout: m ? (m.cardLayoutConfig?.currentFields ?? []).map((f) => f.name) : void 0,
+        detailView: m ? (m.detailViewFieldConfig?.currentFields ?? []).map((f) => ({ fieldId: f.fieldId, name: f.name })) : void 0,
+        estimation: est ? { field: est.fieldId ?? est.id, name: est.name, tracking: m.estimationStatisticConfig?.currentTrackingStatistic?.name } : a?.estimation ? { field: a.estimation.field?.fieldId, name: a.estimation.field?.displayName } : void 0,
+        administrators: m ? { users: (m.boardAdmins?.userKeys ?? []).map((u) => u.displayName ?? u.key), groups: (m.boardAdmins?.groupKeys ?? []).map((g) => g.displayName ?? g.key) } : void 0,
+        unavailable: Object.keys(unavailable).length ? unavailable : void 0
+      };
+    }
+  },
+  {
+    name: "jira_set_board_detail_fields",
+    product: "jira",
+    write: true,
+    description: "Change a board's Detail View fields: `fields` = the complete target list in order, or add_fields / remove_fields (fields not named keep their place and order; added ones go last). Fields are ids or exact names the Detail View offers. Needs board admin rights; internal Jira Software API, Jira 11.3.x only. The Detail View is read back after the change.",
+    inputShape: {
+      ...boardShape,
+      fields: listArg.optional().describe("Complete ordered target list"),
+      add_fields: listArg.optional(),
+      remove_fields: listArg.optional(),
+      ...dryRunShape
+    },
+    async handler({ client }, args) {
+      const partial2 = !!(args.add_fields?.length || args.remove_fields?.length);
+      if (args.fields?.length && partial2) throw new ValidationError("Pass either fields or add_fields/remove_fields");
+      if (!args.fields?.length && !partial2) throw new ValidationError("Pass fields, or add_fields and/or remove_fields");
+      return changeDetailView(client("jira"), args.board_id, args.dry_run !== false, (view2) => {
+        const current = view2.rows.map((r) => r.fieldId);
+        if (args.fields?.length) {
+          const target = resolveDetailFields(view2, args.fields);
+          return { target, identity: { op: "detail-view-set", target }, state: current };
+        }
+        const remove2 = resolveDetailFields(view2, args.remove_fields ?? []);
+        const add = resolveDetailFields(view2, args.add_fields ?? []);
+        const kept = current.filter((id2) => !remove2.includes(id2));
+        const named = [...remove2, ...add];
+        return {
+          target: [...kept, ...add.filter((id2) => !kept.includes(id2))],
+          identity: { op: "detail-view-edit", add, remove: remove2 },
+          state: Object.fromEntries(named.map((id2) => [id2, current.includes(id2)]))
+        };
+      });
+    }
+  },
+  {
+    name: "jira_add_board_detail_field",
+    product: "jira",
+    write: true,
+    description: "Add one field to the end of a board's Detail View (already shown \u2192 already-satisfied). Board admin; Jira 11.3.x only.",
+    inputShape: { ...boardShape, field: fieldArg3, ...dryRunShape },
+    async handler({ client }, args) {
+      return changeDetailView(client("jira"), args.board_id, args.dry_run !== false, (view2) => {
+        const [id2] = resolveDetailFields(view2, [args.field]);
+        const current = view2.rows.map((r) => r.fieldId);
+        return { target: current.includes(id2) ? current : [...current, id2], identity: { op: "detail-view-add", field: id2 }, state: { present: current.includes(id2) } };
+      });
+    }
+  },
+  {
+    name: "jira_remove_board_detail_field",
+    product: "jira",
+    write: true,
+    description: "Remove one field from a board's Detail View; other fields keep their order (not shown \u2192 already-satisfied). Board admin; Jira 11.3.x only.",
+    inputShape: { ...boardShape, field: fieldArg3, ...dryRunShape },
+    async handler({ client }, args) {
+      return changeDetailView(client("jira"), args.board_id, args.dry_run !== false, (view2) => {
+        const [id2] = resolveDetailFields(view2, [args.field]);
+        const current = view2.rows.map((r) => r.fieldId);
+        return { target: current.filter((x2) => x2 !== id2), identity: { op: "detail-view-remove", field: id2 }, state: { present: current.includes(id2) } };
+      });
+    }
+  }
+];
+
 // src/tools/jira/links.ts
 var issueKey = external_exports.string().regex(/^[A-Z][A-Z0-9_]+-\d+$/, "expected an issue key like PROJ-123");
 var jiraLinkTools = [
@@ -61150,7 +62552,7 @@ var jiraLinkTools = [
     description: "Issue link types with inward/outward wording (e.g. Blocks: 'is blocked by' / 'blocks').",
     inputShape: { name_contains: external_exports.string().optional() },
     async handler({ client }, args) {
-      const data = await client("jira").get(`${API7}/issueLinkType`);
+      const data = await client("jira").get(`${API9}/issueLinkType`);
       return (data?.issueLinkTypes ?? []).filter((t) => contains(t.name, args.name_contains)).map((t) => ({ id: t.id, name: t.name, inward: t.inward, outward: t.outward }));
     }
   },
@@ -61166,7 +62568,7 @@ var jiraLinkTools = [
       const fields = epic.epicLink ? { [epic.epicLink]: args.epic_key } : { parent: { key: args.epic_key } };
       return guardedWrite(c, args, {
         method: "PUT",
-        path: `${API7}/issue/${seg(args.issue_key)}`,
+        path: `${API9}/issue/${seg(args.issue_key)}`,
         json: { fields },
         summary: `Link ${args.issue_key} to epic ${args.epic_key} via ${epic.epicLink ?? "parent"}`
       });
@@ -61199,7 +62601,7 @@ var jiraLinkTools = [
       }
       return guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/issueLink`,
+        path: `${API9}/issueLink`,
         json: body,
         summary: `Link ${args.outward_issue_key} -[${args.link_type}]-> ${args.inward_issue_key}`
       });
@@ -61227,7 +62629,7 @@ var jiraLinkTools = [
       if (args.relationship) body.relationship = args.relationship;
       return guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/issue/${seg(args.issue_key)}/remotelink`,
+        path: `${API9}/issue/${seg(args.issue_key)}/remotelink`,
         json: body,
         summary: `Add remote link '${args.title}' to ${args.issue_key}`
       });
@@ -61243,7 +62645,7 @@ var jiraLinkTools = [
       if (!/^\d+$/.test(args.link_id)) throw new ValidationError("link_id must be numeric");
       return guardedWrite(client("jira"), args, {
         method: "DELETE",
-        path: `${API7}/issueLink/${args.link_id}`,
+        path: `${API9}/issueLink/${args.link_id}`,
         summary: `Delete issue link ${args.link_id}`
       });
     }
@@ -61255,7 +62657,7 @@ var jiraLinkTools = [
     inputShape: { issue_key: issueKey, include_remote: boolArg.optional().describe("Default true") },
     async handler({ client }, args) {
       const c = client("jira");
-      const issue2 = await c.get(`${API7}/issue/${seg(args.issue_key)}`, { fields: "issuelinks" });
+      const issue2 = await c.get(`${API9}/issue/${seg(args.issue_key)}`, { fields: "issuelinks" });
       const links = (issue2?.fields?.issuelinks ?? []).map((l3) => {
         const other = l3.outwardIssue ?? l3.inwardIssue;
         return {
@@ -61268,7 +62670,7 @@ var jiraLinkTools = [
       });
       const out = { issue: args.issue_key, links };
       if (args.include_remote !== false) {
-        const remote = await c.get(`${API7}/issue/${seg(args.issue_key)}/remotelink`) ?? [];
+        const remote = await c.get(`${API9}/issue/${seg(args.issue_key)}/remotelink`) ?? [];
         out.remote = remote.map((r) => ({ id: r.id, title: r.object?.title, url: r.object?.url, relationship: r.relationship }));
       }
       return out;
@@ -61285,7 +62687,7 @@ var jiraWorklogTools = [
     description: "Worklogs of an issue, newest first: author, started, time spent, comment (Markdown). totalHours covers all worklogs.",
     inputShape: { issue_key: external_exports.string(), oldest_first: boolArg.optional(), ...pageShape(50) },
     async handler({ client }, args) {
-      const data = await client("jira").get(`${API7}/issue/${seg(args.issue_key)}/worklog`);
+      const data = await client("jira").get(`${API9}/issue/${seg(args.issue_key)}/worklog`);
       const sorted = [...data?.worklogs ?? []].sort((a, b) => String(a.started ?? "").localeCompare(String(b.started ?? "")));
       if (!args.oldest_first) sorted.reverse();
       const items = sorted.map((w) => ({
@@ -61320,7 +62722,7 @@ var jiraWorklogTools = [
       const params = args.remaining_estimate ? { adjustEstimate: "new", newEstimate: args.remaining_estimate } : { adjustEstimate: "auto" };
       return guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/issue/${seg(args.issue_key)}/worklog`,
+        path: `${API9}/issue/${seg(args.issue_key)}/worklog`,
         params,
         json: body,
         summary: `Log ${args.time_spent} on ${args.issue_key}`
@@ -61347,7 +62749,7 @@ function safeFileName(name, fallback) {
   return cleaned || fallback;
 }
 async function downloadAll(client, issueKey2, outputDir, filter, maxBytes, maxFiles = DEFAULT_MAX_FILES) {
-  const issue2 = await client.get(`${API7}/issue/${seg(issueKey2)}`, { fields: "attachment" });
+  const issue2 = await client.get(`${API9}/issue/${seg(issueKey2)}`, { fields: "attachment" });
   const matching = (issue2?.fields?.attachment ?? []).filter(filter);
   const attachments = matching.slice(0, maxFiles);
   const dir = resolve3(outputDir);
@@ -61400,7 +62802,7 @@ var jiraAttachmentTools = [
     description: "List an issue's attachments (id, name, type, size, author, created) without downloading them.",
     inputShape: { issue_key: external_exports.string() },
     async handler({ client }, args) {
-      const issue2 = await client("jira").get(`${API7}/issue/${seg(args.issue_key)}`, { fields: "attachment" });
+      const issue2 = await client("jira").get(`${API9}/issue/${seg(args.issue_key)}`, { fields: "attachment" });
       return (issue2?.fields?.attachment ?? []).map((a) => ({
         id: a.id,
         name: a.filename,
@@ -61455,7 +62857,7 @@ var jiraAttachmentTools = [
       if (args.paths.length === 0) throw new ValidationError("paths is empty");
       const res = await guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/issue/${seg(args.issue_key)}/attachments`,
+        path: `${API9}/issue/${seg(args.issue_key)}/attachments`,
         files: { field: "file", paths: args.paths },
         summary: `Attach ${args.paths.map((p) => basename2(p)).join(", ")} to ${args.issue_key}`
       });
@@ -61475,7 +62877,7 @@ var jiraAttachmentTools = [
       if (!/^\d+$/.test(args.attachment_id)) throw new ValidationError("attachment_id must be numeric");
       return guardedWrite(client("jira"), args, {
         method: "DELETE",
-        path: `${API7}/attachment/${args.attachment_id}`,
+        path: `${API9}/attachment/${args.attachment_id}`,
         summary: `PERMANENTLY delete attachment ${args.attachment_id}`
       });
     }
@@ -61499,7 +62901,7 @@ var jiraCollabTools = [
     },
     async handler({ client }, args) {
       if (!args.project_key === !args.issue_key) throw new ValidationError("Pass exactly one of project_key or issue_key");
-      const users = await client("jira").get(`${API7}/user/assignable/search`, {
+      const users = await client("jira").get(`${API9}/user/assignable/search`, {
         username: args.query,
         project: args.project_key,
         issueKey: args.issue_key,
@@ -61514,7 +62916,7 @@ var jiraCollabTools = [
     description: "Watchers of an issue and the watch count.",
     inputShape: { issue_key: external_exports.string() },
     async handler({ client }, args) {
-      const data = await client("jira").get(`${API7}/issue/${seg(args.issue_key)}/watchers`);
+      const data = await client("jira").get(`${API9}/issue/${seg(args.issue_key)}/watchers`);
       return {
         issue: args.issue_key,
         watchCount: data?.watchCount,
@@ -61532,7 +62934,7 @@ var jiraCollabTools = [
     async handler({ client }, args) {
       return guardedWrite(client("jira"), args, {
         method: "POST",
-        path: `${API7}/issue/${seg(args.issue_key)}/watchers`,
+        path: `${API9}/issue/${seg(args.issue_key)}/watchers`,
         json: args.username,
         summary: `Add watcher ${args.username} to ${args.issue_key}`
       });
@@ -61547,7 +62949,7 @@ var jiraCollabTools = [
     async handler({ client }, args) {
       return guardedWrite(client("jira"), args, {
         method: "DELETE",
-        path: `${API7}/issue/${seg(args.issue_key)}/watchers`,
+        path: `${API9}/issue/${seg(args.issue_key)}/watchers`,
         params: { username: args.username },
         summary: `Remove watcher ${args.username} from ${args.issue_key}`
       });
@@ -61602,7 +63004,7 @@ function summarise(periods) {
   }));
 }
 async function issueWithChangelog(client, key) {
-  return client.get(`${API7}/issue/${seg(key)}`, {
+  return client.get(`${API9}/issue/${seg(key)}`, {
     fields: "status,created,updated,duedate,resolutiondate",
     expand: "changelog"
   });
@@ -61653,7 +63055,7 @@ function parseDays(s) {
 var METRICS = ["cycle_time", "lead_time", "time_in_status", "due_date_compliance", "resolution_time", "first_response_time"];
 var DATA_TYPES = ["pullrequest", "branch", "repository"];
 async function devInfo(client, key, appType, dataType, maxCommits = 20) {
-  const issue2 = await client.get(`${API7}/issue/${seg(key)}`, { fields: "id" });
+  const issue2 = await client.get(`${API9}/issue/${seg(key)}`, { fields: "id" });
   const issueId = issue2?.id;
   let apps = appType ? [appType] : [];
   if (!appType) {
@@ -61726,7 +63128,7 @@ async function searchAll(client, jql, fields, max) {
   const issues = [];
   let total = 0;
   while (issues.length < max) {
-    const data = await client.get(`${API7}/search`, { jql, fields, startAt: issues.length, maxResults: Math.min(50, max - issues.length) });
+    const data = await client.get(`${API9}/search`, { jql, fields, startAt: issues.length, maxResults: Math.min(50, max - issues.length) });
     total = data?.total ?? 0;
     const batch = data?.issues ?? [];
     issues.push(...batch);
@@ -61794,33 +63196,33 @@ var jiraInsightTools = [
       } : void 0;
       const span = (a, b) => wh ? workingMinutes(a, b, wh) : minutesBetween(a, b);
       const periods = statusTimeline(issue2, now).map((p) => ({ ...p, minutes: span(p.from, p.to ?? now) }));
-      const metrics = {};
+      const metrics2 = {};
       const val = (m) => ({ minutes: m, time: formatMinutes(m) });
-      if (wanted.has("cycle_time")) metrics.cycle_time = f.resolutiondate ? val(span(f.created, f.resolutiondate)) : { calculated: false, reason: "not resolved" };
-      if (wanted.has("lead_time")) metrics.lead_time = { ...val(span(f.created, f.resolutiondate ?? now)), resolved: !!f.resolutiondate };
-      if (wanted.has("time_in_status")) metrics.time_in_status = summarise(periods);
+      if (wanted.has("cycle_time")) metrics2.cycle_time = f.resolutiondate ? val(span(f.created, f.resolutiondate)) : { calculated: false, reason: "not resolved" };
+      if (wanted.has("lead_time")) metrics2.lead_time = { ...val(span(f.created, f.resolutiondate ?? now)), resolved: !!f.resolutiondate };
+      if (wanted.has("time_in_status")) metrics2.time_in_status = summarise(periods);
       if (wanted.has("due_date_compliance")) {
-        if (!f.duedate) metrics.due_date_compliance = "no_due_date";
-        else if (!f.resolutiondate) metrics.due_date_compliance = "not_resolved";
+        if (!f.duedate) metrics2.due_date_compliance = "no_due_date";
+        else if (!f.resolutiondate) metrics2.due_date_compliance = "not_resolved";
         else {
           const due = /* @__PURE__ */ new Date(`${String(f.duedate).slice(0, 10)}T23:59:59Z`);
           const margin = Math.round((due.getTime() - Date.parse(f.resolutiondate)) / 6e4);
-          metrics.due_date_compliance = { result: margin >= 0 ? "met" : "missed", margin: formatMinutes(Math.abs(margin)) };
+          metrics2.due_date_compliance = { result: margin >= 0 ? "met" : "missed", margin: formatMinutes(Math.abs(margin)) };
         }
       }
       if (wanted.has("resolution_time")) {
-        const statuses = await c.get(`${API7}/status`) ?? [];
+        const statuses = await c.get(`${API9}/status`) ?? [];
         const inProgress = new Set(statuses.filter((s) => s.statusCategory?.key === "indeterminate").map((s) => s.name));
         const start = periods.find((p) => inProgress.has(p.status));
-        metrics.resolution_time = start && f.resolutiondate ? val(span(start.from, f.resolutiondate)) : { calculated: false, reason: start ? "not resolved" : "never in progress" };
+        metrics2.resolution_time = start && f.resolutiondate ? val(span(start.from, f.resolutiondate)) : { calculated: false, reason: start ? "not resolved" : "never in progress" };
       }
       if (wanted.has("first_response_time")) {
-        metrics.first_response_time = periods.length > 1 ? val(span(f.created, periods[1].from)) : { calculated: false, reason: "no status change" };
+        metrics2.first_response_time = periods.length > 1 ? val(span(f.created, periods[1].from)) : { calculated: false, reason: "no status change" };
       }
       return {
         issue: args.issue_key,
         workingHours: wh ? `${args.work_start ?? "09:00"}-${args.work_end ?? "17:00"} days ${args.work_days ?? "1-5"} ${wh.timeZone}` : void 0,
-        metrics,
+        metrics: metrics2,
         raw: args.include_raw_dates ? { created: f.created, resolved: f.resolutiondate, due: f.duedate, status: f.status?.name, periods: periods.map((p) => ({ status: p.status, from: p.from, to: p.to })) } : void 0
       };
     }
@@ -61897,7 +63299,7 @@ var jiraInsightTools = [
       const parents = /* @__PURE__ */ new Map();
       for (let i = 0; i < parentKeys.length; i += 50) {
         const chunk = parentKeys.slice(i, i + 50);
-        const data = await c.get(`${API7}/search`, { jql: `key in (${chunk.join(",")})`, fields: "summary", maxResults: chunk.length });
+        const data = await c.get(`${API9}/search`, { jql: `key in (${chunk.join(",")})`, fields: "summary", maxResults: chunk.length });
         for (const p of data?.issues ?? []) parents.set(p.key, p.fields?.summary);
       }
       return {
@@ -61940,7 +63342,7 @@ var jiraInsightTools = [
 ];
 
 // src/tools/jira/servicedesk.ts
-import { readFileSync as readFileSync3 } from "fs";
+import { readFileSync as readFileSync4 } from "fs";
 import { basename as basename3, resolve as resolve4 } from "path";
 var SD = "/rest/servicedeskapi";
 var OPT_IN = { "X-ExperimentalApi": "opt-in" };
@@ -62179,7 +63581,7 @@ var jiraServiceDeskTools = [
       if (files.length && key) {
         try {
           const form = new FormData();
-          for (const p of files) form.append("file", new Blob([readFileSync3(resolve4(p))]), basename3(p));
+          for (const p of files) form.append("file", new Blob([readFileSync4(resolve4(p))]), basename3(p));
           const tmp = await c.request("POST", `${SD}/servicedesk/${seg(args.service_desk_id)}/attachTemporaryFile`, { form, headers: OPT_IN });
           const ids = (tmp?.temporaryAttachments ?? []).map((t) => t.temporaryAttachmentId);
           await c.request("POST", `${SD}/request/${seg(key)}/attachment`, {
@@ -62207,8 +63609,1054 @@ var jiraServiceDeskTools = [
   }
 ];
 
+// src/tools/jira/requestTypes.ts
+async function resolveServiceDesk(client, given) {
+  const value = String(given).trim();
+  const hit = /^\d+$/.test(value) ? await sdGet(client, `/servicedesk/${value}`) : await findInPages(client, "/servicedesk", (d) => String(d.projectKey).toLowerCase() === value.toLowerCase());
+  if (!hit) throw new ValidationError(`No service desk for '${value}' (pass a service desk id or its project key)`);
+  return { id: String(hit.id), projectId: String(hit.projectId), projectKey: String(hit.projectKey), name: String(hit.projectName ?? hit.projectKey) };
+}
+async function listRequestTypes(client, sd) {
+  const out = [];
+  for (let start = 0; out.length < 1e3; ) {
+    const data = await sdGet(client, `/servicedesk/${sd.id}/requesttype`, { start, limit: 50 });
+    const values = data?.values ?? [];
+    out.push(...values);
+    if (!values.length || data?.isLastPage !== false) break;
+    start += values.length;
+  }
+  return out;
+}
+async function resolveRequestType(client, sd, given, opts = {}) {
+  const value = String(given).trim();
+  const types = opts.types ?? await listRequestTypes(client, sd);
+  const describe3 = (t, ref) => ({ id: String(t.id), name: String(t.name), issueTypeId: t.issueTypeId !== void 0 ? String(t.issueTypeId) : void 0, ref, raw: t });
+  const byId = types.find((t) => String(t.id) === value);
+  if (byId) return describe3(byId, value);
+  const byName = types.filter((t) => String(t.name).toLowerCase() === value.toLowerCase());
+  if (byName.length > 1) throw new ValidationError(`Request type name '${value}' is ambiguous in ${sd.projectKey}: ${byName.map((t) => `${t.id} (${t.name})`).join(", ")}; pass the id`);
+  if (byName.length === 1) return describe3(byName[0], { requestType: value });
+  if (opts.allowPending) return { name: value, ref: { requestType: value }, pending: true };
+  throw new ValidationError(`Request type '${value}' not found in ${sd.projectKey}`);
+}
+var IJ = "/rest/servicedesk/1/servicedesk";
+async function portalGroups(client, sd) {
+  const data = await client.get(`${IJ}/${sd.projectId}/request-type-groups`);
+  return (Array.isArray(data) ? data : []).map((g) => ({ id: String(g.id), name: String(g.name) }));
+}
+function pickGroup(groups, given) {
+  const value = String(given).trim();
+  const byId = groups.find((g) => g.id === value);
+  if (byId) return byId;
+  const byName = groups.filter((g) => g.name.toLowerCase() === value.toLowerCase());
+  if (byName.length > 1) throw new ValidationError(`Group name '${value}' is ambiguous; pass the id`);
+  if (!byName.length) throw new ValidationError(`No portal group '${value}'; groups: ${groups.map((g) => `${g.id} (${g.name})`).join(", ")}`);
+  return byName[0];
+}
+async function readModel(client, sd, rt2) {
+  const via = rt2.raw?.groupIds?.[0] !== void 0 ? String(rt2.raw.groupIds[0]) : "hidden";
+  const model = await client.get(`${IJ}/${sd.projectId}/request-type-groups/${via}/request-types/${rt2.id}`);
+  return { model, via };
+}
+var modelPath = (sd, group, id2) => `${IJ}/${sd.projectId}/request-type-groups/${group}/request-types/${id2}`;
+async function groupOrder(client, sd, g) {
+  const data = await client.get(`${IJ}/${sd.projectId}/request-type-groups/${g.id}/request-types`);
+  return (Array.isArray(data) ? data : []).map((t) => String(t.id));
+}
+function placement(list, id2, position, after) {
+  const rest = list.filter((x2) => x2 !== id2);
+  let i;
+  if (after !== void 0) {
+    if (!rest.includes(after)) throw new ValidationError(`'${after}' is not in this list`);
+    i = rest.indexOf(after) + 1;
+  } else {
+    i = position === void 0 ? rest.length : Math.min(Math.max(position, 1) - 1, rest.length);
+  }
+  const desired = [...rest.slice(0, i), id2, ...rest.slice(i)];
+  return { desired, anchor: i === 0 ? "first" : desired[i - 1] };
+}
+function moveBody(client, rowUrl2, desired, id2) {
+  const i = desired.indexOf(id2);
+  return i === 0 ? { position: "First" } : { after: client.url(rowUrl2(desired[i - 1])) };
+}
+var byIdState = (ref, state) => typeof ref === "string" ? state : void 0;
+async function projectIssueTypes(client, sd) {
+  const p = await client.get(`/rest/api/2/project/${seg(sd.projectKey)}`);
+  return (p?.issueTypes ?? []).map((t) => ({ id: String(t.id), name: String(t.name) }));
+}
+function pickIssueType(types, given) {
+  const value = String(given).trim();
+  const hit = types.find((t) => t.id === value) ?? types.find((t) => t.name.toLowerCase() === value.toLowerCase());
+  if (!hit) throw new ValidationError(`'${value}' is not an issue type of this project; issue types: ${types.map((t) => `${t.name} (${t.id})`).join(", ")}`);
+  return hit;
+}
+var sdArg = external_exports.coerce.string().min(1).describe("Service desk id or project key");
+var rtArg = external_exports.coerce.string().min(1).describe("Request type id or exact name (also of one created earlier in the same plan)");
+var groupArg = external_exports.coerce.string().min(1).describe("Portal group id or exact name");
+async function steps(client, dryRun, summary, list, extra, verify) {
+  const shown = (p) => p?.atl_token ? { ...p, atl_token: "***" } : p;
+  const described = list.map((s) => ({ method: s.method, url: client.url(s.path, shown(s.params)), body: s.json, label: s.label }));
+  if (dryRun) {
+    return { dry_run: true, product: client.product, summary, request: described[0], followUps: described.slice(1), ...extra, note: "Nothing was changed. Confirm with the user, then re-run with dry_run=false." };
+  }
+  for (const s of list) await client.request(s.method, s.path, { json: s.json, params: s.params, headers: s.headers });
+  const check2 = await verify();
+  if (!check2.ok) throw new VerificationError(`${summary}: the read-back does not show the change`, check2.result);
+  return { dry_run: false, product: client.product, summary, request: described[0], result: check2.result };
+}
+var toRow = (r) => ({
+  id: Number(r.id),
+  fieldId: String(r.fieldId),
+  name: String(r.jiraName || r.label || r.fieldId),
+  label: String(r.label ?? ""),
+  description: String(r.description ?? ""),
+  sdRequired: !!r.sdRequired,
+  jiraRequired: !!r.jiraRequired,
+  values: r.values ?? {}
+});
+async function readForm(client, rtId) {
+  const [visible, hidden, unused] = await Promise.all(
+    ["visible", "hidden", "unused"].map((k2) => client.get(`${IJ}/${rtId}/request-type-fields/${k2}`))
+  );
+  const rows2 = (v) => (Array.isArray(v) ? v : []).map(toRow);
+  return { visible: rows2(visible), hidden: rows2(hidden), unused: rows2(unused) };
+}
+function findField(rows2, given) {
+  const v = given.trim().toLowerCase();
+  const byId = rows2.find((r) => r.fieldId.toLowerCase() === v);
+  if (byId) return byId;
+  const byName = rows2.filter((r) => r.name.toLowerCase() === v || r.label.toLowerCase() === v);
+  if (byName.length > 1) throw new ValidationError(`Field name '${given}' is ambiguous on this form; pass the field id`);
+  return byName[0];
+}
+var fieldRowPath = (rtId, kind, id2) => `${IJ}/${rtId}/request-type-fields/${kind}/${id2}`;
+async function formContext(client, args) {
+  await requireJsmVersion(client, "Request type form changes");
+  const sd = await resolveServiceDesk(client, args.service_desk);
+  const rt2 = await resolveRequestType(client, sd, args.request_type);
+  const form = await readForm(client, rt2.id);
+  return { sd, rt: rt2, form, dryRun: args.dry_run !== false, where: `form of '${rt2.name}' (${sd.projectKey})` };
+}
+var order = (rows2) => rows2.map((r) => r.fieldId);
+var jiraRequestTypeTools = [
+  {
+    name: "jira_create_request_type",
+    product: "jira",
+    write: true,
+    description: "Create a JSM request type for an issue type (id or name). Same name and issue type \u2192 already-satisfied; same name with another issue type \u2192 error. New request types are not in a portal group (hidden) until added to one.",
+    inputShape: { service_desk: sdArg, name: external_exports.string().trim().min(1), issue_type: external_exports.coerce.string().min(1), description: external_exports.string().optional(), help_text: external_exports.string().optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const [types, its] = await Promise.all([listRequestTypes(c, sd), projectIssueTypes(c, sd)]);
+      const it2 = pickIssueType(its, args.issue_type);
+      const same2 = types.find((t) => String(t.name).toLowerCase() === args.name.toLowerCase());
+      const summary = `Create request type '${args.name}' (${it2.name}) in ${sd.projectKey}`;
+      if (same2 && String(same2.issueTypeId) === it2.id) return alreadySatisfied(summary, `request type ${same2.id} '${same2.name}' exists with issue type ${it2.name}`, { requestTypeId: String(same2.id) });
+      if (same2) throw new ValidationError(`Request type ${same2.id} '${same2.name}' already exists with issue type ${its.find((t) => t.id === String(same2.issueTypeId))?.name ?? same2.issueTypeId}`);
+      const req = { method: "POST", path: `${SD}/servicedesk/${sd.id}/requesttype`, json: { issueTypeId: it2.id, name: args.name, description: args.description ?? "", helpText: args.help_text ?? "" }, headers: OPT_IN, summary };
+      if (args.dry_run !== false) return { ...await guardedWrite(c, args, req), identity: { op: "create-request-type", sd: sd.id, name: args.name, issueType: it2.id } };
+      await c.request("POST", req.path, { json: req.json, headers: OPT_IN });
+      const back = (await listRequestTypes(c, sd)).find((t) => String(t.name) === args.name);
+      if (!back) throw new VerificationError(`${summary}: the request type is not listed after creation`);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: String(back.id), name: back.name, issueTypeId: String(back.issueTypeId) } };
+    }
+  },
+  {
+    name: "jira_update_request_type",
+    product: "jira",
+    write: true,
+    description: "Change a request type's name, description, help text and/or issue type. Internal JSM API, JSM 11.3.x only; read back after the change.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, name: external_exports.string().trim().min(1).optional(), description: external_exports.string().optional(), help_text: external_exports.string().optional(), issue_type: external_exports.coerce.string().optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "Request type changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const rt2 = await resolveRequestType(c, sd, args.request_type);
+      const { model, via } = await readModel(c, sd, rt2);
+      const it2 = args.issue_type !== void 0 ? pickIssueType(await projectIssueTypes(c, sd), args.issue_type) : void 0;
+      const changes = {};
+      if (args.name !== void 0 && args.name !== model.name) changes.name = args.name;
+      if (args.description !== void 0 && args.description !== (model.description ?? "")) changes.description = args.description;
+      if (it2 && String(model.issueType?.id) !== it2.id) changes.issueType = it2.id;
+      const helpChange = args.help_text !== void 0 && args.help_text !== (model.helpText ?? "");
+      const summary = `Update request type ${rt2.id} '${model.name}' in ${sd.projectKey}: ${[...Object.keys(changes), ...helpChange ? ["helpText"] : []].join(", ") || "nothing"}`;
+      if (!Object.keys(changes).length && !helpChange) return alreadySatisfied(`Update request type '${model.name}'`, "it already has these values");
+      const list = [];
+      if (Object.keys(changes).length) {
+        const body = { ...model, ...changes.name !== void 0 ? { name: changes.name } : {}, ...changes.description !== void 0 ? { description: changes.description } : {}, ...it2 && changes.issueType ? { issueType: { id: it2.id, name: it2.name } } : {} };
+        list.push({ method: "PUT", path: modelPath(sd, via, rt2.id), json: body, label: "request type" });
+      }
+      if (helpChange) list.push({ method: "PUT", path: `${IJ}/${sd.projectId}/request-type-groups/help-text/${rt2.id}`, json: { helpText: args.help_text }, label: "help text" });
+      return steps(c, args.dry_run !== false, summary, list, {
+        identity: { op: "update-request-type", sd: sd.id, requestType: rt2.ref, ...changes, ...helpChange ? { helpText: args.help_text } : {} },
+        state: byIdState(rt2.ref, { name: model.name, description: model.description, issueType: model.issueType?.id, helpText: model.helpText })
+      }, async () => {
+        const back = (await readModel(c, sd, { ...rt2, raw: { groupIds: (model.groups ?? []).map((g) => g.id) } })).model;
+        const ok = (changes.name === void 0 || back.name === changes.name) && (changes.description === void 0 || back.description === changes.description) && (!changes.issueType || String(back.issueType?.id) === changes.issueType) && (!helpChange || back.helpText === args.help_text);
+        return { ok, result: { id: back.id, name: back.name, description: back.description, issueType: back.issueType?.name, helpText: back.helpText } };
+      });
+    }
+  },
+  {
+    name: "jira_delete_request_type",
+    product: "jira",
+    write: true,
+    description: "Delete a request type (irreversible: requests created from it keep their issue type but lose the request type). Already gone \u2192 already-satisfied.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const rt2 = await resolveRequestType(c, sd, args.request_type, { allowPending: true });
+      const summary = `Delete request type ${rt2.id ?? ""} '${rt2.name}' in ${sd.projectKey} \u2014 irreversible: existing requests lose their request type`;
+      if (!rt2.id) return alreadySatisfied(`Delete request type '${rt2.name}'`, "no such request type");
+      return guardedWrite(c, args, { method: "DELETE", path: `${SD}/servicedesk/${sd.id}/requesttype/${rt2.id}`, headers: OPT_IN, summary });
+    }
+  },
+  {
+    name: "jira_set_request_type_hidden",
+    product: "jira",
+    write: true,
+    description: "Hide a request type from the portal (hidden=true removes it from all portal groups) or show it (hidden=false, needs group). Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, hidden: boolArg, group: groupArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "Request type portal changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const rt2 = await resolveRequestType(c, sd, args.request_type);
+      const { model, via } = await readModel(c, sd, rt2);
+      const current = (model.groups ?? []).map((g2) => ({ id: String(g2.id), name: g2.name }));
+      if (args.hidden) {
+        if (!current.length) return alreadySatisfied(`Hide request type '${model.name}'`, "it is not in any portal group");
+        return steps(
+          c,
+          args.dry_run !== false,
+          `Hide request type '${model.name}' from the portal (remove it from ${current.map((g2) => g2.name).join(", ")})`,
+          [{ method: "PUT", path: modelPath(sd, via, rt2.id), json: { ...model, groups: [] } }],
+          { identity: { op: "hide-request-type", sd: sd.id, requestType: rt2.ref }, state: { groups: current.map((g2) => g2.id) } },
+          async () => {
+            const back = (await readModel(c, sd, { ...rt2, raw: { groupIds: [] } })).model;
+            return { ok: !(back.groups ?? []).length, result: { groups: back.groups } };
+          }
+        );
+      }
+      if (current.length) return alreadySatisfied(`Show request type '${model.name}'`, `it is in ${current.map((g2) => g2.name).join(", ")}`);
+      if (!args.group) throw new ValidationError("Showing a hidden request type means adding it to a portal group: pass group");
+      const g = pickGroup(await portalGroups(c, sd), args.group);
+      return steps(
+        c,
+        args.dry_run !== false,
+        `Show request type '${model.name}' in portal group ${g.name}`,
+        [{ method: "PUT", path: modelPath(sd, g.id, rt2.id), json: { ...model, groups: [{ id: Number(g.id), name: g.name }] } }],
+        { identity: { op: "show-request-type", sd: sd.id, requestType: rt2.ref, group: g.id }, state: { groups: [] } },
+        async () => ({ ok: (await groupOrder(c, sd, g)).includes(rt2.id), result: { group: g.name } })
+      );
+    }
+  },
+  {
+    name: "jira_add_request_type_to_group",
+    product: "jira",
+    write: true,
+    description: "Add a request type to a portal group, optionally at a 1-based position. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, group: groupArg, position: external_exports.coerce.number().int().min(1).optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "Request type portal changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const rt2 = await resolveRequestType(c, sd, args.request_type);
+      const g = pickGroup(await portalGroups(c, sd), args.group);
+      const [{ model, via }, members2] = await Promise.all([readModel(c, sd, rt2), groupOrder(c, sd, g)]);
+      const present = members2.includes(rt2.id);
+      const { desired, anchor: anchor2 } = placement(members2, rt2.id, args.position ?? (present ? members2.indexOf(rt2.id) + 1 : void 0));
+      const where = `portal group ${g.name}${args.position ? ` at position ${args.position}` : ""}`;
+      if (present && JSON.stringify(desired) === JSON.stringify(members2)) return alreadySatisfied(`Add '${model.name}' to ${where}`, "it is already there");
+      const list = [];
+      if (!present) list.push({ method: "PUT", path: modelPath(sd, via, rt2.id), json: { ...model, groups: [...model.groups ?? [], { id: Number(g.id), name: g.name }] }, label: "add to group" });
+      if (desired.indexOf(rt2.id) !== desired.length - 1 || present) {
+        list.push({ method: "POST", path: `${modelPath(sd, g.id, rt2.id)}/move`, json: moveBody(c, (id2) => modelPath(sd, g.id, id2), desired, rt2.id), label: "position" });
+      }
+      return steps(
+        c,
+        args.dry_run !== false,
+        `Add request type '${model.name}' to ${where}`,
+        list,
+        { identity: { op: "add-to-group", sd: sd.id, requestType: rt2.ref, group: g.id, position: args.position ?? null }, state: { present, anchor: args.position ? anchor2 : null } },
+        async () => {
+          const back = await groupOrder(c, sd, g);
+          return { ok: JSON.stringify(back) === JSON.stringify(desired), result: { group: g.name, order: back } };
+        }
+      );
+    }
+  },
+  {
+    name: "jira_remove_request_type_from_group",
+    product: "jira",
+    write: true,
+    description: "Remove a request type from a portal group (no groups left \u2192 hidden from the portal). Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, group: groupArg, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "Request type portal changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const rt2 = await resolveRequestType(c, sd, args.request_type);
+      const g = pickGroup(await portalGroups(c, sd), args.group);
+      const { model } = await readModel(c, sd, rt2);
+      const groups = (model.groups ?? []).map((x2) => String(x2.id));
+      if (!groups.includes(g.id)) return alreadySatisfied(`Remove '${model.name}' from portal group ${g.name}`, "it is not in that group");
+      const last = groups.length === 1;
+      const result = await steps(
+        c,
+        args.dry_run !== false,
+        `Remove request type '${model.name}' from portal group ${g.name}`,
+        [{ method: "DELETE", path: modelPath(sd, g.id, rt2.id) }],
+        { identity: { op: "remove-from-group", sd: sd.id, requestType: rt2.ref, group: g.id }, state: { present: true }, warning: last ? "it is in no other group, so it becomes hidden from the portal" : void 0 },
+        async () => ({ ok: !(await groupOrder(c, sd, g)).includes(rt2.id), result: { group: g.name } })
+      );
+      return result;
+    }
+  },
+  {
+    name: "jira_move_request_type_in_group",
+    product: "jira",
+    write: true,
+    description: "Move a request type within a portal group to a 1-based position or right after another request type. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, group: groupArg, position: external_exports.coerce.number().int().min(1).optional(), after: rtArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      if (args.position === void 0 === (args.after === void 0)) throw new ValidationError("Pass exactly one of position or after");
+      const c = client("jira");
+      await requireJsmVersion(c, "Request type portal changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const types = await listRequestTypes(c, sd);
+      const rt2 = await resolveRequestType(c, sd, args.request_type, { types });
+      const after = args.after !== void 0 ? await resolveRequestType(c, sd, args.after, { types }) : void 0;
+      const g = pickGroup(await portalGroups(c, sd), args.group);
+      const members2 = await groupOrder(c, sd, g);
+      if (!members2.includes(rt2.id)) throw new ValidationError(`'${rt2.name}' is not in portal group ${g.name}`);
+      const { desired, anchor: anchor2 } = placement(members2, rt2.id, args.position, after?.id);
+      const target = after ? `after '${after.name}'` : `position ${args.position}`;
+      if (JSON.stringify(desired) === JSON.stringify(members2)) return alreadySatisfied(`Move '${rt2.name}' in ${g.name} to ${target}`, "it is already there");
+      return steps(
+        c,
+        args.dry_run !== false,
+        `Move request type '${rt2.name}' in portal group ${g.name} to ${target}`,
+        [{ method: "POST", path: `${modelPath(sd, g.id, rt2.id)}/move`, json: moveBody(c, (id2) => modelPath(sd, g.id, id2), desired, rt2.id) }],
+        { identity: { op: "move-in-group", sd: sd.id, requestType: rt2.ref, group: g.id, position: args.position ?? null, after: after?.ref ?? null }, state: { anchor: after ? null : anchor2 } },
+        async () => {
+          const back = await groupOrder(c, sd, g);
+          return { ok: back.indexOf(rt2.id) === desired.indexOf(rt2.id) || (after ? back.indexOf(rt2.id) === back.indexOf(after.id) + 1 : false), result: { group: g.name, order: back } };
+        }
+      );
+    }
+  },
+  // -- form ----------------------------------------------------------------------------------
+  {
+    name: "jira_get_request_type_form",
+    product: "jira",
+    description: "A request type's form: visible fields in order (label, description, required), hidden fields with their preset values, and fields that can still be added. Internal JSM API.",
+    inputShape: { service_desk: sdArg, request_type: rtArg },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const rt2 = await resolveRequestType(c, sd, args.request_type);
+      const form = await readForm(c, rt2.id);
+      return {
+        requestType: { id: rt2.id, name: rt2.name },
+        visible: form.visible.map((r) => ({ fieldId: r.fieldId, name: r.name, label: r.label, description: r.description || void 0, required: r.sdRequired || r.jiraRequired })),
+        hidden: form.hidden.map((r) => ({ fieldId: r.fieldId, name: r.name, preset: r.values[r.fieldId] ?? [] })),
+        addable: form.unused.map((r) => ({ fieldId: r.fieldId, name: r.name }))
+      };
+    }
+  },
+  {
+    name: "jira_add_request_type_field",
+    product: "jira",
+    write: true,
+    description: "Add a field to a request type's form (optionally label, description, required, 1-based position). Already visible there \u2192 already-satisfied. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, field: external_exports.coerce.string().min(1), label: external_exports.string().optional(), description: external_exports.string().optional(), required: boolArg.optional(), position: external_exports.coerce.number().int().min(1).optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const { rt: rt2, form, dryRun, where } = await formContext(c, args);
+      const rtId = rt2.id;
+      const visible = findField(form.visible, args.field);
+      const hidden = findField(form.hidden, args.field);
+      if (hidden) throw new ValidationError(`${hidden.name} is a hidden field of this form; use jira_show_request_type_field`);
+      const attrs = {};
+      if (args.label !== void 0) attrs.label = args.label;
+      if (args.description !== void 0) attrs.description = args.description;
+      if (args.required !== void 0) attrs.sdRequired = args.required;
+      const cur = order(form.visible);
+      if (visible) {
+        const { desired: desired2 } = placement(cur, visible.fieldId, args.position ?? cur.indexOf(visible.fieldId) + 1);
+        const same2 = Object.entries(attrs).every(([k2, v]) => visible[k2] === v) && JSON.stringify(desired2) === JSON.stringify(cur);
+        if (same2) return alreadySatisfied(`Add ${visible.name} to the ${where}`, "it is already on the form with these settings");
+        throw new ValidationError(`${visible.name} is already on the form; use jira_update_request_type_field or jira_move_request_type_field`);
+      }
+      const add = findField(form.unused, args.field);
+      if (!add) throw new ValidationError(`'${args.field}' cannot be added to the ${where}; addable fields: ${form.unused.map((r) => r.name).join(", ")}`);
+      const { desired, anchor: anchor2 } = placement(cur, add.fieldId, args.position);
+      const list = [{ method: "POST", path: `${IJ}/${rtId}/request-type-fields`, json: { fields: [add.fieldId] }, label: `add ${add.name}` }];
+      if (Object.keys(attrs).length) list.push({ method: "PUT", path: fieldRowPath(rtId, "visible", `{${add.fieldId}}`), json: attrs, label: "settings" });
+      if (desired.indexOf(add.fieldId) !== desired.length - 1) list.push({ method: "POST", path: `${fieldRowPath(rtId, "visible", `{${add.fieldId}}`)}/move`, json: anchor2 === "first" ? { position: "First" } : { after: `{${anchor2}}` }, label: "position" });
+      const summary = `Add ${add.name} to the ${where}${args.position ? ` at position ${args.position}` : ""}`;
+      const extra = { identity: { op: "add-form-field", requestType: rt2.ref, field: add.fieldId, ...attrs, position: args.position ?? null }, state: { present: false, anchor: args.position ? anchor2 : null } };
+      if (dryRun) return steps(c, true, summary, list, extra, async () => ({ ok: true, result: null }));
+      const rows2 = await c.request("POST", list[0].path, { json: list[0].json });
+      const row = (rows2 ?? []).find((r) => r.fieldId === add.fieldId);
+      if (!row) throw new VerificationError(`${summary}: Jira did not add the field`, rows2);
+      if (!row.displayed) throw new VerificationError(`${summary}: Jira added ${add.name} as a hidden field (the portal cannot show it)`, row);
+      if (Object.keys(attrs).length) await c.request("PUT", fieldRowPath(rtId, "visible", row.id), { json: attrs });
+      const now = order((await readForm(c, rtId)).visible);
+      if (JSON.stringify(now) !== JSON.stringify(desired)) {
+        const visibleRows = (await readForm(c, rtId)).visible;
+        const idOf = (fid) => String(visibleRows.find((r) => r.fieldId === fid).id);
+        const i = desired.indexOf(add.fieldId);
+        await c.request("POST", `${fieldRowPath(rtId, "visible", row.id)}/move`, { json: i === 0 ? { position: "First" } : { after: c.url(fieldRowPath(rtId, "visible", idOf(desired[i - 1]))) } });
+      }
+      const back = await readForm(c, rtId);
+      const added = back.visible.find((r) => r.fieldId === add.fieldId);
+      const ok = !!added && JSON.stringify(order(back.visible)) === JSON.stringify(desired) && Object.entries(attrs).every(([k2, v]) => added[k2] === v);
+      if (!ok) throw new VerificationError(`${summary}: the read-back does not show the change`, back.visible);
+      return { dry_run: false, product: c.product, summary, request: { method: "POST", url: c.url(list[0].path), body: list[0].json }, result: { visible: back.visible.map((r) => r.fieldId) } };
+    }
+  },
+  {
+    name: "jira_remove_request_type_field",
+    product: "jira",
+    write: true,
+    description: "Remove a field (visible or hidden) from a request type's form. Not on the form \u2192 already-satisfied. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, field: external_exports.coerce.string().min(1), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const { rt: rt2, form, dryRun, where } = await formContext(c, args);
+      const v = findField(form.visible, args.field);
+      const h2 = v ? void 0 : findField(form.hidden, args.field);
+      const row = v ?? h2;
+      if (!row) return alreadySatisfied(`Remove ${args.field} from the ${where}`, "it is not on the form");
+      return steps(
+        c,
+        dryRun,
+        `Remove ${row.name} from the ${where}`,
+        [{ method: "DELETE", path: fieldRowPath(rt2.id, v ? "visible" : "hidden", row.id) }],
+        { identity: { op: "remove-form-field", requestType: rt2.ref, field: row.fieldId }, state: { present: true } },
+        async () => {
+          const back = await readForm(c, rt2.id);
+          return { ok: !back.visible.concat(back.hidden).some((r) => r.fieldId === row.fieldId), result: { visible: order(back.visible), hidden: order(back.hidden) } };
+        }
+      );
+    }
+  },
+  {
+    name: "jira_move_request_type_field",
+    product: "jira",
+    write: true,
+    description: "Move a visible field of a request type's form to a 1-based position or right after another field. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, field: external_exports.coerce.string().min(1), position: external_exports.coerce.number().int().min(1).optional(), after: external_exports.coerce.string().optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      if (args.position === void 0 === (args.after === void 0)) throw new ValidationError("Pass exactly one of position or after");
+      const c = client("jira");
+      const { rt: rt2, form, dryRun, where } = await formContext(c, args);
+      const row = findField(form.visible, args.field);
+      if (!row) throw new ValidationError(`${args.field} is not a visible field of the ${where}`);
+      const after = args.after !== void 0 ? findField(form.visible, args.after) : void 0;
+      if (args.after !== void 0 && !after) throw new ValidationError(`${args.after} is not a visible field of the ${where}`);
+      const cur = order(form.visible);
+      const { desired, anchor: anchor2 } = placement(cur, row.fieldId, args.position, after?.fieldId);
+      const target = after ? `after ${after.name}` : `position ${args.position}`;
+      if (JSON.stringify(desired) === JSON.stringify(cur)) return alreadySatisfied(`Move ${row.name} on the ${where} to ${target}`, "it is already there");
+      const idOf = (fid) => String(form.visible.find((r) => r.fieldId === fid).id);
+      return steps(
+        c,
+        dryRun,
+        `Move ${row.name} on the ${where} to ${target}`,
+        [{ method: "POST", path: `${fieldRowPath(rt2.id, "visible", row.id)}/move`, json: moveBody(c, (fid) => fieldRowPath(rt2.id, "visible", idOf(fid)), desired, row.fieldId) }],
+        { identity: { op: "move-form-field", requestType: rt2.ref, field: row.fieldId, position: args.position ?? null, after: after?.fieldId ?? null }, state: { anchor: after ? null : anchor2 } },
+        async () => {
+          const back = order((await readForm(c, rt2.id)).visible);
+          return { ok: after ? back.indexOf(row.fieldId) === back.indexOf(after.fieldId) + 1 : back.indexOf(row.fieldId) === desired.indexOf(row.fieldId), result: { visible: back } };
+        }
+      );
+    }
+  },
+  {
+    name: "jira_update_request_type_field",
+    product: "jira",
+    write: true,
+    description: "Change a visible form field's label, description and/or required flag. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, field: external_exports.coerce.string().min(1), label: external_exports.string().optional(), description: external_exports.string().optional(), required: boolArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const { rt: rt2, form, dryRun, where } = await formContext(c, args);
+      const row = findField(form.visible, args.field);
+      if (!row) throw new ValidationError(`${args.field} is not a visible field of the ${where}`);
+      const attrs = {};
+      if (args.label !== void 0 && args.label !== row.label) attrs.label = args.label;
+      if (args.description !== void 0 && args.description !== row.description) attrs.description = args.description;
+      if (args.required !== void 0 && args.required !== row.sdRequired) attrs.sdRequired = args.required;
+      if (args.label === void 0 && args.description === void 0 && args.required === void 0) throw new ValidationError("Pass label, description and/or required");
+      const summary = `Update ${row.name} on the ${where}: ${Object.keys(attrs).join(", ")}`;
+      if (!Object.keys(attrs).length) return alreadySatisfied(`Update ${row.name} on the ${where}`, "it already has these values");
+      return steps(
+        c,
+        dryRun,
+        summary,
+        [{ method: "PUT", path: fieldRowPath(rt2.id, "visible", row.id), json: attrs }],
+        { identity: { op: "update-form-field", requestType: rt2.ref, field: row.fieldId, ...attrs }, state: Object.fromEntries(Object.keys(attrs).map((k2) => [k2, row[k2]])) },
+        async () => {
+          const back = findField((await readForm(c, rt2.id)).visible, row.fieldId);
+          return { ok: !!back && Object.entries(attrs).every(([k2, v]) => back[k2] === v), result: back };
+        }
+      );
+    }
+  },
+  {
+    name: "jira_hide_request_type_field",
+    product: "jira",
+    write: true,
+    description: "Hide a form field from customers, optionally with a preset value (preset = value or comma list). A field Jira requires needs a preset. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, field: external_exports.coerce.string().min(1), preset: external_exports.string().optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const { rt: rt2, form, dryRun, where } = await formContext(c, args);
+      const preset = args.preset !== void 0 ? String(args.preset).split(",").map((s) => s.trim()).filter(Boolean) : void 0;
+      const hiddenRow = findField(form.hidden, args.field);
+      if (hiddenRow) {
+        const stored = hiddenRow.values[hiddenRow.fieldId] ?? [];
+        if (!preset || JSON.stringify(stored) === JSON.stringify(preset)) return alreadySatisfied(`Hide ${hiddenRow.name} on the ${where}`, "it is already hidden with this preset");
+      }
+      const row = hiddenRow ?? findField(form.visible, args.field);
+      if (!row) throw new ValidationError(`${args.field} is not on the ${where}`);
+      if (row.jiraRequired && !preset?.length && !row.values[row.fieldId]?.length) {
+        throw new ValidationError(`${row.name} is required by Jira; hiding it needs a preset value, or creating requests fails`);
+      }
+      const token = preset ? await c.xsrfToken() : void 0;
+      if (preset && !token) throw new ValidationError("Jira did not provide an XSRF token, which the preset call needs");
+      const list = [];
+      if (preset) {
+        list.push({ method: "POST", path: `${IJ}/${rt2.id}/request-type-fields/${row.id}/preset`, params: { atl_token: token }, headers: { Cookie: `atlassian.xsrf.token=${token}` }, json: { values: { [row.fieldId]: preset } }, label: "preset" });
+      }
+      if (!hiddenRow) list.push({ method: "PUT", path: `${IJ}/${rt2.id}/request-type-fields/${row.id}/hide`, label: "hide" });
+      return steps(
+        c,
+        dryRun,
+        `Hide ${row.name} on the ${where}${preset ? ` with preset ${preset.join(", ")}` : ""}`,
+        list,
+        { identity: { op: "hide-form-field", requestType: rt2.ref, field: row.fieldId, preset: preset ?? null }, state: { hidden: !!hiddenRow } },
+        async () => {
+          const back = findField((await readForm(c, rt2.id)).hidden, row.fieldId);
+          return { ok: !!back && (!preset || JSON.stringify(back.values[row.fieldId] ?? []) === JSON.stringify(preset)), result: back };
+        }
+      );
+    }
+  },
+  {
+    name: "jira_show_request_type_field",
+    product: "jira",
+    write: true,
+    description: "Show a hidden form field to customers again. Already visible \u2192 already-satisfied. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg, request_type: rtArg, field: external_exports.coerce.string().min(1), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const { rt: rt2, form, dryRun, where } = await formContext(c, args);
+      if (findField(form.visible, args.field)) return alreadySatisfied(`Show ${args.field} on the ${where}`, "it is already visible");
+      const row = findField(form.hidden, args.field);
+      if (!row) throw new ValidationError(`${args.field} is not on the ${where}`);
+      return steps(
+        c,
+        dryRun,
+        `Show ${row.name} on the ${where}`,
+        [{ method: "PUT", path: `${IJ}/${rt2.id}/request-type-fields/${row.id}/show` }],
+        { identity: { op: "show-form-field", requestType: rt2.ref, field: row.fieldId }, state: { hidden: true } },
+        async () => ({ ok: !!findField((await readForm(c, rt2.id)).visible, row.fieldId), result: { visible: order((await readForm(c, rt2.id)).visible) } })
+      );
+    }
+  }
+];
+
+// src/tools/jira/sla.ts
+var IJ2 = "/rest/servicedesk/1/servicedesk";
+var MINUTE = 6e4;
+var HOUR = 60 * MINUTE;
+var DAY = 24 * HOUR;
+var DEFAULT_CALENDAR = { id: -1, name: "Default 24/7 calendar" };
+function parseTarget(text) {
+  const value = String(text).trim();
+  if (/^\d+$/.test(value)) return Number(value) * MINUTE;
+  const parts = value.split(/\s+/);
+  let total = 0;
+  for (const part of parts) {
+    const m = /^(\d+)([dhm])$/i.exec(part);
+    if (!m) throw new ValidationError(`Goal target '${text}' is not understood; use e.g. 4h, 2d 4h, 1h 30m or minutes`);
+    total += Number(m[1]) * { d: DAY, h: HOUR, m: MINUTE }[m[2].toLowerCase()];
+  }
+  if (!total) throw new ValidationError(`Goal target '${text}' is zero`);
+  return total;
+}
+function formatTarget(ms) {
+  const d = Math.floor(ms / DAY);
+  const h2 = Math.floor(ms % DAY / HOUR);
+  const m = Math.round(ms % HOUR / MINUTE);
+  return [d ? `${d}d` : "", h2 ? `${h2}h` : "", m ? `${m}m` : ""].filter(Boolean).join(" ") || "0m";
+}
+var DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+var clock = (t) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+  if (!m || Number(m[1]) > 24 || Number(m[2]) > 59) throw new ValidationError(`Time '${t}' is not HH:MM`);
+  return Number(m[1]) * HOUR + Number(m[2]) * MINUTE;
+};
+function parseWorkingHours(text) {
+  const value = String(text).trim().toLowerCase();
+  if (value === "24x7" || value === "24/7") return DAYS.map((day) => ({ day, start: 0, end: DAY, disabled: false }));
+  const out = [];
+  for (const part of value.split(/[;,]/).map((s) => s.trim()).filter(Boolean)) {
+    const m = /^([a-z]{3})(?:-([a-z]{3}))?\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/.exec(part);
+    const from = m ? DAYS.findIndex((d) => d.startsWith(m[1])) : -1;
+    const to = m ? m[2] ? DAYS.findIndex((d) => d.startsWith(m[2])) : from : -1;
+    if (!m || from < 0 || to < from) throw new ValidationError(`Working hours '${part}' are not understood; use 24x7 or e.g. mon-fri 09:00-18:00`);
+    for (let i = from; i <= to; i++) out.push({ day: DAYS[i], start: clock(m[3]), end: clock(m[4]), disabled: false });
+  }
+  return out;
+}
+var hhmm = (ms) => `${String(Math.floor(ms / HOUR)).padStart(2, "0")}:${String(Math.round(ms % HOUR / MINUTE)).padStart(2, "0")}`;
+function describeWorkingTimes(times) {
+  const on = times.filter((t) => !t.disabled).sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day));
+  if (on.length === 7 && on.every((t) => t.start === 0 && t.end === DAY)) return "24x7";
+  const groups = [];
+  for (let i = 0; i < on.length; ) {
+    let j2 = i;
+    while (j2 + 1 < on.length && DAYS.indexOf(on[j2 + 1].day) === DAYS.indexOf(on[j2].day) + 1 && on[j2 + 1].start === on[i].start && on[j2 + 1].end === on[i].end) j2++;
+    groups.push(`${on[i].day}${j2 > i ? `\u2013${on[j2].day}` : ""} ${hhmm(on[i].start)}\u2013${hhmm(on[i].end)}`);
+    i = j2 + 1;
+  }
+  return groups.join("; ");
+}
+async function metrics(client, sd) {
+  const data = await client.get(`${IJ2}/agent/${sd.projectKey}/sla/metrics`);
+  return data?.timeMetrics ?? (Array.isArray(data) ? data : []);
+}
+async function calendarRefs(client, sd) {
+  const data = await client.get(`${IJ2}/agent/${sd.projectKey}/sla/metrics/calendar-refs`);
+  return (data?.calendars ?? []).map((c) => ({ id: Number(c.id), name: String(c.name) }));
+}
+async function conditions(client, sd) {
+  const data = await client.get(`${IJ2}/${sd.projectKey}/sla/conditions/available`);
+  return { hit: data?.hitConditions ?? [], match: data?.matchConditions ?? [] };
+}
+var sameName = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+function pickConditions(available, names, kind, type) {
+  return names.map((n) => {
+    const hit = available.find((c) => sameName(c.name, n));
+    if (!hit) throw new ValidationError(`${kind} condition '${n}' is not available; ${kind} conditions: ${available.map((c) => c.name).join(", ")}`);
+    return { pluginKey: hit.pluginKey, factoryKey: hit.factoryKey, conditionId: hit.conditionId, type, name: hit.name };
+  });
+}
+var goalList = external_exports.preprocess(
+  (v) => typeof v === "string" ? JSON.parse(v) : v,
+  external_exports.array(external_exports.object({ jql: external_exports.string().optional(), target: external_exports.coerce.string().min(1), calendar: external_exports.coerce.string().optional() }).strict()).min(1)
+);
+function buildGoals(goals, refs, allowPending) {
+  const defaults2 = goals.filter((g) => !g.jql?.trim());
+  if (defaults2.length > 1) throw new ValidationError("Only one goal may be for all remaining issues (without jql)");
+  if (defaults2.length && goals.indexOf(defaults2[0]) !== goals.length - 1) throw new ValidationError("The goal for all remaining issues (without jql) must be last");
+  return goals.map((g) => {
+    const out = { jqlQuery: g.jql?.trim() ?? "", duration: parseTarget(g.target) };
+    if (g.calendar !== void 0) {
+      const name = g.calendar.trim();
+      const ref = /^(24x7|24\/7)$/i.test(name) ? DEFAULT_CALENDAR : refs.find((c) => String(c.id) === name || sameName(c.name, name));
+      if (ref) out.calendarId = ref.id;
+      else if (allowPending) out.calendarId = `{${name}}`;
+      else throw new ValidationError(`Calendar '${name}' not found; calendars: ${refs.map((c) => c.name).join(", ")}`);
+    }
+    out.defaultGoal = !g.jql?.trim();
+    return out;
+  });
+}
+function goalSummary(goals, refs) {
+  return goals.map((g) => ({
+    jql: g.jqlQuery ? g.jqlQuery : "All remaining issues",
+    target: formatTarget(Number(g.duration)),
+    calendar: g.calendarId === void 0 || g.calendarId === null || Number(g.calendarId) === -1 ? DEFAULT_CALENDAR.name : refs.find((c) => c.id === Number(g.calendarId))?.name ?? String(g.calendarId)
+  }));
+}
+function shapeOf(m) {
+  const cond = (list) => (list ?? []).map((c) => `${c.pluginKey}:${c.factoryKey}:${c.conditionId}`).sort();
+  return JSON.stringify({
+    name: m.name,
+    customerVisible: !!m.customerVisible,
+    start: cond(m.config?.definition?.start),
+    pause: cond(m.config?.definition?.pause),
+    stop: cond(m.config?.definition?.stop),
+    goals: (m.config?.goals ?? []).map((g) => ({ jql: g.jqlQuery ?? "", duration: Number(g.duration), calendarId: g.calendarId === void 0 || Number(g.calendarId) === -1 ? -1 : g.calendarId, defaultGoal: !!g.defaultGoal }))
+  });
+}
+function pickMetric(list, given) {
+  const v = String(given).trim();
+  const hit = list.find((m) => String(m.id) === v) ?? list.filter((m) => sameName(m.name, v))[0];
+  return hit;
+}
+async function calendarDetails(client, sd) {
+  const list = await client.get(`${IJ2}/${sd.id}/sla/calendars`) ?? [];
+  return Promise.all(list.map(async (c) => ({
+    ...c,
+    detail: c.id !== void 0 ? await client.get(`${IJ2}/${sd.id}/sla/calendars/${c.id}`) : void 0
+  })));
+}
+var sdArg2 = external_exports.coerce.string().min(1).describe("Service desk id or project key");
+var conditionList = listArg.describe("Condition names from jira_get_sla_conditions, comma-separated");
+var goalsArg = goalList.describe('JSON list in order: [{jql?, target, calendar?}], e.g. [{"jql":"priority = Highest","target":"4h","calendar":"24x7"},{"target":"2d"}]; the goal without jql (all remaining issues) goes last');
+var RECALC = "JSM recalculates this SLA on existing requests, which can take a while on large projects";
+var jiraSlaTools = [
+  {
+    name: "jira_get_sla_configuration",
+    product: "jira",
+    description: "SLA metrics of a service desk: start, pause and stop conditions, and goals in order (JQL, target, calendar). Internal JSM API.",
+    inputShape: { service_desk: sdArg2, ...pageShape(50) },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const [list, refs] = await Promise.all([metrics(c, sd), calendarRefs(c, sd)]);
+      const items = list.map((m) => ({
+        id: m.id,
+        name: m.name,
+        customerVisible: !!m.customerVisible,
+        start: (m.config?.definition?.start ?? []).map((x2) => x2.name),
+        pause: (m.config?.definition?.pause ?? []).map((x2) => x2.name),
+        stop: (m.config?.definition?.stop ?? []).map((x2) => x2.name),
+        goals: goalSummary(m.config?.goals ?? [], refs)
+      }));
+      return paginate(items, args, 50);
+    }
+  },
+  {
+    name: "jira_get_sla_conditions",
+    product: "jira",
+    description: "Conditions an SLA can use in this service desk: start/stop events and pause conditions, by name. Internal JSM API.",
+    inputShape: { service_desk: sdArg2 },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const { hit, match } = await conditions(c, sd);
+      return { startStop: hit.map((x2) => x2.name), pause: match.map((x2) => x2.name) };
+    }
+  },
+  {
+    name: "jira_list_sla_calendars",
+    product: "jira",
+    description: "SLA calendars of a service desk with time zone, working hours, holidays and the SLAs that use them (the built-in Default 24/7 calendar included). Internal JSM API.",
+    inputShape: { service_desk: sdArg2 },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      return (await calendarDetails(c, sd)).map((cal) => ({
+        id: cal.id ?? -1,
+        name: cal.name,
+        timeZone: cal.detail?.timeZone,
+        workingHours: cal.detail ? describeWorkingTimes(cal.detail.workingTimes ?? []) : "24x7",
+        holidays: (cal.detail?.holidays ?? []).length,
+        usedBy: (cal.dependentMetrics ?? []).map((m) => m.metricName),
+        deletable: !!cal.inherentlyDeletable
+      }));
+    }
+  },
+  {
+    name: "jira_create_sla",
+    product: "jira",
+    write: true,
+    description: "Create an SLA metric: start/pause/stop conditions by name and goals in order. Same name and settings \u2192 already-satisfied; same name otherwise \u2192 error. Calendars by name (also one planned earlier), id, or 24x7. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg2, name: external_exports.string().trim().min(1), start: conditionList, pause: conditionList.optional(), stop: conditionList, goals: goalsArg, customer_visible: boolArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "SLA changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const [list, refs, avail] = await Promise.all([metrics(c, sd), calendarRefs(c, sd), conditions(c, sd)]);
+      const dryRun = args.dry_run !== false;
+      const body = {
+        name: args.name,
+        customerVisible: !!args.customer_visible,
+        config: {
+          definition: {
+            start: pickConditions(avail.hit, args.start, "start", "Start"),
+            pause: pickConditions(avail.match, args.pause ?? [], "pause", "Pause"),
+            stop: pickConditions(avail.hit, args.stop, "stop", "Stop")
+          },
+          goals: buildGoals(args.goals, refs, dryRun)
+        }
+      };
+      const summary = `Create SLA '${args.name}' in ${sd.projectKey}: ${body.config.goals.length} goal(s)`;
+      const existing = list.find((m) => sameName(m.name, args.name));
+      if (existing && shapeOf(existing) === shapeOf(body)) return alreadySatisfied(summary, `SLA ${existing.id} '${existing.name}' already has these settings`);
+      if (existing) throw new ValidationError(`SLA ${existing.id} '${existing.name}' already exists with other settings; use jira_update_sla`);
+      const req = { method: "POST", path: `${IJ2}/agent/${sd.projectKey}/sla/metrics`, json: body, summary };
+      const identity = { op: "create-sla", sd: sd.id, name: args.name, start: args.start, pause: args.pause ?? [], stop: args.stop, goals: args.goals, customerVisible: !!args.customer_visible };
+      if (dryRun) return { ...await guardedWrite(c, args, req), identity };
+      await c.request("POST", req.path, { json: body });
+      const back = (await metrics(c, sd)).find((m) => sameName(m.name, args.name));
+      if (!back || shapeOf(back) !== shapeOf(body)) throw new VerificationError(`${summary}: the SLA does not read back as created`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, name: back.name, goals: goalSummary(back.config.goals, refs) } };
+    }
+  },
+  {
+    name: "jira_update_sla",
+    product: "jira",
+    write: true,
+    description: "Change an SLA metric's name, conditions, goals or customer visibility (given parts replace the stored ones). JSM recalculates the SLA on existing requests. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg2, sla: external_exports.coerce.string().min(1).describe("SLA id or exact name"), name: external_exports.string().trim().min(1).optional(), start: conditionList.optional(), pause: conditionList.optional(), stop: conditionList.optional(), goals: goalsArg.optional(), customer_visible: boolArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "SLA changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const [list, refs, avail] = await Promise.all([metrics(c, sd), calendarRefs(c, sd), conditions(c, sd)]);
+      const stored = pickMetric(list, args.sla);
+      if (!stored) throw new ValidationError(`No SLA '${args.sla}' in ${sd.projectKey}`);
+      const def = stored.config.definition;
+      const body = {
+        ...stored,
+        name: args.name ?? stored.name,
+        customerVisible: args.customer_visible ?? stored.customerVisible,
+        config: {
+          ...stored.config,
+          definition: {
+            ...def,
+            start: args.start ? pickConditions(avail.hit, args.start, "start", "Start") : def.start,
+            pause: args.pause ? pickConditions(avail.match, args.pause, "pause", "Pause") : def.pause,
+            stop: args.stop ? pickConditions(avail.hit, args.stop, "stop", "Stop") : def.stop
+          },
+          goals: args.goals ? buildGoals(args.goals, refs, false) : stored.config.goals
+        }
+      };
+      const summary = `Update SLA ${stored.id} '${stored.name}' in ${sd.projectKey}`;
+      if (shapeOf(body) === shapeOf(stored)) return alreadySatisfied(summary, "it already has these settings");
+      const recalc = !!(args.start || args.pause || args.stop || args.goals);
+      const req = { method: "PUT", path: `${IJ2}/agent/${sd.projectKey}/sla/metrics/${stored.id}`, json: body, summary };
+      const identity = { op: "update-sla", sd: sd.id, sla: args.sla, name: args.name, start: args.start, pause: args.pause, stop: args.stop, goals: args.goals, customerVisible: args.customer_visible };
+      if (args.dry_run !== false) {
+        return { ...await guardedWrite(c, args, req), before: goalSummary(stored.config.goals, refs), after: goalSummary(body.config.goals, refs), warning: recalc ? RECALC : void 0, identity, state: shapeOf(stored) };
+      }
+      await c.request("PUT", req.path, { json: body });
+      const back = pickMetric(await metrics(c, sd), String(stored.id));
+      if (!back || shapeOf(back) !== shapeOf(body)) throw new VerificationError(`${summary}: the SLA does not read back as updated`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, name: back.name, goals: goalSummary(back.config.goals, refs) } };
+    }
+  },
+  {
+    name: "jira_delete_sla",
+    product: "jira",
+    write: true,
+    description: "Delete an SLA metric (irreversible: the SLA values recorded on requests are lost). Already gone \u2192 already-satisfied. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg2, sla: external_exports.coerce.string().min(1), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "SLA changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const stored = pickMetric(await metrics(c, sd), args.sla);
+      if (!stored) return alreadySatisfied(`Delete SLA '${args.sla}'`, "no such SLA");
+      return guardedWrite(c, args, {
+        method: "DELETE",
+        path: `${IJ2}/agent/${sd.projectKey}/sla/metrics/${stored.id}`,
+        summary: `Delete SLA ${stored.id} '${stored.name}' in ${sd.projectKey} \u2014 irreversible: the SLA values recorded on requests are lost`
+      });
+    }
+  },
+  {
+    name: "jira_create_sla_calendar",
+    product: "jira",
+    write: true,
+    description: "Create an SLA calendar: name, time_zone (e.g. Europe/Moscow), working_hours (24x7, or e.g. 'mon-fri 09:00-18:00'), optional holidays (JSON list as JSM stores them). Same name and settings \u2192 already-satisfied. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg2, name: external_exports.string().trim().min(1).max(63), time_zone: external_exports.string().min(1), working_hours: external_exports.string().min(1), description: external_exports.string().optional(), holidays: external_exports.preprocess((v) => typeof v === "string" ? JSON.parse(v) : v, external_exports.array(external_exports.record(external_exports.string(), external_exports.any()))).optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "SLA calendar changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const body = { name: args.name, description: args.description ?? "", timeZone: args.time_zone, holidays: args.holidays ?? [], workingTimes: parseWorkingHours(args.working_hours) };
+      const summary = `Create SLA calendar '${args.name}' (${args.time_zone}, ${describeWorkingTimes(body.workingTimes)}) in ${sd.projectKey}`;
+      const existing = (await calendarDetails(c, sd)).find((x2) => sameName(x2.name, args.name));
+      if (existing) {
+        const d = existing.detail ?? {};
+        const same2 = d.timeZone === body.timeZone && describeWorkingTimes(d.workingTimes ?? []) === describeWorkingTimes(body.workingTimes);
+        if (same2) return alreadySatisfied(summary, `calendar ${existing.id} '${existing.name}' already has these settings`);
+        throw new ValidationError(`Calendar '${existing.name}' already exists with other settings; use jira_update_sla_calendar`);
+      }
+      const req = { method: "POST", path: `${IJ2}/${sd.id}/sla/calendars`, json: body, summary };
+      const identity = { op: "create-calendar", sd: sd.id, ...body };
+      if (args.dry_run !== false) return { ...await guardedWrite(c, args, req), identity };
+      await c.request("POST", req.path, { json: body });
+      const back = (await calendarDetails(c, sd)).find((x2) => x2.name === args.name);
+      if (!back) throw new VerificationError(`${summary}: the calendar is not listed after creation`);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, name: back.name } };
+    }
+  },
+  {
+    name: "jira_update_sla_calendar",
+    product: "jira",
+    write: true,
+    description: "Change an SLA calendar's name, description, time zone, working hours or holidays. SLAs using it are recalculated. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg2, calendar: external_exports.coerce.string().min(1), name: external_exports.string().trim().min(1).max(63).optional(), time_zone: external_exports.string().optional(), working_hours: external_exports.string().optional(), description: external_exports.string().optional(), holidays: external_exports.preprocess((v) => typeof v === "string" ? JSON.parse(v) : v, external_exports.array(external_exports.record(external_exports.string(), external_exports.any()))).optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "SLA calendar changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const cal = (await calendarDetails(c, sd)).find((x2) => x2.id !== void 0 && (String(x2.id) === args.calendar || sameName(x2.name, args.calendar)));
+      if (!cal) throw new ValidationError(`No editable calendar '${args.calendar}' (the Default 24/7 calendar cannot be changed)`);
+      const d = cal.detail;
+      const body = { ...d, name: args.name ?? d.name, description: args.description ?? d.description, timeZone: args.time_zone ?? d.timeZone, holidays: args.holidays ?? d.holidays, workingTimes: args.working_hours ? parseWorkingHours(args.working_hours) : d.workingTimes };
+      const summary = `Update SLA calendar ${cal.id} '${cal.name}' in ${sd.projectKey}`;
+      const comparable = (x2) => JSON.stringify({ n: x2.name, d: x2.description, t: x2.timeZone, h: x2.holidays, w: describeWorkingTimes(x2.workingTimes ?? []) });
+      if (comparable(body) === comparable(d)) return alreadySatisfied(summary, "it already has these settings");
+      return { ...await guardedWrite(c, args, { method: "PUT", path: `${IJ2}/${sd.id}/sla/calendars/${cal.id}`, json: body, summary }), warning: (cal.dependentMetrics ?? []).length ? `${RECALC} (used by ${(cal.dependentMetrics ?? []).map((m) => m.metricName).join(", ")})` : void 0, identity: { op: "update-calendar", calendar: args.calendar, name: args.name, timeZone: args.time_zone, workingHours: args.working_hours, holidays: args.holidays }, state: comparable(d) };
+    }
+  },
+  {
+    name: "jira_delete_sla_calendar",
+    product: "jira",
+    write: true,
+    description: "Delete an SLA calendar. Refused while SLA goals use it. Already gone \u2192 already-satisfied. Internal JSM API, JSM 11.3.x only.",
+    inputShape: { service_desk: sdArg2, calendar: external_exports.coerce.string().min(1), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      await requireJsmVersion(c, "SLA calendar changes");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const cal = (await calendarDetails(c, sd)).find((x2) => x2.id !== void 0 && (String(x2.id) === args.calendar || sameName(x2.name, args.calendar)));
+      if (!cal) return alreadySatisfied(`Delete SLA calendar '${args.calendar}'`, "no such calendar");
+      const users = (cal.dependentMetrics ?? []).map((m) => m.metricName);
+      if (users.length) throw new ValidationError(`Calendar '${cal.name}' is used by SLA goals of: ${users.join(", ")}; change those goals first`);
+      return guardedWrite(c, args, { method: "DELETE", path: `${IJ2}/${sd.id}/sla/calendars/${cal.id}`, summary: `Delete SLA calendar ${cal.id} '${cal.name}' in ${sd.projectKey}` });
+    }
+  }
+];
+
+// src/tools/jira/queues.ts
+async function listQueues(client, sd) {
+  const out = [];
+  for (let start = 0; out.length < 500; ) {
+    const data = await sdGet(client, `/servicedesk/${sd.id}/queue`, { start, limit: 50 });
+    const values = data?.values ?? [];
+    out.push(...values);
+    if (!values.length || data?.isLastPage !== false) break;
+    start += values.length;
+  }
+  return out;
+}
+function pickQueue(queues, given) {
+  const v = String(given).trim();
+  const byId = queues.find((q2) => String(q2.id) === v);
+  if (byId) return byId;
+  const byName = queues.filter((q2) => String(q2.name).toLowerCase() === v.toLowerCase());
+  if (byName.length > 1) throw new ValidationError(`Queue name '${v}' is ambiguous; pass the id`);
+  return byName[0];
+}
+async function resolveColumns(client, given) {
+  const fields = await client.get("/rest/api/2/field") ?? [];
+  return given.map((g) => {
+    const v = g.trim();
+    const hit = fields.find((f) => f.id === v) ?? fields.find((f) => String(f.name).toLowerCase() === v.toLowerCase());
+    if (!hit) throw new ValidationError(`Column '${v}' is not a field`);
+    return String(hit.id);
+  });
+}
+var sdArg3 = external_exports.coerce.string().min(1).describe("Service desk id or project key");
+var queueArg = external_exports.coerce.string().min(1).describe("Queue id or exact name");
+var columnsArg = listArg.describe("Columns in order: field ids or exact names, comma-separated");
+var view = (q2) => ({ name: q2.name, jql: q2.jql, fields: q2.fields ?? [] });
+var same = (a, b) => JSON.stringify(view(a)) === JSON.stringify(view(b));
+var jiraQueueTools = [
+  {
+    name: "jira_create_queue",
+    product: "jira",
+    write: true,
+    description: "Create a service desk queue with JQL and ordered columns. Same name and settings \u2192 already-satisfied; same name otherwise \u2192 error.",
+    inputShape: { service_desk: sdArg3, name: external_exports.string().trim().min(1), jql: external_exports.string().trim().min(1), columns: columnsArg, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const [queues, fields] = await Promise.all([listQueues(c, sd), resolveColumns(c, args.columns)]);
+      const body = { name: args.name, jql: args.jql, fields };
+      const summary = `Create queue '${args.name}' in ${sd.projectKey}`;
+      const existing = queues.find((q2) => String(q2.name).toLowerCase() === args.name.toLowerCase());
+      if (existing && same(existing, body)) return alreadySatisfied(summary, `queue ${existing.id} already has this JQL and these columns`);
+      if (existing) throw new ValidationError(`Queue ${existing.id} '${existing.name}' already exists with other settings; use jira_update_queue`);
+      const req = { method: "POST", path: `${SD}/servicedesk/${sd.id}/queue`, json: body, headers: OPT_IN, summary };
+      if (args.dry_run !== false) return guardedWrite(c, args, req);
+      await c.request("POST", req.path, { json: body, headers: OPT_IN });
+      const back = (await listQueues(c, sd)).find((q2) => q2.name === args.name);
+      if (!back || !same(back, body)) throw new VerificationError(`${summary}: the queue does not read back as created`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, ...view(back) } };
+    }
+  },
+  {
+    name: "jira_update_queue",
+    product: "jira",
+    write: true,
+    description: "Change a queue's name, JQL and/or columns. The dry run shows old and new values.",
+    inputShape: { service_desk: sdArg3, queue: queueArg, name: external_exports.string().trim().min(1).optional(), jql: external_exports.string().trim().min(1).optional(), columns: columnsArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const q2 = pickQueue(await listQueues(c, sd), args.queue);
+      if (!q2) throw new ValidationError(`No queue '${args.queue}' in ${sd.projectKey}`);
+      const body = { name: args.name ?? q2.name, jql: args.jql ?? q2.jql, fields: args.columns ? await resolveColumns(c, args.columns) : q2.fields ?? [] };
+      const summary = `Update queue ${q2.id} '${q2.name}' in ${sd.projectKey}`;
+      if (same(q2, body)) return alreadySatisfied(summary, "it already has these settings");
+      const req = { method: "POST", path: `${SD}/servicedesk/${sd.id}/queue/${q2.id}`, json: body, headers: OPT_IN, summary };
+      if (args.dry_run !== false) return { ...await guardedWrite(c, args, req), before: view(q2), after: body, identity: { op: "update-queue", sd: sd.id, queue: args.queue, ...body }, state: view(q2) };
+      await c.request("POST", req.path, { json: body, headers: OPT_IN });
+      const back = await sdGet(c, `/servicedesk/${sd.id}/queue/${q2.id}`);
+      if (!same(back, body)) throw new VerificationError(`${summary}: the queue does not read back as updated`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, ...view(back) } };
+    }
+  },
+  {
+    name: "jira_delete_queue",
+    product: "jira",
+    write: true,
+    description: "Delete a queue. Already gone \u2192 already-satisfied.",
+    inputShape: { service_desk: sdArg3, queue: queueArg, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const q2 = pickQueue(await listQueues(c, sd), args.queue);
+      if (!q2) return alreadySatisfied(`Delete queue '${args.queue}'`, "no such queue");
+      return guardedWrite(c, args, { method: "DELETE", path: `${SD}/servicedesk/${sd.id}/queue/${q2.id}`, headers: OPT_IN, summary: `Delete queue ${q2.id} '${q2.name}' in ${sd.projectKey}` });
+    }
+  },
+  {
+    name: "jira_move_queue",
+    product: "jira",
+    write: true,
+    description: "Move a queue to a 1-based position or right after another queue. Sends the full order of queue ids to POST \u2026/queue/reorder and reads the order back.",
+    inputShape: { service_desk: sdArg3, queue: queueArg, position: external_exports.coerce.number().int().min(1).optional(), after: queueArg.optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      if (args.position === void 0 === (args.after === void 0)) throw new ValidationError("Pass exactly one of position or after");
+      const c = client("jira");
+      const sd = await resolveServiceDesk(c, args.service_desk);
+      const queues = await listQueues(c, sd);
+      const q2 = pickQueue(queues, args.queue);
+      if (!q2) throw new ValidationError(`No queue '${args.queue}' in ${sd.projectKey}`);
+      const after = args.after !== void 0 ? pickQueue(queues, args.after) : void 0;
+      if (args.after !== void 0 && !after) throw new ValidationError(`No queue '${args.after}' in ${sd.projectKey}`);
+      if (after && after.id === q2.id) throw new ValidationError("after is the queue itself");
+      const order2 = queues.map((x2) => String(x2.id));
+      const rest = order2.filter((id2) => id2 !== String(q2.id));
+      const i = after ? rest.indexOf(String(after.id)) + 1 : Math.min(args.position - 1, rest.length);
+      const desired = [...rest.slice(0, i), String(q2.id), ...rest.slice(i)];
+      const nameOf = (id2) => queues.find((x2) => String(x2.id) === id2)?.name ?? id2;
+      const target = after ? `after '${after.name}'` : `position ${args.position}`;
+      const summary = `Move queue '${q2.name}' in ${sd.projectKey} to ${target}`;
+      if (JSON.stringify(desired) === JSON.stringify(order2)) return alreadySatisfied(summary, "it is already there");
+      const req = { method: "POST", path: `${SD}/servicedesk/${sd.id}/queue/reorder`, json: desired.map(Number), headers: OPT_IN, summary };
+      const anchor2 = i === 0 ? "first" : desired[i - 1];
+      const extra = { before: order2.map(nameOf), after: desired.map(nameOf), identity: { op: "move-queue", sd: sd.id, queue: args.queue, position: args.position ?? null, after: args.after ?? null }, state: { anchor: after ? null : anchor2 } };
+      if (args.dry_run !== false) return { ...await guardedWrite(c, args, req), ...extra };
+      await c.request("POST", req.path, { json: req.json, headers: OPT_IN });
+      const back = (await listQueues(c, sd)).map((x2) => String(x2.id));
+      if (JSON.stringify(back) !== JSON.stringify(desired)) {
+        throw new VerificationError(`${summary}: Jira reports another order after the change`, { expected: desired.map(nameOf), actual: back.map(nameOf) });
+      }
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { order: back.map(nameOf) } };
+    }
+  }
+];
+
 // src/tools/confluence/system.ts
-var API8 = "/rest/api";
+var API10 = "/rest/api";
 var PROTOTYPE = "/rest/prototype/1";
 var confluenceSystemTools = [
   {
@@ -62217,7 +64665,7 @@ var confluenceSystemTools = [
     description: "Confluence version, build number, base URL and server time.",
     inputShape: {},
     async handler({ client }) {
-      return client("confluence").get(`${API8}/server-information`);
+      return client("confluence").get(`${API10}/server-information`);
     }
   },
   {
@@ -62226,7 +64674,7 @@ var confluenceSystemTools = [
     description: "Instance size: number of spaces, pages, users and other content counts.",
     inputShape: {},
     async handler({ client }) {
-      return client("confluence").get(`${API8}/instance-metrics`);
+      return client("confluence").get(`${API10}/instance-metrics`);
     }
   },
   {
@@ -62235,7 +64683,7 @@ var confluenceSystemTools = [
     description: "Data Center cluster nodes and their status.",
     inputShape: {},
     async handler({ client }) {
-      return client("confluence").get(`${API8}/cluster/nodes`);
+      return client("confluence").get(`${API10}/cluster/nodes`);
     }
   },
   {
@@ -62244,7 +64692,7 @@ var confluenceSystemTools = [
     description: "Read-only mode status (READ_WRITE or READ_ONLY, e.g. during maintenance).",
     inputShape: {},
     async handler({ client }) {
-      return client("confluence").get(`${API8}/accessmode`);
+      return client("confluence").get(`${API10}/accessmode`);
     }
   },
   {
@@ -62255,7 +64703,7 @@ var confluenceSystemTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 50;
-      const data = await client("confluence").get(`${API8}/longtask`, { start: offset, limit, expand: "status" });
+      const data = await client("confluence").get(`${API10}/longtask`, { start: offset, limit, expand: "status" });
       return serverPage(data?.results ?? [], offset, limit, null, !data?._links?.next);
     }
   },
@@ -62265,7 +64713,7 @@ var confluenceSystemTools = [
     description: "One long-running task: percentage complete, elapsed time, messages, success flag.",
     inputShape: { task_id: external_exports.string() },
     async handler({ client }, args) {
-      return client("confluence").get(`${API8}/longtask/${encodeURIComponent(args.task_id)}`);
+      return client("confluence").get(`${API10}/longtask/${encodeURIComponent(args.task_id)}`);
     }
   },
   {
@@ -62294,7 +64742,7 @@ var confluenceSystemTools = [
 ];
 
 // src/tools/confluence/users.ts
-var API9 = "/rest/api";
+var API11 = "/rest/api";
 var PROTOTYPE2 = "/rest/prototype/1";
 var MAX_GROUPS = 200;
 var USER_FIELDS2 = ["type", "username", "userKey", "displayName", "email", "status"];
@@ -62338,7 +64786,7 @@ async function resolveConfluenceGrantUser(client, identity) {
   const query = username ?? email3;
   let direct;
   try {
-    direct = await client.get(`${API9}/user`, { username: query, expand: "status" });
+    direct = await client.get(`${API11}/user`, { username: query, expand: "status" });
   } catch (error62) {
     if (!isHttpStatusError(error62) || error62.status !== 404 || !email3) {
       throw new ValidationError(`Could not verify the requested Confluence user: ${String(error62?.message ?? error62)}`);
@@ -62378,7 +64826,7 @@ async function resolveConfluenceGrantUser(client, identity) {
     if (!candidateUsername) throw new ValidationError("An exact-email search match has no usable username");
     let hydrated;
     try {
-      hydrated = await client.get(`${API9}/user`, { username: candidateUsername, expand: "status" });
+      hydrated = await client.get(`${API11}/user`, { username: candidateUsername, expand: "status" });
     } catch (error62) {
       throw new ValidationError(`Could not verify exact-email match '${candidateUsername}': ${String(error62?.message ?? error62)}`);
     }
@@ -62433,9 +64881,9 @@ var confluenceUserTools = [
     inputShape: { ...userShape, include_groups: boolArg.optional().describe("Default true") },
     async handler({ client }, args) {
       const c = client("confluence");
-      const user = compactUser3(await c.get(`${API9}/user`, { username: args.username, expand: "status" }));
+      const user = compactUser3(await c.get(`${API11}/user`, { username: args.username, expand: "status" }));
       if (args.include_groups !== false) {
-        const groups = await c.getPagedConfluence(`${API9}/user/memberof`, { username: args.username }, 200, MAX_GROUPS + 1);
+        const groups = await c.getPagedConfluence(`${API11}/user/memberof`, { username: args.username }, 200, MAX_GROUPS + 1);
         user.groups = groups.slice(0, MAX_GROUPS).map((g) => g.name).sort();
         if (groups.length > MAX_GROUPS) user.groupsTruncated = `first ${MAX_GROUPS}; use confluence_list_groups / group members for the rest`;
       }
@@ -62450,7 +64898,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 200;
-      const data = await client("confluence").get(`${API9}/group`, { start: offset, limit });
+      const data = await client("confluence").get(`${API11}/group`, { start: offset, limit });
       return serverPage((data?.results ?? []).map((g) => g.name), offset, limit, null, !data?._links?.next);
     }
   },
@@ -62462,7 +64910,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 100;
-      const data = await client("confluence").get(`${API9}/group/${seg(args.group)}/member`, {
+      const data = await client("confluence").get(`${API11}/group/${seg(args.group)}/member`, {
         start: offset,
         limit,
         expand: "status"
@@ -62493,7 +64941,7 @@ var confluenceUserTools = [
       if (args.password) body.password = args.password;
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API9}/admin/user`,
+        path: `${API11}/admin/user`,
         json: body,
         secretKeys: ["password"],
         summary: `Create user ${args.username}`
@@ -62509,7 +64957,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
-        path: `${API9}/admin/user/${seg(args.username)}/${args.enabled ? "enable" : "disable"}`,
+        path: `${API11}/admin/user/${seg(args.username)}/${args.enabled ? "enable" : "disable"}`,
         summary: `${args.enabled ? "Enable" : "Disable"} user ${args.username}`
       });
     }
@@ -62523,7 +64971,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API9}/admin/group`,
+        path: `${API11}/admin/group`,
         json: { type: "group", name: args.name },
         summary: `Create group ${args.name}`
       });
@@ -62538,7 +64986,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API9}/admin/group/${seg(args.name)}`,
+        path: `${API11}/admin/group/${seg(args.name)}`,
         summary: `DELETE group ${args.name}`
       });
     }
@@ -62552,7 +65000,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
-        path: `${API9}/user/${seg(args.username)}/group/${seg(args.group)}`,
+        path: `${API11}/user/${seg(args.username)}/group/${seg(args.group)}`,
         summary: `Add ${args.username} to ${args.group}`
       });
     }
@@ -62566,7 +65014,7 @@ var confluenceUserTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API9}/user/${seg(args.username)}/group/${seg(args.group)}`,
+        path: `${API11}/user/${seg(args.username)}/group/${seg(args.group)}`,
         summary: `Remove ${args.username} from ${args.group}`
       });
     }
@@ -62574,7 +65022,7 @@ var confluenceUserTools = [
 ];
 
 // src/tools/confluence/spaces.ts
-var API10 = "/rest/api";
+var API12 = "/rest/api";
 var SPACE_SCAN_MAX = 2e3;
 var SPACE_OPERATIONS = [
   "read",
@@ -62639,17 +65087,17 @@ var confluenceSpaceTools = [
         let cql = `type = space AND (${clauses.join(" OR ")})`;
         if (args.type) cql += ` AND space.type = ${args.type}`;
         try {
-          const data2 = await c.get(`${API10}/search`, { cql, start: offset, limit, expand: "space" });
+          const data2 = await c.get(`${API12}/search`, { cql, start: offset, limit, expand: "space" });
           const items = (data2?.results ?? []).map((r) => r.space ?? r).filter((sp) => !args.status || !sp.status || sp.status === args.status).map(compact);
           return { cql, ...serverPage(items, offset, limit, data2?.totalSize ?? null, !data2?._links?.next) };
         } catch (e) {
           if (!isHttpStatusError(e) || e.status !== 400) throw e;
-          const all = await c.getPagedConfluence(`${API10}/space`, params, 200, SPACE_SCAN_MAX);
+          const all = await c.getPagedConfluence(`${API12}/space`, params, 200, SPACE_SCAN_MAX);
           const items = all.map(compact).filter((sp) => contains(sp.name, args.name_contains) || contains(sp.key, args.name_contains));
           return { fallback: `CQL rejected; scanned ${all.length} spaces`, ...paginate(items, args, 100) };
         }
       }
-      const data = await c.get(`${API10}/space`, { ...params, start: offset, limit });
+      const data = await c.get(`${API12}/space`, { ...params, start: offset, limit });
       return serverPage((data?.results ?? []).map(compact), offset, limit, null, !data?._links?.next);
     }
   },
@@ -62659,7 +65107,7 @@ var confluenceSpaceTools = [
     description: "One space with description, homepage and creator.",
     inputShape: { space_key: external_exports.string() },
     async handler({ client }, args) {
-      const s = await client("confluence").get(`${API10}/space/${seg(args.space_key)}`, {
+      const s = await client("confluence").get(`${API12}/space/${seg(args.space_key)}`, {
         expand: "description.plain,homepage,history"
       });
       return {
@@ -62685,7 +65133,7 @@ var confluenceSpaceTools = [
       subject: external_exports.string().optional()
     },
     async handler({ client }, args) {
-      const base = `${API10}/space/${seg(args.space_key)}/permissions`;
+      const base = `${API12}/space/${seg(args.space_key)}/permissions`;
       const path = args.subject_type ? subjectPath(base, args.subject_type, args.subject) : base;
       const data = await client("confluence").get(path);
       const list = Array.isArray(data) ? data : data?.results ?? [];
@@ -62705,7 +65153,7 @@ var confluenceSpaceTools = [
     description: `Grant space permissions to a user, group or anonymous. operations: list of 'operation:target', e.g. read:space, create:page, delete:attachment, administer:space. Operations: ${SPACE_OPERATIONS.join(", ")}.`,
     inputShape: { space_key: external_exports.string(), ...subjectShape, operations: operationsArg, ...dryRunShape },
     async handler({ client }, args) {
-      const base = `${API10}/space/${seg(args.space_key)}/permissions`;
+      const base = `${API12}/space/${seg(args.space_key)}/permissions`;
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
         path: `${subjectPath(base, args.subject_type, args.subject)}/grant`,
@@ -62721,7 +65169,7 @@ var confluenceSpaceTools = [
     description: "Revoke space permissions ('operation:target' list) from a user, group or anonymous.",
     inputShape: { space_key: external_exports.string(), ...subjectShape, operations: operationsArg, ...dryRunShape },
     async handler({ client }, args) {
-      const base = `${API10}/space/${seg(args.space_key)}/permissions`;
+      const base = `${API12}/space/${seg(args.space_key)}/permissions`;
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
         path: `${subjectPath(base, args.subject_type, args.subject)}/revoke`,
@@ -62739,7 +65187,7 @@ var confluenceSpaceTools = [
       subject: external_exports.string().optional().describe("User key or username, or group name")
     },
     async handler({ client }, args) {
-      const path = args.subject_type === "unlicensed" ? `${API10}/permissions/unlicensed` : subjectPath(`${API10}/permissions`, args.subject_type, args.subject);
+      const path = args.subject_type === "unlicensed" ? `${API12}/permissions/unlicensed` : subjectPath(`${API12}/permissions`, args.subject_type, args.subject);
       return client("confluence").get(path);
     }
   },
@@ -62752,7 +65200,7 @@ var confluenceSpaceTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
-        path: `${API10}/space/${seg(args.space_key)}/archive`,
+        path: `${API12}/space/${seg(args.space_key)}/archive`,
         summary: `Archive space ${args.space_key}`
       });
     }
@@ -62766,7 +65214,7 @@ var confluenceSpaceTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API10}/space/${seg(args.space_key)}`,
+        path: `${API12}/space/${seg(args.space_key)}`,
         summary: `PERMANENTLY delete space ${args.space_key} and all its content`
       });
     }
@@ -62774,7 +65222,7 @@ var confluenceSpaceTools = [
 ];
 
 // src/tools/confluence/spaceCategories.ts
-var API11 = "/rest/api";
+var API13 = "/rest/api";
 var MAX_CATEGORY_PAGES = 50;
 var MAX_CATEGORIES = 1e3;
 var spaceCategoryNameSchema = external_exports.string().regex(
@@ -62792,7 +65240,7 @@ function continuationPath(baseUrl, spacePath, next2) {
   return `${spacePath}${url2.search}`;
 }
 async function readSpaceCategories(client, spaceKey, maxCategories = MAX_CATEGORIES) {
-  const spacePath = `${API11}/space/${seg(spaceKey)}`;
+  const spacePath = `${API13}/space/${seg(spaceKey)}`;
   const categories = [];
   const issues = [];
   const seen = /* @__PURE__ */ new Set();
@@ -62876,7 +65324,7 @@ var confluenceSpaceCategoryTools = [
       const c = client("confluence");
       const request = {
         method: "POST",
-        path: `${API11}/space/${seg(args.space_key)}/category/${seg(args.name)}`,
+        path: `${API13}/space/${seg(args.space_key)}/category/${seg(args.name)}`,
         summary: `Add category ${args.name} to space ${args.space_key}`
       };
       if (args.dry_run !== false) return guardedWrite(c, args, request);
@@ -62900,7 +65348,7 @@ var confluenceSpaceCategoryTools = [
 ];
 
 // src/tools/confluence/spaceDiscovery.ts
-var API12 = "/rest/api";
+var API14 = "/rest/api";
 var PAGE_SIZE = 100;
 var MAX_SPACES = 2e3;
 var MAX_PAGES_PER_SCOPE = Math.ceil(MAX_SPACES / PAGE_SIZE);
@@ -62939,7 +65387,7 @@ function groupPermissionOperations(data, exactGroup) {
 }
 async function exactGroupExists(client, group) {
   try {
-    const data = await client.get(`${API12}/group/${seg(group)}/member`, { start: 0, limit: 1 });
+    const data = await client.get(`${API14}/group/${seg(group)}/member`, { start: 0, limit: 1 });
     if (!Array.isArray(data?.results)) {
       throw new Error("group member lookup returned an unknown response shape");
     }
@@ -62948,7 +65396,7 @@ async function exactGroupExists(client, group) {
   }
 }
 async function enumerateScope(client, type, status, maxSpaces) {
-  const path = `${API12}/space`;
+  const path = `${API14}/space`;
   const spaces = [];
   const issues = [];
   const visited = /* @__PURE__ */ new Set();
@@ -63068,7 +65516,7 @@ var confluenceSpaceDiscoveryTools = [
       if (enumeratedCount >= maxSpaces) issues.push("space enumeration reached the max_spaces limit");
       const permissionRows = await boundedAll(spaces.map((space) => async () => {
         try {
-          const data = await c.get(`${API12}/space/${seg(space.key)}/permissions/group/${seg(args.group)}`);
+          const data = await c.get(`${API14}/space/${seg(space.key)}/permissions/group/${seg(args.group)}`);
           const parsed = groupPermissionOperations(data, args.group);
           return parsed.issue ? { ...space, groupOperations: [], selected: false, error: parsed.issue } : { ...space, groupOperations: parsed.operations, selected: parsed.operations.includes("read:space") };
         } catch (error62) {
@@ -63130,9 +65578,9 @@ var confluenceSpaceDiscoveryTools = [
 ];
 
 // src/tools/confluence/pages.ts
-import { existsSync as existsSync3, readFileSync as readFileSync4, statSync as statSync2 } from "fs";
+import { existsSync as existsSync3, readFileSync as readFileSync5, statSync as statSync2 } from "fs";
 import { resolve as resolve5 } from "path";
-var API13 = "/rest/api";
+var API15 = "/rest/api";
 var StaleVersionError = class extends Error {
   constructor(message) {
     super(message);
@@ -63165,10 +65613,10 @@ function buildCql(query, spaces = []) {
   const isCql = /[=~<>]|\bAND\b|\bOR\b|currentUser\(\)/.test(q2);
   let cql = isCql ? q2 : `siteSearch ~ "${q2.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
   if (spaces.length) {
-    const order = /\s+ORDER\s+BY\s+.*$/i.exec(cql);
-    const base = order ? cql.slice(0, order.index) : cql;
+    const order2 = /\s+ORDER\s+BY\s+.*$/i.exec(cql);
+    const base = order2 ? cql.slice(0, order2.index) : cql;
     const filter = spaces.map((k2) => `space = "${k2.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`).join(" OR ");
-    cql = `(${base}) AND (${filter})${order ? order[0] : ""}`;
+    cql = `(${base}) AND (${filter})${order2 ? order2[0] : ""}`;
   }
   return cql;
 }
@@ -63180,7 +65628,7 @@ function bodyFrom(args) {
   if (args.content_file !== void 0) {
     const file2 = resolve5(args.content_file);
     if (!existsSync3(file2) || !statSync2(file2).isFile()) throw new ValidationError(`File not found: ${args.content_file}`);
-    text = readFileSync4(file2, "utf8");
+    text = readFileSync5(file2, "utf8");
   }
   return args.content_format === "storage" ? String(text) : markdownToStorage(String(text));
 }
@@ -63190,7 +65638,7 @@ var contentShape = {
   content_format: external_exports.enum(["markdown", "storage"]).optional().describe("Default markdown; storage = XHTML sent as is")
 };
 async function getPage(client, id2, expand, extra = {}) {
-  return client.get(`${API13}/content/${seg(id2)}`, { expand, ...extra });
+  return client.get(`${API15}/content/${seg(id2)}`, { expand, ...extra });
 }
 function compactPage(client, p, bodyFormat = "none") {
   const ancestors = p?.ancestors ?? [];
@@ -63318,7 +65766,7 @@ var confluencePageTools = [
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 25, 100);
       const c = client("confluence");
-      const call = (cql2) => c.get(`${API13}/search`, {
+      const call = (cql2) => c.get(`${API15}/search`, {
         cql: cql2,
         start: offset,
         limit,
@@ -63364,7 +65812,7 @@ var confluencePageTools = [
       if (args.page) {
         p = await getPage(c, resolvePageId(args.page), expand);
       } else if (args.title && args.space_key) {
-        const data = await c.get(`${API13}/content`, { type: "page", spaceKey: args.space_key, title: args.title, limit: 1, expand });
+        const data = await c.get(`${API15}/content`, { type: "page", spaceKey: args.space_key, title: args.title, limit: 1, expand });
         p = data?.results?.[0];
         if (!p) throw new ValidationError(`No page '${args.title}' in space ${args.space_key}`);
       } else {
@@ -63381,7 +65829,7 @@ var confluencePageTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 50;
-      const data = await client("confluence").get(`${API13}/content/${seg(resolvePageId(args.page))}/child/page`, {
+      const data = await client("confluence").get(`${API15}/content/${seg(resolvePageId(args.page))}/child/page`, {
         start: offset,
         limit,
         expand: "version"
@@ -63402,7 +65850,7 @@ var confluencePageTools = [
       let start = 0;
       let more = false;
       for (; ; ) {
-        const data = await c.get(`${API13}/content`, { spaceKey: args.space_key, type: "page", start, limit: Math.min(200, max - pages.length), expand: "ancestors" });
+        const data = await c.get(`${API15}/content`, { spaceKey: args.space_key, type: "page", start, limit: Math.min(200, max - pages.length), expand: "ancestors" });
         const batch = data?.results ?? [];
         pages.push(...batch);
         more = !!data?._links?.next;
@@ -63451,7 +65899,7 @@ var confluencePageTools = [
       if (args.parent) body.ancestors = [{ id: resolvePageId(args.parent) }];
       const res = await guardedWrite(c, args, {
         method: "POST",
-        path: `${API13}/content`,
+        path: `${API15}/content`,
         json: body,
         summary: `Create page '${args.title}' in ${args.space_key}`
       });
@@ -63488,7 +65936,7 @@ var confluencePageTools = [
       if (args.parent) body.ancestors = [{ id: resolvePageId(args.parent) }];
       const res = await guardedWrite(c, args, {
         method: "PUT",
-        path: `${API13}/content/${seg(id2)}`,
+        path: `${API15}/content/${seg(id2)}`,
         json: body,
         summary: `Update page ${id2} '${body.title}' v${current} \u2192 v${current + 1}`
       });
@@ -63518,7 +65966,7 @@ var confluencePageTools = [
       const storage = replaceSection(String(page?.body?.storage?.value ?? ""), args.heading, fragment);
       const res = await guardedWrite(c, args, {
         method: "PUT",
-        path: `${API13}/content/${seg(id2)}`,
+        path: `${API15}/content/${seg(id2)}`,
         json: {
           id: id2,
           type: page?.type ?? "page",
@@ -63541,7 +65989,7 @@ var confluencePageTools = [
       const id2 = resolvePageId(args.page);
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API13}/content/${seg(id2)}`,
+        path: `${API15}/content/${seg(id2)}`,
         summary: `Move page ${id2} to trash`
       });
     }
@@ -63563,7 +66011,7 @@ var confluencePageTools = [
       const id2 = resolvePageId(args.page);
       if (!args.target && !args.target_space_key) throw new ValidationError("Pass target and/or target_space_key");
       const targetId = args.target ? resolvePageId(args.target) : void 0;
-      const spaceKey = args.target_space_key ?? (await c.get(`${API13}/content/${seg(targetId)}`, { expand: "space" }))?.space?.key;
+      const spaceKey = args.target_space_key ?? (await c.get(`${API15}/content/${seg(targetId)}`, { expand: "space" }))?.space?.key;
       const res = await guardedWrite(c, args, {
         method: "POST",
         path: "/pages/movepage.action",
@@ -63589,7 +66037,7 @@ var confluencePageTools = [
       if (args.version === void 0) {
         const offset = args.offset ?? 0;
         const limit = args.limit ?? 25;
-        const data = await c.get(`${API13}/content/${seg(id2)}/version`, { start: offset, limit });
+        const data = await c.get(`${API15}/content/${seg(id2)}/version`, { start: offset, limit });
         const items = (data?.results ?? []).map((v) => ({
           number: v.number,
           when: v.when,
@@ -63630,7 +66078,7 @@ var confluencePageTools = [
     description: "View (read) and edit (update) restrictions of a page: users and groups; empty = not restricted.",
     inputShape: { page: external_exports.string() },
     async handler({ client }, args) {
-      const data = await client("confluence").get(`${API13}/content/${seg(resolvePageId(args.page))}/restriction/byOperation`, {
+      const data = await client("confluence").get(`${API15}/content/${seg(resolvePageId(args.page))}/restriction/byOperation`, {
         expand: "restrictions.user,restrictions.group"
       });
       const op = (key) => ({
@@ -63666,7 +66114,7 @@ var confluencePageTools = [
       const count = body.reduce((n, e) => n + e.restrictions.user.length + e.restrictions.group.length, 0);
       return guardedWrite(client("confluence"), args, {
         method: "PUT",
-        path: `${API13}/content/${seg(id2)}/restriction`,
+        path: `${API15}/content/${seg(id2)}/restriction`,
         json: body,
         summary: count ? `Replace restrictions of page ${id2} (${count} entries)` : `Remove all restrictions of page ${id2}`
       });
@@ -63696,7 +66144,7 @@ var confluencePageTools = [
       if (args.parent) body.ancestors = [{ id: resolvePageId(args.parent) }];
       const res = await guardedWrite(c, args, {
         method: "POST",
-        path: `${API13}/content`,
+        path: `${API15}/content`,
         json: body,
         summary: `Copy page ${src?.id} '${src?.title}' to '${args.title}' in ${args.space_key}`
       });
@@ -63706,7 +66154,7 @@ var confluencePageTools = [
 ];
 
 // src/tools/confluence/comments.ts
-var API14 = "/rest/api";
+var API16 = "/rest/api";
 var COMMENT_EXPAND = "body.view,version,ancestors,extensions.inlineProperties,extensions.resolution";
 function toStorage(body, format) {
   if (format === "storage") return body;
@@ -63733,7 +66181,7 @@ function compactComment2(c, baseUrl) {
   };
 }
 async function commentPage(client, pageId, offset, limit, location) {
-  const data = await client.get(`${API14}/content/${seg(pageId)}/child/comment`, {
+  const data = await client.get(`${API16}/content/${seg(pageId)}/child/comment`, {
     expand: COMMENT_EXPAND,
     depth: "all",
     location,
@@ -63743,7 +66191,7 @@ async function commentPage(client, pageId, offset, limit, location) {
   return { results: data?.results ?? [], last: !data?._links?.next };
 }
 async function pageOfComment(client, commentId) {
-  const c = await client.get(`${API14}/content/${seg(commentId)}`, { expand: "container,ancestors" });
+  const c = await client.get(`${API16}/content/${seg(commentId)}`, { expand: "container,ancestors" });
   if (c?.type && c.type !== "comment") throw new ValidationError(`${commentId} is a ${c.type}, not a comment`);
   if (c?.container?.type === "page" || c?.container?.type === "blogpost") return String(c.container.id);
   const page = [...c?.ancestors ?? []].reverse().find((a) => a.type === "page" || a.type === "blogpost");
@@ -63792,7 +66240,7 @@ var confluenceCommentTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API14}/content`,
+        path: `${API16}/content`,
         json: {
           type: "comment",
           container: { id: args.page_id, type: "page", status: "current" },
@@ -63813,7 +66261,7 @@ var confluenceCommentTools = [
       const pageId = await pageOfComment(c, args.comment_id);
       return guardedWrite(c, args, {
         method: "POST",
-        path: `${API14}/content`,
+        path: `${API16}/content`,
         json: {
           type: "comment",
           container: { id: pageId, type: "page", status: "current" },
@@ -63843,7 +66291,7 @@ var confluenceCommentTools = [
       if (index >= count) throw new ValidationError("match_index must be smaller than match_count");
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API14}/content`,
+        path: `${API16}/content`,
         json: {
           type: "comment",
           container: { id: args.page_id, type: "page", status: "current" },
@@ -63866,7 +66314,7 @@ var confluenceCommentTools = [
 ];
 
 // src/tools/confluence/labels.ts
-var API15 = "/rest/api";
+var API17 = "/rest/api";
 var confluenceLabelTools = [
   {
     name: "confluence_get_labels",
@@ -63880,7 +66328,7 @@ var confluenceLabelTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 200;
-      const data = await client("confluence").get(`${API15}/content/${seg(args.content_id)}/label`, {
+      const data = await client("confluence").get(`${API17}/content/${seg(args.content_id)}/label`, {
         prefix: args.prefix,
         start: offset,
         limit
@@ -63904,7 +66352,7 @@ var confluenceLabelTools = [
       const prefix = args.prefix ?? "global";
       return guardedWrite(client("confluence"), args, {
         method: "POST",
-        path: `${API15}/content/${seg(args.content_id)}/label`,
+        path: `${API17}/content/${seg(args.content_id)}/label`,
         json: args.names.map((name) => ({ prefix, name: name.trim().toLowerCase().replace(/\s+/g, "-") })),
         summary: `Add label(s) ${args.names.join(", ")} to ${args.content_id}`
       });
@@ -63913,9 +66361,9 @@ var confluenceLabelTools = [
 ];
 
 // src/tools/confluence/attachments.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync2 } from "fs";
+import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync6, writeFileSync as writeFileSync2 } from "fs";
 import { basename as basename4, join as join3, resolve as resolve6, sep as sep2 } from "path";
-var API16 = "/rest/api";
+var API18 = "/rest/api";
 var MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 var IMAGE_MIME2 = /* @__PURE__ */ new Set(["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/bmp"]);
 var IMAGE_EXT2 = /\.(png|jpe?g|gif|webp|svg|bmp)$/i;
@@ -63974,7 +66422,7 @@ async function downloadMany(client, contentId, outputDir, filter, max, serverMed
   let start = 0;
   let scanned = 0;
   for (; ; ) {
-    const data = await client.get(`${API16}/content/${seg(contentId)}/child/attachment`, {
+    const data = await client.get(`${API18}/content/${seg(contentId)}/child/attachment`, {
       start,
       limit: 100,
       mediaType: serverMediaType,
@@ -63999,13 +66447,13 @@ async function downloadMany(client, contentId, outputDir, filter, max, serverMed
 }
 function uploadForm(path, comment, minorEdit) {
   const form = new FormData();
-  form.append("file", new Blob([readFileSync5(path)]), basename4(path));
+  form.append("file", new Blob([readFileSync6(path)]), basename4(path));
   if (comment) form.append("comment", comment);
   form.append("minorEdit", String(minorEdit ?? false));
   return form;
 }
 async function uploadOne(client, contentId, path, comment, minorEdit) {
-  const base = `${API16}/content/${seg(contentId)}/child/attachment`;
+  const base = `${API18}/content/${seg(contentId)}/child/attachment`;
   try {
     const res = await client.request("POST", base, { form: uploadForm(path, comment, minorEdit) });
     const a = res?.results?.[0] ?? res;
@@ -64023,7 +66471,7 @@ async function guardedUpload(client, args, paths) {
   const summary = `Upload ${paths.length} file(s) to content ${args.content_id}` + (args.comment ? ` ("${args.comment}")` : "");
   const req = {
     method: "POST",
-    path: `${API16}/content/${seg(args.content_id)}/child/attachment`,
+    path: `${API18}/content/${seg(args.content_id)}/child/attachment`,
     json: { comment: args.comment, minorEdit: args.minor_edit ?? false },
     files: { field: "file", paths },
     summary
@@ -64069,7 +66517,7 @@ var confluenceAttachmentTools = [
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 50, 100);
-      const data = await client("confluence").get(`${API16}/content/${seg(args.content_id)}/child/attachment`, {
+      const data = await client("confluence").get(`${API18}/content/${seg(args.content_id)}/child/attachment`, {
         start: offset,
         limit,
         filename: args.filename,
@@ -64107,7 +66555,7 @@ var confluenceAttachmentTools = [
     inputShape: { attachment_id: external_exports.coerce.string(), output_dir: external_exports.string() },
     async handler({ client }, args) {
       const c = client("confluence");
-      const a = await c.get(`${API16}/content/${seg(args.attachment_id)}`, { expand: "version" });
+      const a = await c.get(`${API18}/content/${seg(args.attachment_id)}`, { expand: "version" });
       const r = await download(c, a, args.output_dir);
       if (r.error) throw new ValidationError(`${args.attachment_id}: ${r.error}`);
       return r;
@@ -64149,7 +66597,7 @@ var confluenceAttachmentTools = [
     async handler({ client }, args) {
       return guardedWrite(client("confluence"), args, {
         method: "DELETE",
-        path: `${API16}/content/${seg(args.attachment_id)}`,
+        path: `${API18}/content/${seg(args.attachment_id)}`,
         summary: `Delete attachment ${args.attachment_id}`
       });
     }
@@ -65253,16 +67701,22 @@ var TOOL_GROUPS = [
   ["Jira admin \u2014 projects and roles", jiraProjectTools],
   ["Jira admin \u2014 schemes and workflows", jiraSchemeTools],
   ["Jira admin \u2014 workflow schemes", jiraWorkflowSchemeTools],
-  ["Jira admin \u2014 fields and screens", jiraFieldTools],
+  ["Jira admin \u2014 custom fields", [...jiraFieldTools, ...jiraCustomFieldTools, ...jiraFieldOptionTools]],
+  ["Jira admin \u2014 field configurations", jiraFieldConfigurationTools],
+  ["Jira admin \u2014 screens", jiraScreenTools],
   ["Jira \u2014 issues, search, comments, transitions", jiraIssueTools],
   ["Jira \u2014 project metadata and versions", jiraProjectMetaTools],
   ["Jira \u2014 boards and sprints", jiraAgileTools],
+  ["Jira \u2014 board configuration", jiraBoardConfigTools],
   ["Jira \u2014 links and epics", jiraLinkTools],
   ["Jira \u2014 worklog", jiraWorklogTools],
   ["Jira \u2014 attachments", jiraAttachmentTools],
   ["Jira \u2014 assignable users and watchers", jiraCollabTools],
   ["Jira \u2014 dates, SLA, development info, project analysis", jiraInsightTools],
   ["Jira Service Management", jiraServiceDeskTools],
+  ["Jira Service Management \u2014 request types and forms", jiraRequestTypeTools],
+  ["Jira Service Management \u2014 queues", jiraQueueTools],
+  ["Jira Service Management \u2014 SLAs and calendars", jiraSlaTools],
   ["Jira Assets \u2014 schemas, object types, attributes, statuses", assetsStructureTools],
   ["Jira Assets \u2014 objects, AQL, history", assetsObjectTools],
   ["Confluence admin \u2014 system", confluenceSystemTools],
@@ -65313,6 +67767,9 @@ function toToolError(e, tool) {
   if (isHttpStatusError(e)) {
     return { type: `HTTP${e.status}`, message: e.message, status: e.status, hint: HINTS[e.status] };
   }
+  if (e instanceof PermissionError) return { type: e.name, message: e.message, status: 403, hint: HINTS[403] };
+  if (e instanceof VerificationError) return { type: e.name, message: e.message, state: e.state, hint: "re-read the target; the change may be partly applied" };
+  if (e instanceof UnsupportedError) return { type: e.name, message: e.message, ...e.details ?? {} };
   if (e instanceof ValidationError || e instanceof ConfigurationError) {
     return { type: e.name, message: e.message, hint: e instanceof ConfigurationError ? "run: check" : void 0 };
   }
@@ -65352,13 +67809,25 @@ async function runToolByName(name, rawArgs, ctx) {
 
 // src/plan.ts
 function digestOf(dry) {
-  const material = JSON.stringify({ request: dry?.request, followUps: dry?.followUps ?? null, objects: dry?.objects ?? null });
+  const material = JSON.stringify({
+    // identity describes the whole operation, follow-up steps included
+    request: dry?.identity ?? dry?.request,
+    followUps: dry?.identity !== void 0 ? null : dry?.followUps ?? null,
+    objects: dry?.objects ?? null,
+    ...dry?.state !== void 0 ? { state: dry.state } : {}
+  });
   return createHash("sha256").update(material).digest("hex").slice(0, 16);
+}
+function writePlan(file2, plan) {
+  const path = resolve7(file2);
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync3(tmp, JSON.stringify(plan, null, 2));
+  renameSync(tmp, path);
 }
 function readPlan(file2) {
   const path = resolve7(file2);
   if (!existsSync5(path)) return { version: 1, items: [] };
-  const data = JSON.parse(readFileSync6(path, "utf8"));
+  const data = JSON.parse(readFileSync7(path, "utf8"));
   if (!data || data.version !== 1 || !Array.isArray(data.items)) {
     throw new Error(`${file2} is not a version-1 change plan`);
   }
@@ -65377,37 +67846,75 @@ function addToPlan(file2, tool, args, dry) {
     plannedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
   plan.items.push(item);
-  writeFileSync3(resolve7(file2), JSON.stringify(plan, null, 2));
+  writePlan(file2, plan);
   return item;
+}
+var FINISHED = /* @__PURE__ */ new Set(["done", "already-satisfied"]);
+function isFinished(item) {
+  return !!item.outcome && FINISHED.has(item.outcome.status);
+}
+function addResultToPlan(file2, tool, args, value) {
+  if (value?.already_satisfied) return [];
+  if (Array.isArray(value?.batch)) {
+    return value.batch.filter((b) => !b.value?.already_satisfied).map((b) => addToPlan(file2, b.tool, b.args, b.value));
+  }
+  return [addToPlan(file2, tool, args, value)];
 }
 function renderPlan(plan, file2) {
   if (plan.items.length === 0) return `plan ${file2}: empty`;
-  const lines = [`plan ${file2}: ${plan.items.length} change(s). Approve each, or all at once with: apply ${file2}`];
-  for (const it2 of plan.items) lines.push(`${it2.n}. ${it2.summary} | ${it2.request.method} ${it2.request.url}`);
+  const remaining = plan.items.filter((i) => !isFinished(i)).length;
+  const lines = [`plan ${file2}: ${plan.items.length} change(s), remaining ${remaining}. Approve each, or all at once with: apply ${file2}`];
+  for (const it2 of plan.items) {
+    const mark = it2.outcome ? `[${it2.outcome.status}] ` : "";
+    const detail = it2.outcome?.detail && !FINISHED.has(it2.outcome.status) ? ` | ${it2.outcome.detail}` : "";
+    lines.push(`${it2.n}. ${mark}${it2.summary} | ${it2.request.method} ${it2.request.url}${detail}`);
+  }
   return lines.join("\n");
 }
-async function applyPlan(ctx, plan, only) {
+function saveOutcome(file2, n, outcome) {
+  if (!file2) return;
+  const plan = readPlan(file2);
+  const item = plan.items.find((i) => i.n === n);
+  if (!item) return;
+  item.outcome = outcome;
+  writePlan(file2, plan);
+}
+function recordDeclined(file2, numbers) {
+  const at2 = (/* @__PURE__ */ new Date()).toISOString();
+  for (const n of numbers) saveOutcome(file2, n, { status: "declined", at: at2 });
+}
+function pendingItems(plan, only) {
+  return plan.items.filter((i) => (!only?.length || only.includes(i.n)) && !isFinished(i));
+}
+async function applyPlan(ctx, plan, only, file2, run = runToolByName) {
   const out = [];
   for (const it2 of plan.items.filter((i) => !only?.length || only.includes(i.n))) {
-    const again = await runToolByName(it2.tool, { ...it2.args, dry_run: true }, ctx);
-    if (!again.ok) {
-      out.push({ n: it2.n, summary: it2.summary, status: "failed", detail: again.error.message });
+    if (isFinished(it2)) {
+      out.push({ n: it2.n, summary: it2.summary, status: "skipped", detail: `${it2.outcome.status} earlier` });
       continue;
     }
-    if (digestOf(again.value) !== it2.digest) {
-      out.push({ n: it2.n, summary: it2.summary, status: "drifted", detail: "the request differs from the approved one; re-plan it" });
-      continue;
-    }
-    const res = await runToolByName(it2.tool, { ...it2.args, dry_run: false }, ctx);
-    out.push(
-      res.ok ? { n: it2.n, summary: it2.summary, status: "done" } : { n: it2.n, summary: it2.summary, status: "failed", detail: res.error.message }
-    );
+    const outcome = await applyItem(ctx, it2, run);
+    saveOutcome(file2, it2.n, { status: outcome.status, at: (/* @__PURE__ */ new Date()).toISOString(), detail: outcome.detail });
+    out.push(outcome);
   }
   return out;
 }
+async function applyItem(ctx, it2, run) {
+  const base = { n: it2.n, summary: it2.summary };
+  const again = await run(it2.tool, { ...it2.args, dry_run: true }, ctx);
+  if (!again.ok) return { ...base, status: "failed", detail: again.error.message };
+  if (again.value?.already_satisfied) return { ...base, status: "already-satisfied", detail: again.value.reason };
+  if (digestOf(again.value) !== it2.digest) {
+    return { ...base, status: "drifted", detail: "the request differs from the approved one; re-plan it" };
+  }
+  const res = await run(it2.tool, { ...it2.args, dry_run: false }, ctx);
+  return res.ok ? { ...base, status: "done" } : { ...base, status: "failed", detail: res.error.message };
+}
 function renderOutcomes(outcomes) {
-  const done = outcomes.filter((o) => o.status === "done").length;
-  const lines = [`applied ${done}/${outcomes.length}`];
+  const run = outcomes.filter((o) => o.status !== "skipped");
+  const done = run.filter((o) => o.status === "done" || o.status === "already-satisfied").length;
+  const skipped = outcomes.length - run.length;
+  const lines = [`applied ${done}/${run.length}${skipped ? ` (${skipped} finished earlier, skipped)` : ""}`];
   for (const o of outcomes) lines.push(`${o.n}. ${o.status.toUpperCase()} | ${o.summary}${o.detail ? ` | ${o.detail}` : ""}`);
   return lines.join("\n");
 }
@@ -65418,8 +67925,8 @@ import {
   existsSync as existsSync6,
   fsyncSync,
   openSync as openSync2,
-  readFileSync as readFileSync7,
-  renameSync,
+  readFileSync as readFileSync8,
+  renameSync as renameSync2,
   unlinkSync,
   writeFileSync as writeFileSync4
 } from "fs";
@@ -65617,7 +68124,7 @@ function validateWorkflowPlan(input2) {
   return plan;
 }
 function readSpaceWorkflowPlan(file2) {
-  const data = JSON.parse(readFileSync7(resolve8(file2), "utf8"));
+  const data = JSON.parse(readFileSync8(resolve8(file2), "utf8"));
   return validateWorkflowPlan(data);
 }
 function writeSpaceWorkflowPlan(file2, input2) {
@@ -65740,7 +68247,7 @@ async function prepareSpaceUpdates(ctx, input2, outputFile) {
   let previousEvidence;
   if (input2.previousOutcomes) {
     const outcomeFile = resolve8(input2.previousOutcomes);
-    const parsedOutcome = workflowOutcomeSchema.safeParse(JSON.parse(readFileSync7(outcomeFile, "utf8")));
+    const parsedOutcome = workflowOutcomeSchema.safeParse(JSON.parse(readFileSync8(outcomeFile, "utf8")));
     if (!parsedOutcome.success) throw new ValidationError("Previous workflow outcome file is malformed");
     const previous = parsedOutcome.data;
     const previousPlanFile = resolve8(previous.planFile);
@@ -65853,7 +68360,7 @@ function verificationPath(planFile) {
 function readWorkflowOutcome(planFile, plan) {
   const path = outcomePath(planFile);
   if (!existsSync6(path)) return void 0;
-  const parsed = workflowOutcomeSchema.safeParse(JSON.parse(readFileSync7(path, "utf8")));
+  const parsed = workflowOutcomeSchema.safeParse(JSON.parse(readFileSync8(path, "utf8")));
   if (!parsed.success) throw new ValidationError(`Invalid workflow outcome file '${path}'`);
   const outcome = parsed.data;
   if (outcome.planDigest !== workflowPlanDigest(plan) || outcome.target !== plan.target) {
@@ -65878,7 +68385,7 @@ function atomicWriteJson(path, value) {
     fsyncSync(fd);
     closeSync2(fd);
     fd = void 0;
-    renameSync(temporary, path);
+    renameSync2(temporary, path);
   } catch (error62) {
     if (fd !== void 0) closeSync2(fd);
     try {
@@ -66441,9 +68948,9 @@ hint: run: list <text>`);
     writeFileSync5(file2, projectTemplate(url2("jira"), url2("confluence")), { mode: 384 });
     const lines = [`created | ${file2} (mode 600) \u2014 fill in the tokens`];
     const gi = `${root2}/.gitignore`;
-    const ignored = existsSync7(gi) && readFileSync8(gi, "utf8").split(/\r?\n/).some((l3) => l3.trim() === PROJECT_CONFIG_FILE || l3.trim() === `/${PROJECT_CONFIG_FILE}`);
+    const ignored = existsSync7(gi) && readFileSync9(gi, "utf8").split(/\r?\n/).some((l3) => l3.trim() === PROJECT_CONFIG_FILE || l3.trim() === `/${PROJECT_CONFIG_FILE}`);
     if (!ignored && gitRoot(root2)) {
-      appendFileSync(gi, `${existsSync7(gi) && !readFileSync8(gi, "utf8").endsWith("\n") ? "\n" : ""}${PROJECT_CONFIG_FILE}
+      appendFileSync(gi, `${existsSync7(gi) && !readFileSync9(gi, "utf8").endsWith("\n") ? "\n" : ""}${PROJECT_CONFIG_FILE}
 `);
       lines.push(`added ${PROJECT_CONFIG_FILE} to ${gi}`);
     }
@@ -66521,7 +69028,7 @@ hint: <write tool> ... --plan=FILE`);
     try {
       const filePath = resolve9(file2);
       if (existsSync7(filePath)) {
-        const candidate = JSON.parse(readFileSync8(filePath, "utf8"));
+        const candidate = JSON.parse(readFileSync9(filePath, "utf8"));
         if (candidate?.version === 2) spacePlan = readSpaceWorkflowPlan(file2);
         else plan = readPlan(file2);
       } else {
@@ -66575,14 +69082,21 @@ hint: <write tool> ... --plan=FILE`);
         }
       }
       const genericPlan = plan;
-      const candidates = genericPlan.items.filter((i) => !options.only?.length || options.only.includes(i.n));
+      const candidates = pendingItems(genericPlan, options.only);
+      if (candidates.length === 0) {
+        print(`${renderPlan(genericPlan, file2)}
+nothing left to apply`);
+        return EXIT.OK;
+      }
       let approved;
       try {
         approved = confirmChanges(candidates.map((i) => ({ n: i.n, summary: i.summary, detail: `${i.request.method} ${i.request.url}` })));
       } catch (e) {
+        if (e instanceof ConfirmationError && e.name === "ConfirmationDeclined") recordDeclined(file2, candidates.map((i) => i.n));
         return printConfirmError(e);
       }
-      const outcomes = await applyPlan(ctx2, genericPlan, approved);
+      recordDeclined(file2, candidates.filter((i) => !approved.includes(i.n)).map((i) => i.n));
+      const outcomes = await applyPlan(ctx2, genericPlan, approved, file2);
       print(renderOutcomes(outcomes));
       return outcomes.every((o) => o.status === "done") ? EXIT.OK : EXIT.GENERIC;
     } finally {
@@ -66652,16 +69166,50 @@ hint: <write tool> ... --plan=FILE`);
         return dry.exitCode;
       }
       const d = dry.value;
-      try {
-        confirmChanges([{ n: 1, summary: d.summary, detail: `${d.request?.method} ${d.request?.url}` }]);
-      } catch (e) {
-        return printConfirmError(e);
+      if (d?.already_satisfied) {
+        print(output2(dry, parsed.options));
+        return EXIT.OK;
+      }
+      if (Array.isArray(d?.batch)) {
+        let approved;
+        try {
+          approved = confirmChanges(d.batch.map((b, i) => ({ n: i + 1, summary: b.value.summary, detail: `${b.value.request?.method} ${b.value.request?.url}` })));
+        } catch (e) {
+          return printConfirmError(e);
+        }
+        const lines = [];
+        let failed = false;
+        for (const [i, b] of d.batch.entries()) {
+          if (!approved.includes(i + 1)) {
+            lines.push(`${i + 1}. DECLINED | ${b.value.summary}`);
+            continue;
+          }
+          const r = await runToolByName(b.tool, { ...b.args, dry_run: false }, ctx);
+          failed ||= !r.ok;
+          lines.push(r.ok ? `${i + 1}. DONE | ${b.value.summary}` : `${i + 1}. FAILED | ${b.value.summary} | ${r.error.message}`);
+        }
+        for (const note of d.satisfied ?? []) lines.push(`-. ALREADY-SATISFIED | ${note}`);
+        print(lines.join("\n"));
+        return failed ? EXIT.GENERIC : EXIT.OK;
+      }
+      if (!(d?.manual && d?.request?.method === "MANUAL")) {
+        try {
+          confirmChanges([{ n: 1, summary: d.summary, detail: `${d.request?.method} ${d.request?.url}` }]);
+        } catch (e) {
+          return printConfirmError(e);
+        }
       }
     }
     const res = await runToolByName(command, parsed.args, ctx);
+    if (res.ok && parsed.options.plan && res.value?.already_satisfied) {
+      print(`${output2(res, parsed.options)}`);
+      process.stderr.write(`not planned in ${parsed.options.plan}: already satisfied
+`);
+      return res.exitCode;
+    }
     if (res.ok && parsed.options.plan && res.value?.dry_run === true) {
-      const item = addToPlan(parsed.options.plan, command, parsed.args, res.value);
-      const notice = `planned #${item.n} in ${parsed.options.plan}`;
+      const items = addResultToPlan(parsed.options.plan, command, parsed.args, res.value);
+      const notice = `planned ${items.map((i) => `#${i.n}`).join(", ")} in ${parsed.options.plan}`;
       const rendered = output2(res, parsed.options);
       if (parsed.options.format === "compact" || parsed.options.out) {
         print(`${rendered}

@@ -1,0 +1,127 @@
+{
+  "status": "red",
+  "statusLines": [
+    {
+      "status": "green",
+      "summary": [
+        {
+          "message": "Field configuration",
+          "parameters": []
+        }
+      ],
+      "details": [
+        {
+          "message": "The '{0}' field is enabled by the '{1}' field configuration associated with this issue.",
+          "parameters": [
+            {
+              "type": "plain",
+              "value": "Probe Field"
+            },
+            {
+              "type": "plain",
+              "value": "Demo Field Configuration"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "red",
+      "summary": [
+        {
+          "message": "Project and issue type scope",
+          "parameters": []
+        }
+      ],
+      "details": [
+        {
+          "message": "The field '{0}' is not configured in scope of the project '{1}' and issue type '{2}' {3}To solve this problem, edit the field context.",
+          "parameters": [
+            {
+              "type": "plain",
+              "value": "Probe Field"
+            },
+            {
+              "type": "plain",
+              "value": "Demo Project"
+            },
+            {
+              "type": "plain",
+              "value": "Story"
+            },
+            {
+              "type": "link",
+              "text": "context",
+              "href": "https://jira.example.com/secure/admin/ConfigureCustomField!default.jspa?customFieldId=10101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "red",
+      "summary": [
+        {
+          "message": "Field Screen",
+          "parameters": []
+        }
+      ],
+      "details": [
+        {
+          "message": "The '{0}' field is not included in the '{1}' screen configured for this issue.{2}To solve this problem, go to {3} settings and add the field.{2}Alternatively, you can configure a different screen for that issue by modifying the screen schemes associated with it:{4}{5}the {6}, or{7}{5}the {8}{7}{9}",
+          "parameters": [
+            {
+              "type": "plain",
+              "value": "Probe Field"
+            },
+            {
+              "type": "plain",
+              "value": "DEMO: Edit Screen"
+            },
+            {
+              "type": "newline"
+            },
+            {
+              "type": "link",
+              "text": "'DEMO: Edit Screen' Screen configuration",
+              "href": "https://jira.example.com/secure/admin/ConfigureFieldScreen.jspa?id=10434"
+            },
+            {
+              "type": "tagstart",
+              "tagName": "ul"
+            },
+            {
+              "type": "tagstart",
+              "tagName": "li"
+            },
+            {
+              "type": "link",
+              "text": "'DEMO: Screen Scheme' screen scheme",
+              "href": "https://jira.example.com/secure/admin/ConfigureFieldScreenScheme.jspa?id=10505"
+            },
+            {
+              "type": "tagend",
+              "tagName": "li"
+            },
+            {
+              "type": "link",
+              "text": "'DEMO: Issue Type Screen Scheme' issue type screen scheme",
+              "href": "https://jira.example.com/secure/admin/ConfigureIssueTypeScreenScheme.jspa?id=10503"
+            },
+            {
+              "type": "tagend",
+              "tagName": "ul"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "fieldName": "Probe Field",
+  "projectName": "Demo Project",
+  "projectKey": "DEMO",
+  "issueType": "Story",
+  "operation": "Edit Issue",
+  "username": "admin",
+  "userDisplayName": "Admin"
+}

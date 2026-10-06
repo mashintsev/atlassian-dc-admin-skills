@@ -8,6 +8,7 @@ Provides Jira Data Center administrators with bounded, explicit management of Sc
 
 ### Requirement: Manage ScriptRunner scripts and extensions
 The system SHALL expose ScriptRunner script-registry, REST Endpoint, and Resource operations only when supported by a verified API for the discovered Jira and ScriptRunner version pair. Before a resource request, a centralized resolver SHALL discover Jira's version and ScriptRunner's version and enabled state from UPM using the canonical plugin key recorded in the verified support matrix; callers SHALL NOT supply the key or versions. Missing, disabled, malformed, inaccessible, or unsupported runtime information SHALL fail closed without calling a ScriptRunner resource endpoint. Only a verified app absence or unsupported version pair SHALL be reported as unsupported; other discovery failures SHALL remain explicit errors.
+An operation is verified for a version pair only when the support matrix records it with sanitized captured evidence from a ScriptRunner instance running exactly that pair; Adaptavist documents no public management API, so vendor documentation is not required. The system SHALL identify these operations as using unofficial ScriptRunner endpoints.
 
 #### Scenario: List supported registry entries
 - **WHEN** an administrator requests ScriptRunner script or extension entries
@@ -18,6 +19,11 @@ The system SHALL expose ScriptRunner script-registry, REST Endpoint, and Resourc
 - **WHEN** ScriptRunner is absent or disabled, Jira or ScriptRunner version data is malformed or missing, discovery is otherwise inaccessible, or the Jira/ScriptRunner version pair is not in the verified support matrix
 - **THEN** the system does not call a ScriptRunner resource endpoint
 - **AND** it reports the applicable unavailable or unsupported condition
+
+#### Scenario: Uncaptured version pair
+- **WHEN** the observed Jira/ScriptRunner version pair is not recorded in the support matrix, including a newer patch release of a recorded version
+- **THEN** the system does not call a ScriptRunner resource endpoint
+- **AND** the error names the observed pair and states that a new capture is needed to support it
 
 #### Scenario: Unsupported API operation
 - **WHEN** the discovered Jira/ScriptRunner version pair does not expose a verified operation for a requested resource

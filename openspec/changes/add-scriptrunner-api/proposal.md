@@ -7,7 +7,7 @@ Jira Data Center administrators cannot manage ScriptRunner configuration through
 ## What Changes
 
 - Add Jira Data Center ScriptRunner tools for the script registry, jobs, listeners, fields, Behaviours, UI Fragments, REST Endpoints, Resources, and Mail Handler.
-- Support read and management operations only where the installed ScriptRunner version exposes a verified API; do not guess undocumented endpoints or silently report unsupported operations as successful.
+- Adaptavist documents no public REST API for managing these resources. Use the internal endpoints that ScriptRunner's own admin UI calls, but only those confirmed by captured responses from the user's instance for an exact Jira/ScriptRunner version pair; any other pair fails closed. Never guess endpoints or silently report unsupported operations as successful.
 - Route configuration mutations through the existing dry-run and confirmation safeguards. Do not execute arbitrary Groovy scripts or trigger jobs as part of this management API.
 - Document supported version and operation coverage, add regression tests, and update the skill's generated reference and dispatcher as needed.
 
@@ -25,4 +25,4 @@ None. The repository currently has no main capability specifications.
 
 ## Impact
 
-Expected areas include new Jira ScriptRunner tool modules and registration in `src/tools/index.ts`, tests under `test/unit/`, and `atlassian-dc-admin/SKILL.md` plus generated `REFERENCE.md`. The ScriptRunner REST contract and supported plugin versions must be verified before implementation; no new dependency is expected.
+Expected areas include new Jira ScriptRunner tool modules and registration in `src/tools/index.ts`, tests under `test/unit/`, and `atlassian-dc-admin/SKILL.md` plus generated `REFERENCE.md`. The ScriptRunner REST contract and supported plugin versions must be verified before implementation; no new dependency is expected. Internal endpoints may change in any ScriptRunner release without notice, so each new version pair needs a fresh capture before it is supported. Captures come from the user and are sanitized before they become fixtures.

@@ -1,0 +1,333 @@
+{
+  "id": 56,
+  "name": "DEMO board",
+  "canEdit": true,
+  "showDaysInColumn": true,
+  "warnBeforeEditingOwner": false,
+  "canUseBoardAdminsPicker": true,
+  "boardAdmins": {
+    "userKeys": [
+      {
+        "key": "JIRAUSER10000",
+        "displayName": "Board Admin"
+      }
+    ],
+    "groupKeys": [
+      {
+        "key": "demo-leads",
+        "displayName": "demo-leads"
+      }
+    ]
+  },
+  "filterConfig": {
+    "id": 10900,
+    "name": "Filter for DEMO board",
+    "query": "project = DEMO ORDER BY Rank ASC",
+    "owner": {
+      "userName": "admin",
+      "displayName": "Admin",
+      "renderedLink": "<a>Admin</a>"
+    },
+    "canEdit": true,
+    "isOrderedByRank": true,
+    "permissionEntries": [
+      {
+        "values": [
+          {
+            "type": "Project",
+            "name": "Demo Project"
+          }
+        ]
+      }
+    ],
+    "queryProjects": {
+      "projects": [
+        {
+          "id": 10100,
+          "name": "Demo Project",
+          "key": "DEMO",
+          "isValidEditProjectConfigAction": true
+        }
+      ]
+    }
+  },
+  "rapidListConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "mappedColumns": [
+      {
+        "id": 1,
+        "name": "To Do",
+        "min": "",
+        "max": "",
+        "mappedStatuses": [
+          {
+            "id": "10100",
+            "name": "Backlog",
+            "iconUrl": "https://jira.example.com/images/icons/statuses/generic.png",
+            "statusCategory": {
+              "id": "2",
+              "key": "new",
+              "colorName": "default"
+            },
+            "issueCount": 0,
+            "isPresentInWorkflow": true
+          }
+        ],
+        "isKanPlanColumn": false
+      },
+      {
+        "id": 2,
+        "name": "In Progress",
+        "min": "",
+        "max": "5",
+        "mappedStatuses": [
+          {
+            "id": "3",
+            "name": "In Progress",
+            "iconUrl": "https://jira.example.com/images/icons/statuses/generic.png",
+            "statusCategory": {
+              "id": "2",
+              "key": "indeterminate",
+              "colorName": "default"
+            },
+            "issueCount": 0,
+            "isPresentInWorkflow": true
+          }
+        ],
+        "isKanPlanColumn": false
+      },
+      {
+        "id": 3,
+        "name": "Done",
+        "min": "",
+        "max": "",
+        "mappedStatuses": [
+          {
+            "id": "10001",
+            "name": "Done",
+            "iconUrl": "https://jira.example.com/images/icons/statuses/generic.png",
+            "statusCategory": {
+              "id": "2",
+              "key": "done",
+              "colorName": "default"
+            },
+            "issueCount": 0,
+            "isPresentInWorkflow": true
+          }
+        ],
+        "isKanPlanColumn": false
+      }
+    ],
+    "unmappedStatuses": [
+      {
+        "id": "10002",
+        "name": "Review",
+        "iconUrl": "https://jira.example.com/images/icons/statuses/generic.png",
+        "statusCategory": {
+          "id": "2",
+          "key": "indeterminate",
+          "colorName": "default"
+        },
+        "issueCount": 0,
+        "isPresentInWorkflow": true
+      }
+    ],
+    "showEpicAsPanel": false
+  },
+  "swimlanesConfig": {
+    "rapidViewId": 56,
+    "swimlaneStrategy": "custom",
+    "canEdit": true,
+    "swimlanes": [
+      {
+        "id": 1,
+        "name": "Expedite",
+        "query": "priority = Highest",
+        "description": "",
+        "isDefault": false
+      }
+    ]
+  },
+  "quickFilterConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "quickFilters": [
+      {
+        "id": 11,
+        "name": "Only my issues",
+        "query": "assignee = currentUser()",
+        "description": "",
+        "canEdit": true
+      },
+      {
+        "id": 12,
+        "name": "Recently updated",
+        "query": "updatedDate >= -1d",
+        "description": "",
+        "canEdit": true
+      }
+    ]
+  },
+  "subqueryConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "subqueries": [
+      {
+        "query": "fixVersion in unreleasedVersions() OR fixVersion is EMPTY"
+      }
+    ]
+  },
+  "estimationStatisticConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "currentEstimationStatistic": {
+      "typeId": "field",
+      "fieldId": "customfield_10400",
+      "id": "field_customfield_10400",
+      "name": "Story Points",
+      "isValid": true,
+      "isEnabled": true,
+      "renderer": "number"
+    },
+    "availableEstimationStatistics": [],
+    "currentTrackingStatistic": {
+      "typeId": "none",
+      "id": "none",
+      "name": "None",
+      "isValid": true,
+      "isEnabled": true
+    },
+    "isTimeTrackingEnabledInJira": true,
+    "canEnableTimeTracking": false
+  },
+  "isSprintSupportEnabled": true,
+  "isKanPlanEnabled": false,
+  "cardColorConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "cardColorStrategy": "issuetype"
+  },
+  "detailViewFieldConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "currentFields": [
+      {
+        "id": 293,
+        "fieldId": "status",
+        "name": "Status",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      },
+      {
+        "id": 294,
+        "fieldId": "components",
+        "name": "Component/s",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      },
+      {
+        "id": 295,
+        "fieldId": "versions",
+        "name": "Affects Version/s",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      },
+      {
+        "id": 296,
+        "fieldId": "fixVersions",
+        "name": "Fix Version/s",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      },
+      {
+        "id": 297,
+        "fieldId": "labels",
+        "name": "Labels",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      },
+      {
+        "id": 298,
+        "fieldId": "customfield_10201",
+        "name": "Epic Link",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      }
+    ],
+    "availableFields": [
+      {
+        "fieldId": "customfield_10500",
+        "name": "Start date",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "dates"
+      },
+      {
+        "fieldId": "customfield_10300",
+        "name": "Release URL",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      },
+      {
+        "fieldId": "priority",
+        "name": "Priority",
+        "isValid": true,
+        "isEstimationField": false,
+        "category": "details"
+      }
+    ]
+  },
+  "workingDaysConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "weekDays": {
+      "rapidViewId": 56,
+      "monday": true,
+      "tuesday": true,
+      "wednesday": true,
+      "thursday": true,
+      "friday": true,
+      "saturday": false,
+      "sunday": false
+    },
+    "nonWorkingDays": [],
+    "timeZoneEditModel": {
+      "currentTimeZoneId": "UTC",
+      "regions": [],
+      "timeZones": []
+    }
+  },
+  "cardLayoutConfig": {
+    "rapidViewId": 56,
+    "canEdit": true,
+    "currentFields": [
+      {
+        "id": 40,
+        "fieldId": "priority",
+        "name": "Priority",
+        "isValid": true,
+        "mode": "PLAN"
+      }
+    ],
+    "availableFields": [
+      {
+        "fieldId": "labels",
+        "name": "Labels",
+        "isValid": true,
+        "mode": "PLAN"
+      }
+    ]
+  },
+  "showEpicAsPanel": false,
+  "isOldDoneIssuesCutoffConfigurable": false,
+  "oldDoneIssuesCutoff": "",
+  "oldDoneIssuesCutoffOptions": []
+}

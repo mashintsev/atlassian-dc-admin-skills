@@ -1,0 +1,34 @@
+[
+  {
+    "id": 0,
+    "fieldId": "customfield_10700",
+    "fieldType": "",
+    "label": "Severity",
+    "description": "",
+    "sdRequired": false,
+    "jiraRequired": false,
+    "displayed": false,
+    "usedByEmail": false,
+    "defaultValue": "",
+    "order": 0,
+    "jiraName": "",
+    "descriptionHtml": "",
+    "values": {}
+  },
+  {
+    "id": 0,
+    "fieldId": "labels",
+    "fieldType": "",
+    "label": "Labels",
+    "description": "",
+    "sdRequired": false,
+    "jiraRequired": false,
+    "displayed": false,
+    "usedByEmail": false,
+    "defaultValue": "",
+    "order": 0,
+    "jiraName": "",
+    "descriptionHtml": "",
+    "values": {}
+  }
+]

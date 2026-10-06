@@ -1,0 +1,48 @@
+{
+  "hitConditions": [
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "issue-created-sla-condition-factory",
+      "conditionId": "issue-created-hit-condition",
+      "name": "Issue Created"
+    },
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "resolution-sla-condition-factory",
+      "conditionId": "resolution-set-hit-condition",
+      "name": "Resolution: Set"
+    },
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "resolution-sla-condition-factory",
+      "conditionId": "resolution-cleared-hit-condition",
+      "name": "Resolution: Cleared"
+    },
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "assignee-sla-condition-factory",
+      "conditionId": "assignee-set-hit-condition",
+      "name": "Assignee: From Unassigned"
+    },
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "status-sla-condition-factory",
+      "conditionId": "10016",
+      "name": "Entered Status: Done"
+    }
+  ],
+  "matchConditions": [
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "status-sla-condition-factory",
+      "conditionId": "10015",
+      "name": "Status: In Review"
+    },
+    {
+      "pluginKey": "com.atlassian.servicedesk",
+      "factoryKey": "status-sla-condition-factory",
+      "conditionId": "10002",
+      "name": "Status: Waiting for customer"
+    }
+  ]
+}

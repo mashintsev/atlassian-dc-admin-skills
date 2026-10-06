@@ -66,3 +66,31 @@ export class ValidationError extends Error {
     this.name = "ValidationError";
   }
 }
+
+/** A confirmed change was sent, but reading the target back shows a different state. */
+export class VerificationError extends Error {
+  readonly state: unknown;
+  constructor(message: string, state?: unknown) {
+    super(message);
+    this.name = "VerificationError";
+    this.state = state;
+  }
+}
+
+/** The operation cannot be performed through the API on this instance (version gate, websudo...). */
+export class UnsupportedError extends Error {
+  readonly details?: Record<string, unknown>;
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = "Unsupported";
+    this.details = details;
+  }
+}
+
+/** The account lacks a right that a check before the request established (maps to exit 3). */
+export class PermissionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PermissionDenied";
+  }
+}

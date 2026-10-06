@@ -1,0 +1,77 @@
+{
+  "rapidViewId": 56,
+  "canEdit": true,
+  "currentFields": [
+    {
+      "id": 293,
+      "fieldId": "status",
+      "name": "Status",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    },
+    {
+      "id": 294,
+      "fieldId": "components",
+      "name": "Component/s",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    },
+    {
+      "id": 295,
+      "fieldId": "versions",
+      "name": "Affects Version/s",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    },
+    {
+      "id": 296,
+      "fieldId": "fixVersions",
+      "name": "Fix Version/s",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    },
+    {
+      "id": 297,
+      "fieldId": "labels",
+      "name": "Labels",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    },
+    {
+      "id": 298,
+      "fieldId": "customfield_10201",
+      "name": "Epic Link",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    }
+  ],
+  "availableFields": [
+    {
+      "fieldId": "customfield_10500",
+      "name": "Start date",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "dates"
+    },
+    {
+      "fieldId": "customfield_10300",
+      "name": "Release URL",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    },
+    {
+      "fieldId": "priority",
+      "name": "Priority",
+      "isValid": true,
+      "isEstimationField": false,
+      "category": "details"
+    }
+  ]
+}

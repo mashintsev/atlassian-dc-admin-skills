@@ -1,0 +1,93 @@
+[
+  {
+    "id": 83,
+    "icon": 10500,
+    "name": "Bank incident",
+    "issueType": {
+      "self": "https://jira.example.com/rest/api/2/issuetype/10004",
+      "id": "10004",
+      "description": "",
+      "iconUrl": "https://jira.example.com/secure/viewavatar?size=xsmall&avatarId=10300",
+      "name": "Incident",
+      "subtask": false,
+      "avatarId": 10300
+    },
+    "description": "Bank incident description",
+    "descriptionHtml": "<p>Bank incident description</p>",
+    "groups": [
+      {
+        "id": 1,
+        "name": "Incidents"
+      }
+    ],
+    "order": 0,
+    "projectId": 10100,
+    "usedByEmailSettings": false,
+    "helpText": "",
+    "helpTextHtml": "",
+    "restrictionStatus": "OPEN",
+    "portalId": 1
+  },
+  {
+    "id": 84,
+    "icon": 10500,
+    "name": "Outage",
+    "issueType": {
+      "self": "https://jira.example.com/rest/api/2/issuetype/10004",
+      "id": "10004",
+      "description": "",
+      "iconUrl": "https://jira.example.com/secure/viewavatar?size=xsmall&avatarId=10300",
+      "name": "Incident",
+      "subtask": false,
+      "avatarId": 10300
+    },
+    "description": "Outage description",
+    "descriptionHtml": "<p>Outage description</p>",
+    "groups": [
+      {
+        "id": 1,
+        "name": "Incidents"
+      }
+    ],
+    "order": 1,
+    "projectId": 10100,
+    "usedByEmailSettings": false,
+    "helpText": "",
+    "helpTextHtml": "",
+    "restrictionStatus": "OPEN",
+    "portalId": 1
+  },
+  {
+    "id": 85,
+    "icon": 10500,
+    "name": "Data fix",
+    "issueType": {
+      "self": "https://jira.example.com/rest/api/2/issuetype/10001",
+      "id": "10001",
+      "description": "",
+      "iconUrl": "https://jira.example.com/secure/viewavatar?size=xsmall&avatarId=10300",
+      "name": "Service Request",
+      "subtask": false,
+      "avatarId": 10300
+    },
+    "description": "Data fix description",
+    "descriptionHtml": "<p>Data fix description</p>",
+    "groups": [
+      {
+        "id": 1,
+        "name": "Incidents"
+      },
+      {
+        "id": 2,
+        "name": "Access"
+      }
+    ],
+    "order": 2,
+    "projectId": 10100,
+    "usedByEmailSettings": false,
+    "helpText": "",
+    "helpTextHtml": "",
+    "restrictionStatus": "OPEN",
+    "portalId": 1
+  }
+]

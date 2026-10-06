@@ -35,6 +35,8 @@ $A verify /tmp/sample-space-plan.json
 
 Updates are additive: category writes use the space-category endpoint, not page labels; permission writes target direct user `read:space` and `administer:space` grants. Existing categories and direct user grants are preserved. Inherited access is not converted into a direct grant and group membership is not changed.
 
+After `verify`, give the admins a short UI check plan (SKILL.md, Writes step 7): per changed space, the Space tools → Permissions and space category pages to open and what they should show, with skipped or unverified spaces listed separately.
+
 The workflow writes per-item results atomically to `<plan>.outcomes.json` with mode `0600`. `verify` performs remote reads only and writes its report to `<plan>.verification.json`; it checks all objective spaces, desired category/direct permissions, group view access, and recorded baseline preservation. A successful HTTP response without successful read-back is not verified success. Partial selection, unknown reads, lost baselines, or unverified desired state prevent an all-space success report.
 
 ## Partial failure and retry

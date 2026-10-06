@@ -1,0 +1,33 @@
+{
+  "options": [
+    {
+      "self": "https://jira.example.com/rest/api/2/customFieldOption/10600",
+      "value": "1",
+      "disabled": false,
+      "id": 10600,
+      "childrenIds": []
+    },
+    {
+      "self": "https://jira.example.com/rest/api/2/customFieldOption/10601",
+      "value": "2",
+      "disabled": false,
+      "id": 10601,
+      "childrenIds": []
+    },
+    {
+      "self": "https://jira.example.com/rest/api/2/customFieldOption/10602",
+      "value": "3",
+      "disabled": false,
+      "id": 10602,
+      "childrenIds": []
+    },
+    {
+      "self": "https://jira.example.com/rest/api/2/customFieldOption/10603",
+      "value": "4",
+      "disabled": true,
+      "id": 10603,
+      "childrenIds": []
+    }
+  ],
+  "total": 4
+}

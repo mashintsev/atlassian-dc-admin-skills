@@ -1,0 +1,25 @@
+{
+  "startAt": 0,
+  "maxResults": 100,
+  "total": 3,
+  "screens": [
+    {
+      "id": 10433,
+      "name": "DEMO: View Screen",
+      "description": "",
+      "expand": "fieldScreenSchemes,fieldScreenTabs"
+    },
+    {
+      "id": 10434,
+      "name": "DEMO: Edit Screen",
+      "description": "",
+      "expand": "fieldScreenSchemes,fieldScreenTabs"
+    },
+    {
+      "id": 10435,
+      "name": "DEMO: Create Screen",
+      "description": "",
+      "expand": "fieldScreenSchemes,fieldScreenTabs"
+    }
+  ]
+}

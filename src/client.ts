@@ -8,6 +8,8 @@
  * and an injectable fetch for tests.
  */
 
+import { readFileSync } from "node:fs";
+import { rootCertificates } from "node:tls";
 import { Agent, fetch as undiciFetch } from "undici";
 import { loadConfig, type Product, type ProductConfig } from "./config.js";
 import { HttpStatusError, ValidationError } from "./errors.js";
@@ -87,6 +89,15 @@ export function isJiraUserKey(input: string): boolean {
   return /^JIRAUSER\d+$/i.test(input);
 }
 
+/**
+ * TLS options for a product: verification as configured, and with <P>_CA_FILE the standard
+ * roots plus the file's certificates (so a company CA is trusted without turning checks off).
+ */
+export function tlsOptions(config: ProductConfig): { rejectUnauthorized: boolean; ca?: string[] } {
+  if (!config.caFile) return { rejectUnauthorized: config.verifySsl };
+  return { rejectUnauthorized: config.verifySsl, ca: [...rootCertificates, readFileSync(config.caFile, "utf8")] };
+}
+
 export class AtlassianClient {
   readonly product: Product;
   readonly config: ProductConfig;
@@ -99,7 +110,7 @@ export class AtlassianClient {
     if (fetchImpl) {
       this.fetchImpl = fetchImpl;
     } else {
-      this.agent = new Agent({ keepAliveTimeout: 30_000, connect: { rejectUnauthorized: config.verifySsl } });
+      this.agent = new Agent({ keepAliveTimeout: 30_000, connect: tlsOptions(config) });
       this.fetchImpl = undiciFetch as unknown as FetchLike;
     }
   }
@@ -146,6 +157,18 @@ export class AtlassianClient {
   async request(method: string, path: string, opts: RequestOptions = {}): Promise<Json> {
     const res = await this.send(method, this.url(path, opts.params), opts);
     return parse(await res.text());
+  }
+
+  /**
+   * Jira's XSRF token for resources that check `atl_token` (double submit: the token goes back
+   * as the `atlassian.xsrf.token` cookie and as the parameter). Read from the cookie Jira sets
+   * on any response; undefined when Jira sets none.
+   */
+  async xsrfToken(): Promise<string | undefined> {
+    const res = await this.send("GET", this.url("/rest/api/2/serverInfo"), {});
+    await res.text();
+    const cookies = res.headers.get("set-cookie") ?? "";
+    return /atlassian\.xsrf\.token=([^;,\s]+)/.exec(cookies)?.[1];
   }
 
   /** GET a binary body (attachments, exports). `path` may be an absolute URL on the same host. */

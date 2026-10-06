@@ -2,9 +2,10 @@
 
 ## 1. Establish the ScriptRunner API contract
 
-- [ ] 1.1 Verify the official ScriptRunner REST API by Jira and ScriptRunner version pair for the script registry, jobs, listeners, fields, Behaviours, UI Fragments, REST Endpoints, Resources, and Mail Handler; record supported reads, mutations, permissions, and unsupported operations in a versioned support matrix with vendor references.
+- [ ] 1.1 Record, with vendor references, that Adaptavist documents no public management API. Collect sanitized captures from the user for their exact Jira/ScriptRunner version pair (read-only GETs or a HAR of the admin UI; mutations only from a non-production instance) covering the script registry, jobs, listeners, fields, Behaviours, UI Fragments, REST Endpoints, Resources, and Mail Handler. Record each endpoint's method, path, request/response shape, permission, and capture evidence in the versioned support matrix; exclude canned and script-running endpoints.
 - [ ] 1.2 Add centralized Jira-version and ScriptRunner plugin-key/version/enabled-state discovery; reject caller-supplied versions and verify absent, disabled, malformed, inaccessible, unknown, and unsupported runtime states fail closed before any resource request.
 - [ ] 1.3 Define typed inputs and compact response shapes for each verified operation; verify unsupported resource operations fail explicitly rather than using guessed routes, while HTTP 401/403 remain authentication/authorization failures.
+- [ ] 1.4 Turn the captures into fixtures that keep the captured structure but use synthetic values; verify the repository contains no real scripts, names, or credentials from the instance.
 
 ## 2. Implement script and extension management
 
@@ -29,4 +30,4 @@
 
 - [ ] 5.1 Register all tools in the existing area-grouped registry and update the skill dispatcher and generated `REFERENCE.md`; verify every documented tool is discoverable through `list` and `describe`.
 - [ ] 5.2 Verify each domain tests Jira/ScriptRunner version-pair gating, discovery and resource-endpoint 401/403 preservation, executable-field rejection, and nested sensitive-field redaction in list/detail, dry-run/confirmation, and mutation results; run `pnpm test` and confirm existing Jira tools remain unchanged.
-- [ ] 5.3 Run `pnpm run typecheck`, `pnpm run build`, and `git diff --check`; verify generated artifacts match source and no live ScriptRunner mutations were used for validation.
+- [ ] 5.3 Run `pnpm run typecheck`, `pnpm run build`, and `git diff --check`; verify generated artifacts match source and that no tool or test made a live ScriptRunner mutation; mutation captures come only from the user's own actions on a non-production instance.

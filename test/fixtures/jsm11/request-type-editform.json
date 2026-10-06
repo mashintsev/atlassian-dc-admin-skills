@@ -1,0 +1,19 @@
+{
+  "viewportKey": "demo",
+  "form": {
+    "id": 83,
+    "key": "bankincident",
+    "name": "Bank incident",
+    "description": "",
+    "descriptionHtml": "",
+    "projectId": 10100,
+    "issueTypeId": 10004,
+    "issueTypeName": "Incident",
+    "parentKey": "",
+    "callToAction": "",
+    "intro": "",
+    "introHtml": "",
+    "icon": 10500,
+    "order": 0
+  }
+}

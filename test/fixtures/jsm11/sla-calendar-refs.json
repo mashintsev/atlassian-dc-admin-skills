@@ -1,0 +1,14 @@
+{
+  "calendars": [
+    {
+      "id": 3,
+      "name": "Office hours",
+      "default": false
+    },
+    {
+      "id": -1,
+      "name": "Default 24/7 calendar",
+      "default": true
+    }
+  ]
+}
