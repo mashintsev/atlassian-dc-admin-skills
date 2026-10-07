@@ -15,7 +15,7 @@ import type { AtlassianClient } from "../../client.js";
 import { ValidationError, VerificationError } from "../../errors.js";
 import { requireJsmVersion } from "../../jiraVersion.js";
 import type { ToolDef } from "../types.js";
-import { alreadySatisfied, boolArg, dryRunShape, guardedWrite, listArg, pageShape, paginate } from "../util.js";
+import { alreadySatisfied, boolArg, dryRunShape, guardedWrite, jsonArg, listArg, pageShape, paginate } from "../util.js";
 import { resolveServiceDesk, type ServiceDesk } from "./requestTypes.js";
 
 const IJ = "/rest/servicedesk/1/servicedesk";
@@ -128,9 +128,9 @@ function pickConditions(available: ConditionChoice[], names: string[], kind: str
   });
 }
 
-const goalList = z.preprocess(
-  (v) => (typeof v === "string" ? JSON.parse(v) : v),
+const goalList = jsonArg(
   z.array(z.object({ jql: z.string().optional(), target: z.coerce.string().min(1), calendar: z.coerce.string().optional() }).strict()).min(1),
+  '[{"jql":"priority = Highest","target":"4h"},{"target":"2d"}]',
 );
 
 interface GoalInput {
@@ -366,7 +366,7 @@ export const jiraSlaTools: ToolDef[] = [
     description:
       "Create an SLA calendar: name, time_zone (e.g. Europe/Moscow), working_hours (24x7, or e.g. 'mon-fri 09:00-18:00'), " +
       "optional holidays (JSON list as JSM stores them). Same name and settings → already-satisfied. Internal JSM API, JSM 11.3.x only.",
-    inputShape: { service_desk: sdArg, name: z.string().trim().min(1).max(63), time_zone: z.string().min(1), working_hours: z.string().min(1), description: z.string().optional(), holidays: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.record(z.string(), z.any()))).optional(), ...dryRunShape },
+    inputShape: { service_desk: sdArg, name: z.string().trim().min(1).max(63), time_zone: z.string().min(1), working_hours: z.string().min(1), description: z.string().optional(), holidays: jsonArg(z.array(z.record(z.string(), z.any())), '[{"name":"New Year","date":"2026-01-01","recurring":true}]').optional(), ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
       await requireJsmVersion(c, "SLA calendar changes");
@@ -394,7 +394,7 @@ export const jiraSlaTools: ToolDef[] = [
     product: "jira",
     write: true,
     description: "Change an SLA calendar's name, description, time zone, working hours or holidays. SLAs using it are recalculated. Internal JSM API, JSM 11.3.x only.",
-    inputShape: { service_desk: sdArg, calendar: z.coerce.string().min(1), name: z.string().trim().min(1).max(63).optional(), time_zone: z.string().optional(), working_hours: z.string().optional(), description: z.string().optional(), holidays: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.record(z.string(), z.any()))).optional(), ...dryRunShape },
+    inputShape: { service_desk: sdArg, calendar: z.coerce.string().min(1), name: z.string().trim().min(1).max(63).optional(), time_zone: z.string().optional(), working_hours: z.string().optional(), description: z.string().optional(), holidays: jsonArg(z.array(z.record(z.string(), z.any())), '[{"name":"New Year","date":"2026-01-01","recurring":true}]').optional(), ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
       await requireJsmVersion(c, "SLA calendar changes");

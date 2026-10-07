@@ -7,8 +7,8 @@
  */
 
 export function maxResponseChars(): number {
-  const raw = Number(process.env.ATLASSIAN_MAX_RESPONSE_CHARS ?? 60_000);
-  return Number.isFinite(raw) ? raw : 60_000;
+  const raw = Number(process.env.ATLASSIAN_MAX_RESPONSE_CHARS ?? 25_000);
+  return Number.isFinite(raw) ? raw : 25_000;
 }
 
 /** Compact JSON; `undefined` properties are omitted. */

@@ -158,6 +158,7 @@ export const jiraAttachmentTools: ToolDef[] = [
   },
   {
     name: "jira_upload_attachments",
+    unverifiable: "each call attaches the files again",
     product: "jira",
     write: true,
     description: "Attach local files to an issue (multipart upload).",
@@ -178,6 +179,7 @@ export const jiraAttachmentTools: ToolDef[] = [
   },
   {
     name: "jira_delete_attachment",
+    unverifiable: "not checked: the attachment is not read before or after",
     product: "jira",
     write: true,
     description: "Delete one attachment by id (irreversible).",

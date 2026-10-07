@@ -8,7 +8,7 @@ import { z } from "zod";
 import { ValidationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
 import { dryRunShape, guardedWrite, listArg, pageShape, serverPage } from "../util.js";
-import { AGILE, compactIssue, DEFAULT_ISSUE_FIELDS } from "./shape.js";
+import { AGILE, compactIssue, DEFAULT_ISSUE_FIELDS, refuseAllFields } from "./shape.js";
 
 const SPRINT_STATES = ["future", "active", "closed"] as const;
 
@@ -27,13 +27,13 @@ function compactSprint(s: any): Record<string, unknown> {
 
 const issueListShape = {
   jql: z.string().optional().describe("Extra JQL filter, e.g. status = 'In Progress'"),
-  fields: z.string().optional().describe(`Comma list of issue fields (default: ${DEFAULT_ISSUE_FIELDS}); *all for everything`),
-  ...pageShape(50),
+  fields: z.string().optional().describe(`Comma list of issue fields (default: ${DEFAULT_ISSUE_FIELDS}); extra fields become columns`),
+  ...pageShape(20, 100),
 };
 
 async function issuePage(get: () => Promise<any>, offset: number, limit: number) {
   const data = await get();
-  return serverPage((data?.issues ?? []).map((i: any) => compactIssue(i)), offset, limit, data?.total);
+  return serverPage((data?.issues ?? []).map((i: any) => compactIssue(i, { flatten: true })), offset, limit, data?.total);
 }
 
 export const jiraAgileTools: ToolDef[] = [
@@ -73,7 +73,8 @@ export const jiraAgileTools: ToolDef[] = [
     inputShape: { board_id: z.coerce.number().int(), ...issueListShape },
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
-      const limit = args.limit ?? 50;
+      refuseAllFields(args.fields);
+      const limit = args.limit ?? 20;
       return issuePage(
         () =>
           client("jira").get(`${AGILE}/board/${args.board_id}/issue`, {
@@ -114,7 +115,8 @@ export const jiraAgileTools: ToolDef[] = [
     inputShape: { sprint_id: z.coerce.number().int(), ...issueListShape },
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
-      const limit = args.limit ?? 50;
+      refuseAllFields(args.fields);
+      const limit = args.limit ?? 20;
       return issuePage(
         () =>
           client("jira").get(`${AGILE}/sprint/${args.sprint_id}/issue`, {
@@ -130,6 +132,7 @@ export const jiraAgileTools: ToolDef[] = [
   },
   {
     name: "jira_create_sprint",
+    unverifiable: "Jira allows several sprints with one name; each call creates one",
     product: "jira",
     write: true,
     description: "Create a future sprint on a board. Dates are ISO 8601, e.g. 2026-10-06T09:00:00.000+03:00.",
@@ -161,6 +164,7 @@ export const jiraAgileTools: ToolDef[] = [
   },
   {
     name: "jira_update_sprint",
+    unverifiable: "not checked: current values are not compared",
     product: "jira",
     write: true,
     description:
@@ -197,6 +201,7 @@ export const jiraAgileTools: ToolDef[] = [
   },
   {
     name: "jira_add_issues_to_sprint",
+    unverifiable: "not checked: current sprint membership is not compared",
     product: "jira",
     write: true,
     description: "Move issues into a sprint (up to 50 per call).",
@@ -213,6 +218,7 @@ export const jiraAgileTools: ToolDef[] = [
   },
   {
     name: "jira_move_issues_to_backlog",
+    unverifiable: "not checked: current sprint membership is not compared",
     product: "jira",
     write: true,
     description: "Move issues out of their sprints into the backlog (up to 50 per call).",

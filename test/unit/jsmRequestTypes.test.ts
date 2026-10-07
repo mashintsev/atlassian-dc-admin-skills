@@ -210,8 +210,15 @@ describe("portal visibility and groups (3.2)", () => {
 });
 
 describe("form (4.1, 4.2)", () => {
-  it("reads visible fields in order, hidden fields with presets, and addable fields", async () => {
+  it("counts addable fields without returning them by default", async () => {
     const r = await run("jira_get_request_type_form", { service_desk: "BANK", request_type: "Bank incident" }, fakeJsm().responder);
+    assert.ok(r.res.ok, JSON.stringify(r.error));
+    assert.equal(r.value.addable, undefined);
+    assert.equal(r.value.addableCount, 2);
+  });
+
+  it("reads visible fields in order, hidden fields with presets, and addable fields", async () => {
+    const r = await run("jira_get_request_type_form", { service_desk: "BANK", request_type: "Bank incident", include_addable: true }, fakeJsm().responder);
     assert.ok(r.res.ok, JSON.stringify(r.error));
     assert.deepEqual(r.value.visible.map((f: any) => f.fieldId), ["summary", "description", "priority", "components"]);
     assert.deepEqual(r.value.hidden[0], { fieldId: "duedate", name: "Due date", preset: ["2026-12-31"] });

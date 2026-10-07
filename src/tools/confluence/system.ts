@@ -5,10 +5,18 @@
 
 import { z } from "zod";
 import type { ToolDef } from "../types.js";
-import { dryRunShape, guardedWrite, pageShape, serverPage } from "../util.js";
+import { dryRunShape, guardedWrite, pageShape, pick, serverPage } from "../util.js";
 
 const API = "/rest/api";
 const PROTOTYPE = "/rest/prototype/1";
+
+function taskView(task: any): Record<string, unknown> {
+  const name = typeof task?.name === "string" ? task.name : task?.name?.translation ?? task?.name?.key;
+  return {
+    ...pick(task, ["id", "elapsedTime", "percentageComplete", "successful"]),
+    ...(typeof name === "string" ? { name } : {}),
+  };
+}
 
 export const confluenceSystemTools: ToolDef[] = [
   {
@@ -35,7 +43,9 @@ export const confluenceSystemTools: ToolDef[] = [
     description: "Data Center cluster nodes and their status.",
     inputShape: {},
     async handler({ client }) {
-      return client("confluence").get(`${API}/cluster/nodes`);
+      const data = await client("confluence").get(`${API}/cluster/nodes`);
+      return (Array.isArray(data) ? data : data?.results ?? []).map((node: any) =>
+        pick(node, ["id", "name", "state", "version", "buildNumber", "address"]));
     },
   },
   {
@@ -56,7 +66,7 @@ export const confluenceSystemTools: ToolDef[] = [
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 50;
       const data = await client("confluence").get(`${API}/longtask`, { start: offset, limit, expand: "status" });
-      return serverPage(data?.results ?? [], offset, limit, null, !data?._links?.next);
+      return serverPage((data?.results ?? []).map(taskView), offset, limit, null, !data?._links?.next);
     },
   },
   {
@@ -65,7 +75,13 @@ export const confluenceSystemTools: ToolDef[] = [
     description: "One long-running task: percentage complete, elapsed time, messages, success flag.",
     inputShape: { task_id: z.string() },
     async handler({ client }, args) {
-      return client("confluence").get(`${API}/longtask/${encodeURIComponent(args.task_id)}`);
+      const data = await client("confluence").get(`${API}/longtask/${encodeURIComponent(args.task_id)}`);
+      const messages: any[] = data?.messages ?? [];
+      return {
+        ...taskView(data),
+        messages: messages.slice(-20).reverse().map((message) => message?.translation ?? message?.key ?? String(message)),
+        ...(messages.length > 20 ? { messagesTotal: messages.length } : {}),
+      };
     },
   },
   {
@@ -81,6 +97,7 @@ export const confluenceSystemTools: ToolDef[] = [
     name: "confluence_start_reindex",
     product: "confluence",
     write: true,
+    unverifiable: "Confluence starts a rebuild each time; there is no target state to compare",
     description: "Rebuild the whole search index. Search results are incomplete until it finishes.",
     inputShape: { ...dryRunShape },
     async handler({ client }, args) {

@@ -4,7 +4,7 @@
 
 See proposal.md and specs/. `servicedesk.ts` already reads queues (`jira_get_service_desk_queues`, `jira_get_queue_issues`) and a request's SLA (`jira_get_issue_sla`). The change-plan contract exists. The JSM version gate is introduced by `add-jsm-request-type-management`.
 
-Verified on Jira 11.3.6 / JSM 11.3.5 (WADL plus read-only calls on service desk 3, project SPP):
+Verified on Jira 11.3.6 / JSM 11.3.5 (WADL plus read-only calls on a test service desk):
 - **Queues (public):** `GET/POST /rest/servicedeskapi/servicedesk/{sd}/queue`, `GET/POST/DELETE …/queue/{queueId}`, `POST …/queue/reorder`. A queue reads as `{id, name, jql, fields[]}`.
 - **SLA metrics (internal):**
   - `GET /rest/servicedesk/1/servicedesk/{projectKey}/sla/metric/all` returns `{metrics: [{id, name, customFieldId}]}`;

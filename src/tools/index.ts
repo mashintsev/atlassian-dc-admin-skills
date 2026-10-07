@@ -6,6 +6,10 @@ import { jiraUserTools } from "./jira/users.js";
 import { jiraProjectTools } from "./jira/projects.js";
 import { jiraSchemeTools } from "./jira/schemes.js";
 import { jiraWorkflowSchemeTools } from "./jira/workflowSchemes.js";
+import { jiraWorkflowTools } from "./jira/workflows.js";
+import { jiraProjectSchemeTools } from "./jira/projectSchemes.js";
+import { jiraAdminLifecycleTools } from "./jira/adminLifecycle.js";
+import { jiraFilterTools } from "./jira/filters.js";
 import { jiraFieldTools } from "./jira/fields.js";
 import { jiraScreenTools } from "./jira/screens.js";
 import { jiraCustomFieldTools } from "./jira/customFields.js";
@@ -24,6 +28,9 @@ import { jiraServiceDeskTools } from "./jira/servicedesk.js";
 import { jiraRequestTypeTools } from "./jira/requestTypes.js";
 import { jiraSlaTools } from "./jira/sla.js";
 import { jiraQueueTools } from "./jira/queues.js";
+import { jiraScriptRunnerTools } from "./jira/scriptrunner.js";
+import { jiraScriptRootTools } from "./jira/scriptRoot.js";
+import { jiraScriptSyncTools } from "./jira/scriptSync.js";
 import { confluenceSystemTools } from "./confluence/system.js";
 import { confluenceUserTools } from "./confluence/users.js";
 import { confluenceSpaceTools } from "./confluence/spaces.js";
@@ -44,6 +51,10 @@ export const TOOL_GROUPS: Array<[string, ToolDef[]]> = [
   ["Jira admin — projects and roles", jiraProjectTools],
   ["Jira admin — schemes and workflows", jiraSchemeTools],
   ["Jira admin — workflow schemes", jiraWorkflowSchemeTools],
+  ["Jira admin — workflows (designer, drafts)", jiraWorkflowTools],
+  ["Jira admin — project scheme assignment", jiraProjectSchemeTools],
+  ["Jira admin — scheme, version, screen and permission scheme lifecycle", jiraAdminLifecycleTools],
+  ["Jira — filters and dashboards", jiraFilterTools],
   ["Jira admin — custom fields", [...jiraFieldTools, ...jiraCustomFieldTools, ...jiraFieldOptionTools]],
   ["Jira admin — field configurations", jiraFieldConfigurationTools],
   ["Jira admin — screens", jiraScreenTools],
@@ -60,6 +71,9 @@ export const TOOL_GROUPS: Array<[string, ToolDef[]]> = [
   ["Jira Service Management — request types and forms", jiraRequestTypeTools],
   ["Jira Service Management — queues", jiraQueueTools],
   ["Jira Service Management — SLAs and calendars", jiraSlaTools],
+  ["ScriptRunner for Jira (unofficial endpoints)", jiraScriptRunnerTools],
+  ["ScriptRunner for Jira — Script Root files to local disk", jiraScriptRootTools],
+  ["ScriptRunner for Jira — Script Root ↔ local folder sync", jiraScriptSyncTools],
   ["Jira Assets — schemas, object types, attributes, statuses", assetsStructureTools],
   ["Jira Assets — objects, AQL, history", assetsObjectTools],
   ["Confluence admin — system", confluenceSystemTools],

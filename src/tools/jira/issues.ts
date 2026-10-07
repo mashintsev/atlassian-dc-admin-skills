@@ -13,8 +13,9 @@ import { isJiraUserKey, seg, type AtlassianClient } from "../../client.js";
 import { ValidationError } from "../../errors.js";
 import { jiraWikiToMarkdown, markdownToJiraWiki } from "../../markup.js";
 import type { ToolDef } from "../types.js";
+import { resolveField } from "./fieldRefs.js";
 import { boolArg, dryRunShape, guardedWrite, listArg, pageShape, paginate, pick, serverPage, type WriteRequest } from "../util.js";
-import { API, compactIssue, DEFAULT_ISSUE_FIELDS, discoverEpicFields, userRef } from "./shape.js";
+import { API, compactIssue, DEFAULT_ISSUE_FIELDS, discoverEpicFields, refuseAllFields, userRef } from "./shape.js";
 
 const SEARCH_MAX = 100;
 
@@ -200,8 +201,10 @@ async function runPlan(client: AtlassianClient, args: { dry_run?: boolean }, sum
 const CREATEMETA_MAX_TYPES = 200;
 const CREATEMETA_MAX_FIELDS = 500;
 
-async function createMetaIssueTypes(client: AtlassianClient, projectKey: string): Promise<any[]> {
-  return client.getPaged(`${API}/issue/createmeta/${seg(projectKey)}/issuetypes`, "values", {}, 50, CREATEMETA_MAX_TYPES);
+/** Create-meta issue types; the array carries `truncated` when the cap cut the list (name lookups say so). */
+async function createMetaIssueTypes(client: AtlassianClient, projectKey: string): Promise<any[] & { truncated?: boolean }> {
+  const read = await client.getPagedResult(`${API}/issue/createmeta/${seg(projectKey)}/issuetypes`, "values", {}, 50, CREATEMETA_MAX_TYPES);
+  return Object.assign(read.items, { truncated: read.truncated });
 }
 
 async function createMetaFields(client: AtlassianClient, projectKey: string, typeId: string): Promise<any[]> {
@@ -250,6 +253,7 @@ function jqlWithProjects(jql: string, projects?: string[]): string {
 }
 
 async function search(client: AtlassianClient, args: Record<string, any>, jql: string) {
+  refuseAllFields(args.fields);
   const offset = args.offset ?? 0;
   const limit = Math.min(args.limit ?? 20, SEARCH_MAX);
   const extra = args.fields ? `,${args.fields}` : "";
@@ -258,19 +262,48 @@ async function search(client: AtlassianClient, args: Record<string, any>, jql: s
     jql,
     startAt: offset,
     maxResults: limit,
-    fields: args.fields === "*all" ? "*all" : fields,
+    fields,
     expand: args.expand,
   });
-  const issues = (data?.issues ?? []).map((i: any) => compactIssue(i, { body: !!args.include_description }));
+  const issues = (data?.issues ?? []).map((i: any) => compactIssue(i, { body: !!args.include_description, flatten: true }));
   return serverPage(issues, offset, limit, data?.total);
 }
 
 const searchShape = {
-  ...pageShape(20),
-  fields: z.string().optional().describe("Extra fields to return (e.g. customfield_10100) or *all"),
+  ...pageShape(20, SEARCH_MAX),
+  fields: z.string().optional().describe("Extra fields to return, one column each (e.g. customfield_10100); *all only in jira_get_issue"),
   include_description: boolArg.optional().describe("Include the description (as Markdown); off by default to save tokens"),
   expand: z.string().optional(),
 };
+
+/** Longest description `jira_get_issue` returns by default. */
+const MAX_DESCRIPTION = 8_000;
+/** Changelog values longer than this (or multi-line) are shown as lengths and a preview. */
+const MAX_CHANGE_VALUE = 120;
+
+/** Cut the description at a line break before `max` (0 drops it) and record what was cut. */
+function boundDescription(out: Record<string, unknown>, max: number) {
+  if (typeof out.description !== "string") return;
+  if (max === 0) {
+    delete out.description;
+    return;
+  }
+  const text = out.description;
+  if (text.length <= max) return;
+  const nl = text.lastIndexOf("\n", max);
+  out.description = text.slice(0, nl > max / 2 ? nl : max);
+  out.descriptionTruncated = { shown: (out.description as string).length, total: text.length };
+}
+
+/** One changelog item; text edits (descriptions, text areas) as lengths and a preview, never both full texts. */
+function changeLine(i: any): string {
+  const from = i.fromString ?? "";
+  const to = i.toString ?? "";
+  const long = (v: string) => v.length > MAX_CHANGE_VALUE || v.includes("\n");
+  if (!long(from) && !long(to)) return `${i.field}: ${from} → ${to}`;
+  const preview = to.replace(/\s*\n\s*/g, " ⏎ ").slice(0, MAX_CHANGE_VALUE);
+  return `${i.field}: ${from.length} chars → ${to.length} chars: ${preview}`;
+}
 
 // -- tools ----------------------------------------------------------------------------------
 
@@ -290,7 +323,10 @@ export const jiraIssueTools: ToolDef[] = [
       markup: z.enum(["markdown", "wiki"]).optional().describe("Description format in the result (default markdown)"),
       history_limit: z.coerce.number().int().min(1).max(500).optional()
         .describe(`include=changelog/worklogs: newest N entries (default ${ISSUE_EXTRA_DEFAULT}); totals are reported`),
+      max_description_chars: z.coerce.number().int().min(0).max(100_000).optional()
+        .describe(`Longest description returned, cut at a line break (default ${MAX_DESCRIPTION}); 0 omits it`),
     },
+    narrowing: ["max_description_chars", "history_limit", "comments"],
     async handler({ client }, args) {
       const c = client("jira");
       const key = seg(args.issue_key);
@@ -309,6 +345,7 @@ export const jiraIssueTools: ToolDef[] = [
         expand,
       });
       const out = compactIssue(issue, { body: true, markdown: args.markup !== "wiki" });
+      boundDescription(out, args.max_description_chars ?? MAX_DESCRIPTION);
       const f = issue?.fields ?? {};
       if (epic.epicLink && f[epic.epicLink]) {
         out.epic = f[epic.epicLink];
@@ -342,7 +379,7 @@ export const jiraIssueTools: ToolDef[] = [
         out.changelog = histories.slice(-extraLimit).reverse().map((h: any) => ({
           author: h.author?.name,
           created: h.created,
-          changes: (h.items ?? []).map((i: any) => `${i.field}: ${i.fromString ?? ""} → ${i.toString ?? ""}`),
+          changes: (h.items ?? []).map(changeLine),
         }));
       }
       if (args.comments) {
@@ -407,6 +444,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_create_issue",
+    unverifiable: "each call creates a new issue",
     product: "jira",
     write: true,
     description:
@@ -416,7 +454,7 @@ export const jiraIssueTools: ToolDef[] = [
     inputShape: {
       project_key: z.string(),
       summary: z.string(),
-      issue_type: z.string().describe("Name, e.g. Task, Bug, Story, Epic, Sub-task"),
+      issue_type: z.coerce.string().describe("Issue type id or name, e.g. Task, Bug, Story, Epic, Sub-task"),
       description: z.string().optional(),
       assignee: z.string().optional().describe("Username, user key, e-mail or display name"),
       components: listArg.optional(),
@@ -433,6 +471,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_batch_create_issues",
+    unverifiable: "each call creates new issues",
     product: "jira",
     write: true,
     description:
@@ -462,6 +501,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_update_issue",
+    unverifiable: "not checked: current field values are not compared before writing",
     product: "jira",
     write: true,
     description:
@@ -538,6 +578,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_assign_issue",
+    unverifiable: "not checked: the current assignee is not compared",
     product: "jira",
     write: true,
     description: "Assign an issue (username, user key, e-mail or display name); omit assignee to unassign.",
@@ -555,6 +596,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_delete_issue",
+    unverifiable: "not checked: the issue is not read before or after",
     product: "jira",
     write: true,
     description: "Permanently delete an issue. With subtasks it fails unless delete_subtasks=true. Irreversible.",
@@ -570,12 +612,13 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_get_field_options",
+    aliases: { field_id: "field" },
     product: "jira",
     description:
       "Allowed values of a select/multi-select/cascading field for a project + issue type (from create metadata). " +
       "contains filters values (also children); values_only returns plain strings.",
     inputShape: {
-      field_id: z.string().describe("e.g. customfield_10100, priority"),
+      field: z.coerce.string().min(1).describe("Field id (e.g. customfield_10100, priority) or exact name"),
       project_key: z.string(),
       issue_type: z.string().describe("Issue type name or id"),
       contains: z.string().optional(),
@@ -587,9 +630,17 @@ export const jiraIssueTools: ToolDef[] = [
       const types = await createMetaIssueTypes(c, args.project_key);
       const want = String(args.issue_type).toLowerCase();
       const type = types.find((t: any) => String(t.id) === args.issue_type || String(t.name).toLowerCase() === want || String(t.untranslatedName ?? "").toLowerCase() === want);
-      if (!type) throw new ValidationError(`Issue type '${args.issue_type}' not available in ${args.project_key}: ${types.map((t: any) => t.name).join(", ")}`);
-      const field = await findCreateMetaField(c, args.project_key, String(type.id), args.field_id);
-      if (!field) throw new ValidationError(`Field ${args.field_id} is not on the create screen of ${args.project_key}/${type.name}`);
+      if (!type) {
+        const cut = types.truncated ? ` (only the first ${CREATEMETA_MAX_TYPES} issue types were read)` : "";
+        throw new ValidationError(`Issue type '${args.issue_type}' not available in ${args.project_key}${cut}: ${types.map((t: any) => t.name).join(", ")}`);
+      }
+      // an id needs no lookup; a name is resolved only when the value is not an id on the screen
+      let field = await findCreateMetaField(c, args.project_key, String(type.id), args.field);
+      if (!field) {
+        const ref = await resolveField(c, args.field);
+        if (ref.id !== args.field) field = await findCreateMetaField(c, args.project_key, String(type.id), ref.id!);
+      }
+      if (!field) throw new ValidationError(`Field ${args.field} is not on the create screen of ${args.project_key}/${type.name}`);
       const needle = args.contains?.toLowerCase();
       const label = (o: any) => String(o.value ?? o.name ?? "");
       let options = (field.allowedValues ?? []).map((o: any) => ({
@@ -615,14 +666,14 @@ export const jiraIssueTools: ToolDef[] = [
           items: page.items.map((o: any) => (o.children?.length ? { value: o.value, children: o.children.map((ch: any) => ch.value) } : o.value)),
         };
       }
-      return { field: args.field_id, name: field.name, issueType: type.name, ...page };
+      return { field: field.fieldId ?? args.field, name: field.name, issueType: type.name, ...page };
     },
   },
   {
     name: "jira_get_comments",
     product: "jira",
     description: "Comments of an issue as Markdown, newest first (server-side paging).",
-    inputShape: { issue_key: z.string(), oldest_first: boolArg.optional(), ...pageShape(20), markup: z.enum(["markdown", "wiki"]).optional() },
+    inputShape: { issue_key: z.string(), oldest_first: boolArg.optional(), ...pageShape(20, 100), markup: z.enum(["markdown", "wiki"]).optional() },
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 20;
@@ -636,6 +687,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_add_comment",
+    unverifiable: "each call adds another comment",
     product: "jira",
     write: true,
     description: "Add a comment (Markdown, or markup=wiki). visibility restricts it to a group or project role.",
@@ -659,6 +711,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_edit_comment",
+    unverifiable: "not checked: the current comment text is not compared",
     product: "jira",
     write: true,
     description: "Replace the text of a comment (Markdown, or markup=wiki).",
@@ -702,6 +755,7 @@ export const jiraIssueTools: ToolDef[] = [
   },
   {
     name: "jira_transition_issue",
+    unverifiable: "not checked: the current status is not compared; a repeat may fail if the transition no longer applies",
     product: "jira",
     write: true,
     description:
@@ -755,7 +809,8 @@ async function buildCreate(c: AtlassianClient, args: Record<string, any>): Promi
   const epic = await discoverEpicFields(c);
   const requested = String(args.issue_type);
   const lower = requested.toLowerCase();
-  let issuetype: Record<string, unknown> = { name: requested };
+  // an id (digits) goes as an id; a name as a name, with the Epic/Sub-task lookups below
+  let issuetype: Record<string, unknown> = /^\d+$/.test(String(requested).trim()) ? { id: String(requested).trim() } : { name: requested };
   let createScreen: Set<string> | undefined;
   const isEpic = lower === "epic";
   const isSubtask = ["subtask", "sub-task", "sub task"].includes(lower);

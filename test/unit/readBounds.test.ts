@@ -12,7 +12,7 @@ const SINGLE_OR_SMALL = new Set([
   "jira_application_roles", "jira_get_user", "jira_get_project_config", "jira_get_permission_scheme",
   "jira_get_notification_scheme", "jira_get_issue_security_scheme", "jira_get_workflow_scheme", "jira_compare_workflow_scheme_draft", "jira_get_field_contexts",
   "jira_get_screen", "jira_get_issue", "jira_get_issue_dates", "jira_get_issue_sla", "jira_get_issue_development_info",
-  "jira_get_service_desk_for_project", "jira_get_request_type_fields", "jira_get_board_configuration", "jira_get_custom_field_options", "jira_get_request_type_form", "jira_get_sla_conditions", "jira_list_sla_calendars",
+  "jira_get_service_desk_for_project", "jira_get_request_type_fields", "jira_get_board_configuration", "jira_get_custom_field_options", "jira_get_request_type_form", "jira_get_sla_conditions", "jira_list_sla_calendars", "jira_get_scriptrunner_item", "jira_get_workflow", "jira_compare_workflows", "jira_get_scriptrunner_script", "jira_get_filter", "jira_get_dashboard",
   "assets_get_schema", "assets_get_object_type", "assets_validate_aql", "assets_get_object", "assets_object_references",
   "confluence_server_info", "confluence_instance_metrics", "confluence_cluster_nodes", "confluence_access_mode",
   "confluence_get_long_task", "confluence_reindex_status", "confluence_get_user", "confluence_get_space",

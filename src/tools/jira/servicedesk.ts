@@ -46,7 +46,11 @@ function compactQueue(q: any): Record<string, unknown> {
   return { id: q.id, name: q.name, issueCount: q.issueCount, jql: q.jql, fields: q.fields };
 }
 
+/** Valid values a request type field shows; long option lists (countries, CMDB selects) end with "+N more". */
+const MAX_VALID_VALUES = 50;
+
 function compactField(f: any): Record<string, unknown> {
+  const valid: string[] = (f.validValues ?? []).map((v: any) => (v.value === v.label || !v.label ? v.value : `${v.value}=${v.label}`));
   return {
     fieldId: f.fieldId,
     name: f.name,
@@ -55,7 +59,7 @@ function compactField(f: any): Record<string, unknown> {
     type: f.jiraSchema?.type,
     custom: f.jiraSchema?.custom,
     multiple: f.jiraSchema?.type === "array",
-    validValues: (f.validValues ?? []).map((v: any) => (v.value === v.label || !v.label ? v.value : `${v.value}=${v.label}`)),
+    validValues: valid.length > MAX_VALID_VALUES ? [...valid.slice(0, MAX_VALID_VALUES), `+${valid.length - MAX_VALID_VALUES} more`] : valid,
     defaultValues: (f.defaultValues ?? []).map((v: any) => v.value ?? v.label),
     description: f.description,
   };
@@ -111,6 +115,15 @@ function isOnBehalfError(e: unknown): boolean {
   return /behalf|unknown user|invalid customer|not a customer|does not exist|user.*not found|permission/i.test(e.body ?? e.message);
 }
 
+/** A service desk id as given (digits), or the id of the service desk of a project key. */
+export async function serviceDeskId(client: AtlassianClient, given: string): Promise<string> {
+  const value = String(given).trim();
+  if (/^\d+$/.test(value)) return value;
+  const hit = await findInPages(client, "/servicedesk", (d: any) => String(d.projectKey).toLowerCase() === value.toLowerCase());
+  if (!hit) throw new ValidationError(`No service desk for '${value}' (pass a service desk id or its project key)`);
+  return String(hit.id);
+}
+
 export const jiraServiceDeskTools: ToolDef[] = [
   {
     name: "jira_get_service_desk_for_project",
@@ -128,17 +141,19 @@ export const jiraServiceDeskTools: ToolDef[] = [
   },
   {
     name: "jira_get_service_desk_queues",
+    aliases: { service_desk_id: "service_desk" },
     product: "jira",
     description: "Queues of a service desk with their JQL; include_count=true adds issue counts (runs one JQL count per queue).",
     inputShape: {
-      service_desk_id: z.coerce.string(),
+      service_desk: z.coerce.string().describe("Service desk id or project key"),
       include_count: boolArg.optional().describe("Default false; counting is expensive on large desks"),
       ...pageShape(50),
     },
     async handler({ client }, args) {
+      const sdId = await serviceDeskId(client("jira"), args.service_desk);
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 50, PAGE_MAX);
-      const data = await sdGet(client("jira"), `/servicedesk/${seg(args.service_desk_id)}/queue`, {
+      const data = await sdGet(client("jira"), `/servicedesk/${seg(sdId)}/queue`, {
         includeCount: args.include_count === true,
         start: offset,
         limit,
@@ -148,40 +163,44 @@ export const jiraServiceDeskTools: ToolDef[] = [
   },
   {
     name: "jira_get_queue_issues",
+    aliases: { service_desk_id: "service_desk" },
     product: "jira",
     description: "Issues in a service desk queue (compact issue rows). include_count=true also reports the queue total.",
     inputShape: {
-      service_desk_id: z.coerce.string(),
+      service_desk: z.coerce.string().describe("Service desk id or project key"),
       queue_id: z.coerce.string(),
       include_count: boolArg.optional().describe("Default false: one extra JQL count for the total"),
       ...pageShape(50),
     },
     async handler({ client }, args) {
+      const sdId = await serviceDeskId(client("jira"), args.service_desk);
       const c = client("jira");
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 50, PAGE_MAX);
-      const base = `/servicedesk/${seg(args.service_desk_id)}/queue/${seg(args.queue_id)}`;
+      const base = `/servicedesk/${seg(sdId)}/queue/${seg(args.queue_id)}`;
       const [queue, data] = await Promise.all([
         args.include_count === true ? sdGet(c, base, { includeCount: true }).catch(() => null) : Promise.resolve(null),
         sdGet(c, `${base}/issue`, { start: offset, limit }),
       ]);
-      const page = serverPage((data?.values ?? []).map((i: any) => compactIssue(i)), offset, limit, queue?.issueCount ?? null, data?.isLastPage ?? true);
+      const page = serverPage((data?.values ?? []).map((i: any) => compactIssue(i, { flatten: true })), offset, limit, queue?.issueCount ?? null, data?.isLastPage ?? true);
       return { queue: queue ? queue.name : undefined, ...page };
     },
   },
   {
     name: "jira_get_request_types",
+    aliases: { service_desk_id: "service_desk" },
     product: "jira",
     description: "Request types of a service desk (id, name, issue type, groups); group_id narrows to one portal group.",
     inputShape: {
-      service_desk_id: z.coerce.string(),
+      service_desk: z.coerce.string().describe("Service desk id or project key"),
       group_id: z.coerce.string().optional().describe("Only request types of this portal group (server-side filter)"),
       ...pageShape(50),
     },
     async handler({ client }, args) {
+      const sdId = await serviceDeskId(client("jira"), args.service_desk);
       const offset = args.offset ?? 0;
       const limit = Math.min(args.limit ?? 50, PAGE_MAX);
-      const data = await sdGet(client("jira"), `/servicedesk/${seg(args.service_desk_id)}/requesttype`, {
+      const data = await sdGet(client("jira"), `/servicedesk/${seg(sdId)}/requesttype`, {
         groupId: args.group_id,
         start: offset,
         limit,
@@ -199,14 +218,16 @@ export const jiraServiceDeskTools: ToolDef[] = [
   },
   {
     name: "jira_get_request_type_fields",
+    aliases: { service_desk_id: "service_desk" },
     product: "jira",
     description:
       "Fields of a request type: id, required, type, valid values. Call before jira_create_customer_request.",
-    inputShape: { service_desk_id: z.coerce.string(), request_type_id: z.coerce.string() },
+    inputShape: { service_desk: z.coerce.string().describe("Service desk id or project key"), request_type_id: z.coerce.string() },
     async handler({ client }, args) {
+      const sdId = await serviceDeskId(client("jira"), args.service_desk);
       const data = await sdGet(
         client("jira"),
-        `/servicedesk/${seg(args.service_desk_id)}/requesttype/${seg(args.request_type_id)}/field`,
+        `/servicedesk/${seg(sdId)}/requesttype/${seg(args.request_type_id)}/field`,
       );
       return {
         canRaiseOnBehalfOf: data?.canRaiseOnBehalfOf,
@@ -217,6 +238,8 @@ export const jiraServiceDeskTools: ToolDef[] = [
   },
   {
     name: "jira_create_customer_request",
+    unverifiable: "each call raises a new request",
+    aliases: { service_desk_id: "service_desk" },
     product: "jira",
     write: true,
     description:
@@ -225,7 +248,7 @@ export const jiraServiceDeskTools: ToolDef[] = [
       "attachments: local file paths, attached publicly after creation. raise_on_behalf_of: username " +
       "(fails when rejected; allow_agent_fallback=true retries once as the calling agent, which is a different request than the dry run showed).",
     inputShape: {
-      service_desk_id: z.coerce.string(),
+      service_desk: z.coerce.string().describe("Service desk id or project key"),
       request_type_id: z.coerce.string(),
       request_field_values: z.union([z.record(z.string(), z.any()), z.string()]),
       raise_on_behalf_of: z.string().optional(),
@@ -236,6 +259,7 @@ export const jiraServiceDeskTools: ToolDef[] = [
       ...dryRunShape,
     },
     async handler({ client }, args) {
+      const sdId = await serviceDeskId(client("jira"), args.service_desk);
       const c = client("jira");
       let values: Record<string, unknown> = args.request_field_values;
       if (typeof values === "string") {
@@ -247,10 +271,10 @@ export const jiraServiceDeskTools: ToolDef[] = [
       }
       if (!values || typeof values !== "object" || Array.isArray(values)) throw new ValidationError("request_field_values must be an object");
 
-      const meta = await sdGet(c, `/servicedesk/${seg(args.service_desk_id)}/requesttype/${seg(args.request_type_id)}/field`);
+      const meta = await sdGet(c, `/servicedesk/${seg(sdId)}/requesttype/${seg(args.request_type_id)}/field`);
       const requestFieldValues = prepareFieldValues(meta?.requestTypeFields ?? [], values);
       const body: Record<string, unknown> = {
-        serviceDeskId: args.service_desk_id,
+        serviceDeskId: sdId,
         requestTypeId: args.request_type_id,
         requestFieldValues,
       };
@@ -258,7 +282,7 @@ export const jiraServiceDeskTools: ToolDef[] = [
       if (args.request_participants?.length) body.requestParticipants = args.request_participants;
 
       const files: string[] = args.attachments ?? [];
-      const summary = `Create request type ${args.request_type_id} in service desk ${args.service_desk_id}` +
+      const summary = `Create request type ${args.request_type_id} in service desk ${sdId}` +
         (args.raise_on_behalf_of ? ` on behalf of ${args.raise_on_behalf_of}` : "") +
         (files.length ? ` with ${files.length} attachment(s)` : "");
       const request = { method: "POST" as const, path: `${SD}/request`, json: body, headers: OPT_IN, summary };
@@ -284,7 +308,7 @@ export const jiraServiceDeskTools: ToolDef[] = [
         try {
           const form = new FormData();
           for (const p of files) form.append("file", new Blob([readFileSync(resolve(p))]), basename(p));
-          const tmp = await c.request("POST", `${SD}/servicedesk/${seg(args.service_desk_id)}/attachTemporaryFile`, { form, headers: OPT_IN });
+          const tmp = await c.request("POST", `${SD}/servicedesk/${seg(sdId)}/attachTemporaryFile`, { form, headers: OPT_IN });
           const ids = (tmp?.temporaryAttachments ?? []).map((t: any) => t.temporaryAttachmentId);
           await c.request("POST", `${SD}/request/${seg(key)}/attachment`, {
             json: { temporaryAttachmentIds: ids, public: args.attachments_public ?? true },
@@ -303,7 +327,7 @@ export const jiraServiceDeskTools: ToolDef[] = [
           key,
           id: created?.issueId ?? created?.id,
           created_mode: mode,
-          portal_url: created?._links?.web ?? `${c.config.baseUrl}/servicedesk/customer/portal/${args.service_desk_id}/${key}`,
+          portal_url: created?._links?.web ?? `${c.config.baseUrl}/servicedesk/customer/portal/${sdId}/${key}`,
           warnings: warnings.length ? warnings : undefined,
         },
       };

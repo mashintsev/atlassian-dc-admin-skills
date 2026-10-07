@@ -4,11 +4,19 @@
  */
 
 import { z } from "zod";
+import { ValidationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { listArg } from "../util.js";
+import { boolArg, listArg } from "../util.js";
 import { productShape } from "./plugins.js";
 
 const AUDIT = "/rest/auditing/1.0";
+/** Longest changed value shown; workflow XML or scheme dumps are cut and the rest counted. */
+const MAX_VALUE = 120;
+/** Most events per page, and most with raw=true (full event objects). */
+const MAX_LIMIT = 200;
+const MAX_RAW_LIMIT = 50;
+
+const cutValue = (v: unknown) => (typeof v === "string" && v.length > MAX_VALUE ? `${v.slice(0, MAX_VALUE)}…(+${v.length - MAX_VALUE})` : v);
 
 function compactEvent(e: any): Record<string, unknown> {
   return {
@@ -18,11 +26,31 @@ function compactEvent(e: any): Record<string, unknown> {
     category: e.type?.category ?? null,
     action: e.type?.action ?? null,
     affected: (e.affectedObjects ?? []).map((o: any) => `${o.type}:${o.name ?? o.id}`),
-    changes: (e.changedValues ?? []).map((v: any) => ({ key: v.key, from: v.from, to: v.to })),
+    changes: (e.changedValues ?? []).map((v: any) => ({ key: v.key, from: cutValue(v.from), to: cutValue(v.to) })),
     source: e.source ?? null,
     node: e.node ?? null,
     method: e.method ?? null,
   };
+}
+
+/** The retention period (e.g. P3Y) from the retention configuration. */
+function retentionPeriod(r: any): unknown {
+  if (typeof r === "string") return r;
+  return r?.period ?? r?.retentionPeriod ?? null;
+}
+
+/** Coverage as `area=level` entries, from a map of area → level or a list of {area, level}. */
+function coverageLevels(c: any): string[] {
+  const src = c?.levelByArea ?? c?.areas ?? c;
+  if (Array.isArray(src)) return src.map((x: any) => `${x?.area ?? x?.key}=${x?.level ?? x?.value}`);
+  if (!src || typeof src !== "object") return [];
+  return Object.entries(src).filter(([, v]) => typeof v === "string").map(([k, v]) => `${k}=${v}`);
+}
+
+/** Names of the excluded (denylisted) actions. */
+function denylistNames(d: any): string[] {
+  const src = Array.isArray(d) ? d : d?.actions ?? d?.denyList ?? d?.denylist ?? [];
+  return (Array.isArray(src) ? src : []).map((x: any) => (typeof x === "string" ? x : x?.name ?? x?.key ?? x?.action)).filter(Boolean);
 }
 
 export const auditTools: ToolDef[] = [
@@ -42,11 +70,14 @@ export const auditTools: ToolDef[] = [
       actions: listArg.optional(),
       user_ids: listArg.optional().describe("Author user keys / ids"),
       affected_object: z.string().optional().describe("type,id e.g. USER,JIRAUSER10000"),
-      limit: z.coerce.number().int().min(1).max(1000).optional().describe("Default 50"),
+      limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional().describe(`Default 50, max ${MAX_LIMIT}`),
       page_cursor: z.string().optional(),
-      raw: z.boolean().optional().describe("Return full event objects"),
+      raw: boolArg.optional().describe(`Return full event objects (limit at most ${MAX_RAW_LIMIT})`),
     },
     async handler({ client }, args) {
+      if (args.raw && (args.limit ?? 50) > MAX_RAW_LIMIT) {
+        throw new ValidationError(`raw=true returns full event objects: use limit at most ${MAX_RAW_LIMIT}`);
+      }
       const data = await client(args.product).get(`${AUDIT}/events`, {
         from: args.from,
         to: args.to,
@@ -79,7 +110,7 @@ export const auditTools: ToolDef[] = [
         c.get(`${AUDIT}/configuration/coverage`),
         c.get(`${AUDIT}/configuration/denylist`),
       ]);
-      return { retention, coverage, denylist };
+      return { retention: retentionPeriod(retention), coverage: coverageLevels(coverage), denylist: denylistNames(denylist) };
     },
   },
 ];

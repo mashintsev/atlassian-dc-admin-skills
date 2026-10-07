@@ -6,9 +6,9 @@
 
 import { z } from "zod";
 import { seg, type AtlassianClient } from "../../client.js";
-import { ValidationError } from "../../errors.js";
+import { isHttpStatusError, ValidationError, VerificationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { boolArg, contains, dryRunShape, guardedWrite, listArg, pageShape, paginate } from "../util.js";
+import { alreadySatisfied, boolArg, contains, dryRunShape, guardedWrite, listArg, pageShape, paginate, type WriteRequest } from "../util.js";
 import {
   assetsBase,
   ATTRIBUTE_KINDS,
@@ -22,6 +22,40 @@ import {
 } from "./common.js";
 
 const id = z.coerce.number().int();
+
+/** GET, or null when the object does not exist (404). */
+async function readOrNull(c: AtlassianClient, path: string): Promise<any | null> {
+  try {
+    return await c.get(path);
+  } catch (e) {
+    if (isHttpStatusError(e) && e.status === 404) return null;
+    throw e;
+  }
+}
+
+const listOf = (data: any, key?: string): any[] => (Array.isArray(data) ? data : (key && Array.isArray(data?.[key]) ? data[key] : []));
+const sameText = (a: unknown, b: unknown) => String(a ?? "").toLowerCase() === String(b ?? "").toLowerCase();
+const norm = (v: unknown) => (v === undefined || v === null ? "" : String(v));
+const differing = (want: Record<string, unknown>, have: Record<string, unknown>) =>
+  Object.keys(want).filter((k) => want[k] !== undefined && norm(want[k]) !== norm(have[k]));
+
+/**
+ * Dry run (with identity/state), or execute and read back: `verify` returns the observed state and
+ * whether it shows the change; a mismatch is a VerificationError carrying that state.
+ */
+async function verifiedWrite(
+  c: AtlassianClient,
+  args: { dry_run?: boolean },
+  req: WriteRequest,
+  plan: { identity: Record<string, unknown>; state: unknown },
+  verify: () => Promise<{ ok: boolean; observed: unknown }>,
+) {
+  if (args.dry_run !== false) return { ...(await guardedWrite(c, args, req)), ...plan };
+  const res = await guardedWrite(c, args, req);
+  const back = await verify();
+  if (!back.ok) throw new VerificationError(`${req.summary}: the change does not read back`, back.observed);
+  return { ...res, verification: back.observed };
+}
 
 // -- schemas ----------------------------------------------------------------------
 
@@ -77,11 +111,23 @@ const schemaTools: ToolDef[] = [
     inputShape: { name: z.string(), key: z.string(), description: z.string().optional(), ...dryRunShape },
     async handler({ client }, args) {
       if (!/^[A-Z][A-Z0-9]{1,9}$/.test(args.key)) throw new ValidationError("key must be 2–10 characters A-Z0-9, starting with a letter");
-      return guardedWrite(client("jira"), args, {
+      const c = client("jira");
+      const summary = `Create Assets schema ${args.key} "${args.name}"`;
+      const all = async () => listOf(await c.get(`${assetsBase()}/objectschema/list`), "objectschemas");
+      const existing = (await all()).find((x) => x.objectSchemaKey === args.key || sameText(x.name, args.name));
+      if (existing) {
+        const same = existing.objectSchemaKey === args.key && sameText(existing.name, args.name) && (args.description === undefined || norm(existing.description) === args.description);
+        if (same) return alreadySatisfied(summary, `schema ${existing.objectSchemaKey} [${existing.id}] already exists with these settings`);
+        throw new ValidationError(`A schema ${existing.objectSchemaKey} "${existing.name}" [${existing.id}] already exists with other settings`);
+      }
+      return verifiedWrite(c, args, {
         method: "POST",
         path: `${assetsBase()}/objectschema/create`,
         json: { name: args.name, objectSchemaKey: args.key, description: args.description },
-        summary: `Create Assets schema ${args.key} "${args.name}"`,
+        summary,
+      }, { identity: { op: "assets-create-schema", key: args.key, name: args.name, description: args.description ?? null }, state: { present: false } }, async () => {
+        const back = (await all()).find((x) => x.objectSchemaKey === args.key);
+        return { ok: !!back && sameText(back.name, args.name), observed: back ? compactSchema(back) : null };
       });
     },
   },
@@ -93,17 +139,25 @@ const schemaTools: ToolDef[] = [
     inputShape: { schema_id: id, name: z.string().optional(), description: z.string().optional(), ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/objectschema/${args.schema_id}`);
-      return guardedWrite(c, args, {
+      const path = `${assetsBase()}/objectschema/${args.schema_id}`;
+      const cur = await c.get(path);
+      const want = { name: args.name, description: args.description };
+      const changed = differing(want, cur);
+      const summary = `Update Assets schema ${cur.objectSchemaKey}`;
+      if (!changed.length) return alreadySatisfied(summary, "the schema already has these values");
+      return verifiedWrite(c, args, {
         method: "PUT",
-        path: `${assetsBase()}/objectschema/${args.schema_id}`,
+        path,
         json: {
           id: cur.id,
           name: args.name ?? cur.name,
           objectSchemaKey: cur.objectSchemaKey,
           description: args.description ?? cur.description,
         },
-        summary: `Update Assets schema ${cur.objectSchemaKey}`,
+        summary,
+      }, { identity: { op: "assets-update-schema", schema: args.schema_id, ...want }, state: Object.fromEntries(changed.map((k) => [k, cur[k] ?? null])) }, async () => {
+        const back = await c.get(path);
+        return { ok: !differing(want, back).length, observed: compactSchema(back) };
       });
     },
   },
@@ -115,11 +169,16 @@ const schemaTools: ToolDef[] = [
     inputShape: { schema_id: id, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/objectschema/${args.schema_id}`);
-      return guardedWrite(c, args, {
+      const path = `${assetsBase()}/objectschema/${args.schema_id}`;
+      const cur = await readOrNull(c, path);
+      if (!cur) return alreadySatisfied(`Delete Assets schema ${args.schema_id}`, "no such schema");
+      return verifiedWrite(c, args, {
         method: "DELETE",
-        path: `${assetsBase()}/objectschema/${args.schema_id}`,
+        path,
         summary: `PERMANENTLY delete Assets schema ${cur.objectSchemaKey} "${cur.name}" with ${cur.objectCount ?? "?"} objects`,
+      }, { identity: { op: "assets-delete-schema", schema: args.schema_id }, state: { present: true } }, async () => {
+        const back = await readOrNull(c, path);
+        return { ok: !back, observed: back ? compactSchema(back) : null };
       });
     },
   },
@@ -166,7 +225,7 @@ const objectTypeTools: ToolDef[] = [
   {
     name: "assets_get_object_type",
     product: "jira",
-    description: "One object type with its attribute definitions (own and inherited).",
+    description: "One object type with its attribute counts (own and inherited); assets_list_attributes lists the definitions.",
     inputShape: { object_type_id: id },
     async handler({ client }, args) {
       const c = client("jira");
@@ -174,7 +233,13 @@ const objectTypeTools: ToolDef[] = [
         c.get(`${assetsBase()}/objecttype/${args.object_type_id}`),
         typeAttributes(c, args.object_type_id),
       ]);
-      return { ...compactObjectType(t), icon: t?.icon?.id, attributes: attrs.map(compactAttributeDef) };
+      const inherited = attrs.filter((a) => compactAttributeDef(a).inherited).length;
+      return {
+        ...compactObjectType(t),
+        icon: t?.icon?.id,
+        attributeCount: { total: attrs.length, inherited },
+        hint: `assets_list_attributes object_type_id=${args.object_type_id} lists the attribute definitions (paged, filterable)`,
+      };
     },
   },
   {
@@ -196,7 +261,18 @@ const objectTypeTools: ToolDef[] = [
     },
     async handler({ client }, args) {
       const c = client("jira");
-      return guardedWrite(c, args, {
+      const summary = `Create object type "${args.name}" in schema ${args.schema_id}${args.parent_id ? ` under ${args.parent_id}` : ""}`;
+      const find = async () => listOf(await c.get(`${assetsBase()}/objectschema/${args.schema_id}/objecttypes/flat`))
+        .find((t) => sameText(t.name, args.name) && norm(t.parentObjectTypeId) === norm(args.parent_id));
+      const existing = await find();
+      if (existing) {
+        const want = { description: args.description, inherited: args.inherited, abstractObjectType: args.abstract };
+        const have = { ...existing, inherited: existing.inherited ?? false, abstractObjectType: existing.abstractObjectType ?? false };
+        const iconDiffers = args.icon_id !== undefined && norm(existing.icon?.id) !== norm(args.icon_id);
+        if (!differing(want, have).length && !iconDiffers) return alreadySatisfied(summary, `object type ${existing.name} [${existing.id}] already exists with these settings`);
+        throw new ValidationError(`Object type "${existing.name}" [${existing.id}] already exists there with other settings; use assets_update_object_type`);
+      }
+      return verifiedWrite(c, args, {
         method: "POST",
         path: `${assetsBase()}/objecttype/create`,
         json: {
@@ -208,7 +284,10 @@ const objectTypeTools: ToolDef[] = [
           inherited: args.inherited ?? false,
           abstractObjectType: args.abstract ?? false,
         },
-        summary: `Create object type "${args.name}" in schema ${args.schema_id}${args.parent_id ? ` under ${args.parent_id}` : ""}`,
+        summary,
+      }, { identity: { op: "assets-create-object-type", schema: args.schema_id, name: args.name, parent: args.parent_id ?? null }, state: { present: false } }, async () => {
+        const back = await find();
+        return { ok: !!back, observed: back ? compactObjectType(back) : null };
       });
     },
   },
@@ -229,10 +308,16 @@ const objectTypeTools: ToolDef[] = [
     },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/objecttype/${args.object_type_id}`);
-      return guardedWrite(c, args, {
+      const path = `${assetsBase()}/objecttype/${args.object_type_id}`;
+      const cur = await c.get(path);
+      const view = (t: any) => ({ name: t.name, description: t.description, parentObjectTypeId: t.parentObjectTypeId, iconId: t.icon?.id, inherited: t.inherited ?? false, abstractObjectType: t.abstractObjectType ?? false });
+      const want = { name: args.name, description: args.description, parentObjectTypeId: args.parent_id, iconId: args.icon_id, inherited: args.inherited, abstractObjectType: args.abstract };
+      const changed = differing(want, view(cur));
+      const summary = `Update object type ${cur.name} [${cur.id}]`;
+      if (!changed.length) return alreadySatisfied(summary, "the object type already has these settings");
+      return verifiedWrite(c, args, {
         method: "PUT",
-        path: `${assetsBase()}/objecttype/${args.object_type_id}`,
+        path,
         json: {
           id: cur.id,
           name: args.name ?? cur.name,
@@ -243,7 +328,10 @@ const objectTypeTools: ToolDef[] = [
           inherited: args.inherited ?? cur.inherited,
           abstractObjectType: args.abstract ?? cur.abstractObjectType,
         },
-        summary: `Update object type ${cur.name} [${cur.id}]`,
+        summary,
+      }, { identity: { op: "assets-update-object-type", objectType: args.object_type_id, ...want }, state: Object.fromEntries(changed.map((k) => [k, (view(cur) as any)[k] ?? null])) }, async () => {
+        const back = await c.get(path);
+        return { ok: !differing(want, view(back)).length, observed: compactObjectType(back) };
       });
     },
   },
@@ -255,11 +343,16 @@ const objectTypeTools: ToolDef[] = [
     inputShape: { object_type_id: id, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/objecttype/${args.object_type_id}`);
-      return guardedWrite(c, args, {
+      const path = `${assetsBase()}/objecttype/${args.object_type_id}`;
+      const cur = await readOrNull(c, path);
+      if (!cur) return alreadySatisfied(`Delete object type ${args.object_type_id}`, "no such object type");
+      return verifiedWrite(c, args, {
         method: "DELETE",
-        path: `${assetsBase()}/objecttype/${args.object_type_id}`,
+        path,
         summary: `PERMANENTLY delete object type ${cur.name} [${cur.id}] with ${cur.objectCount ?? "?"} objects`,
+      }, { identity: { op: "assets-delete-object-type", objectType: args.object_type_id }, state: { present: true } }, async () => {
+        const back = await readOrNull(c, path);
+        return { ok: !back, observed: back ? compactObjectType(back) : null };
       });
     },
   },
@@ -391,11 +484,27 @@ const attributeTools: ToolDef[] = [
       "reference needs reference_object_type_id (+ reference_type_id); select takes options.",
     inputShape: { object_type_id: id, name: z.string(), type: z.string(), ...attributeShape, ...dryRunShape },
     async handler({ client }, args) {
-      return guardedWrite(client("jira"), args, {
+      const c = client("jira");
+      const entry = attributeEntry(args);
+      const summary = `Add ${args.type} attribute "${args.name}" to object type ${args.object_type_id}`;
+      // fresh read (not the per-run attribute cache), so the read-back sees the new attribute
+      const find = async () => listOf(await c.get(`${assetsBase()}/objecttype/${args.object_type_id}/attributes`)).find((a) => sameText(a.name, args.name));
+      const existing = await find();
+      if (existing) {
+        const { name: _name, ...settings } = entry;
+        if (!differing(settings, entryFromBean(existing)).length) {
+          return alreadySatisfied(summary, `attribute "${existing.name}" [${existing.id}] already exists with these settings`);
+        }
+        throw new ValidationError(`Attribute "${existing.name}" [${existing.id}] already exists on object type ${args.object_type_id} with other settings; use assets_update_attribute`);
+      }
+      return verifiedWrite(c, args, {
         method: "POST",
         path: `${assetsBase()}/objecttypeattribute/${args.object_type_id}`,
-        json: attributeEntry(args),
-        summary: `Add ${args.type} attribute "${args.name}" to object type ${args.object_type_id}`,
+        json: entry,
+        summary,
+      }, { identity: { op: "assets-create-attribute", objectType: args.object_type_id, entry }, state: { attribute: args.name, present: false } }, async () => {
+        const back = await find();
+        return { ok: !!back, observed: back ? compactAttributeDef(back) : null };
       });
     },
   },
@@ -407,12 +516,23 @@ const attributeTools: ToolDef[] = [
     inputShape: { object_type_id: id, attribute_id: id, name: z.string().optional(), type: z.string().optional(), ...attributeShape, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/objecttypeattribute/${args.attribute_id}`);
-      return guardedWrite(c, args, {
+      const read = () => c.get(`${assetsBase()}/objecttypeattribute/${args.attribute_id}`);
+      const cur = await read();
+      const base = entryFromBean(cur);
+      const json = attributeEntry(args, base);
+      const changed = differing(json, base);
+      const summary = `Update attribute "${cur.name}" [${cur.id}] of object type ${args.object_type_id}`;
+      if (!changed.length) return alreadySatisfied(summary, "the attribute already has these settings");
+      const pick = (o: Record<string, unknown>) => Object.fromEntries(changed.map((k) => [k, o[k] ?? null]));
+      // the plan depends only on this attribute's changed settings, not on the type's other attributes
+      return verifiedWrite(c, args, {
         method: "PUT",
         path: `${assetsBase()}/objecttypeattribute/${args.object_type_id}/${args.attribute_id}`,
-        json: attributeEntry(args, entryFromBean(cur)),
-        summary: `Update attribute "${cur.name}" [${cur.id}] of object type ${args.object_type_id}`,
+        json,
+        summary,
+      }, { identity: { op: "assets-update-attribute", attribute: args.attribute_id, changes: pick(json) }, state: { attribute: args.attribute_id, before: pick(base) } }, async () => {
+        const back = await read();
+        return { ok: !differing(pick(json), entryFromBean(back)).length, observed: compactAttributeDef(back) };
       });
     },
   },
@@ -424,11 +544,16 @@ const attributeTools: ToolDef[] = [
     inputShape: { attribute_id: id, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/objecttypeattribute/${args.attribute_id}`);
-      return guardedWrite(c, args, {
+      const path = `${assetsBase()}/objecttypeattribute/${args.attribute_id}`;
+      const cur = await readOrNull(c, path);
+      if (!cur) return alreadySatisfied(`Delete attribute ${args.attribute_id}`, "no such attribute");
+      return verifiedWrite(c, args, {
         method: "DELETE",
-        path: `${assetsBase()}/objecttypeattribute/${args.attribute_id}`,
+        path,
         summary: `PERMANENTLY delete attribute "${cur.name}" [${cur.id}] and all its values`,
+      }, { identity: { op: "assets-delete-attribute", attribute: args.attribute_id }, state: { present: true } }, async () => {
+        const back = await readOrNull(c, path);
+        return { ok: !back, observed: back ? compactAttributeDef(back) : null };
       });
     },
   },
@@ -459,11 +584,24 @@ const statusTools: ToolDef[] = [
     description: "Create an object status, global or for one schema.",
     inputShape: { name: z.string(), category: z.enum(["active", "inactive", "pending"]), schema_id: id.optional(), description: z.string().optional(), ...dryRunShape },
     async handler({ client }, args) {
-      return guardedWrite(client("jira"), args, {
+      const c = client("jira");
+      const summary = `Create ${args.category} status "${args.name}"${args.schema_id ? ` in schema ${args.schema_id}` : " (global)"}`;
+      const find = async () => listOf(await c.get(`${assetsBase()}/config/statustype`, { objectSchemaId: args.schema_id }))
+        .find((x) => sameText(x.name, args.name) && norm(x.objectSchemaId) === norm(args.schema_id));
+      const existing = await find();
+      if (existing) {
+        const same = existing.category === STATUS_CATEGORIES[args.category] && (args.description === undefined || norm(existing.description) === args.description);
+        if (same) return alreadySatisfied(summary, `status "${existing.name}" [${existing.id}] already exists with these settings`);
+        throw new ValidationError(`Status "${existing.name}" [${existing.id}] already exists there with other settings; use assets_update_status`);
+      }
+      return verifiedWrite(c, args, {
         method: "POST",
         path: `${assetsBase()}/config/statustype`,
         json: { name: args.name, description: args.description, category: STATUS_CATEGORIES[args.category], objectSchemaId: args.schema_id },
-        summary: `Create ${args.category} status "${args.name}"${args.schema_id ? ` in schema ${args.schema_id}` : " (global)"}`,
+        summary,
+      }, { identity: { op: "assets-create-status", name: args.name, schema: args.schema_id ?? null, category: args.category }, state: { present: false } }, async () => {
+        const back = await find();
+        return { ok: !!back && back.category === STATUS_CATEGORIES[args.category], observed: back ?? null };
       });
     },
   },
@@ -475,10 +613,15 @@ const statusTools: ToolDef[] = [
     inputShape: { status_id: id, name: z.string().optional(), category: z.enum(["active", "inactive", "pending"]).optional(), description: z.string().optional(), ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
-      const cur = await c.get(`${assetsBase()}/config/statustype/${args.status_id}`);
-      return guardedWrite(c, args, {
+      const path = `${assetsBase()}/config/statustype/${args.status_id}`;
+      const cur = await c.get(path);
+      const want = { name: args.name, description: args.description, category: args.category ? STATUS_CATEGORIES[args.category] : undefined };
+      const changed = differing(want, cur);
+      const summary = `Update status "${cur.name}" [${cur.id}]`;
+      if (!changed.length) return alreadySatisfied(summary, "the status already has these values");
+      return verifiedWrite(c, args, {
         method: "PUT",
-        path: `${assetsBase()}/config/statustype/${args.status_id}`,
+        path,
         json: {
           id: cur.id,
           name: args.name ?? cur.name,
@@ -486,7 +629,10 @@ const statusTools: ToolDef[] = [
           category: args.category ? STATUS_CATEGORIES[args.category] : cur.category,
           objectSchemaId: cur.objectSchemaId,
         },
-        summary: `Update status "${cur.name}" [${cur.id}]`,
+        summary,
+      }, { identity: { op: "assets-update-status", status: args.status_id, ...want }, state: Object.fromEntries(changed.map((k) => [k, cur[k] ?? null])) }, async () => {
+        const back = await c.get(path);
+        return { ok: !differing(want, back).length, observed: back };
       });
     },
   },
@@ -497,10 +643,17 @@ const statusTools: ToolDef[] = [
     description: "Delete an object status (objects using it lose that status value).",
     inputShape: { status_id: id, ...dryRunShape },
     async handler({ client }, args) {
-      return guardedWrite(client("jira"), args, {
+      const c = client("jira");
+      const path = `${assetsBase()}/config/statustype/${seg(args.status_id)}`;
+      const cur = await readOrNull(c, path);
+      if (!cur) return alreadySatisfied(`Delete Assets status ${args.status_id}`, "no such status");
+      return verifiedWrite(c, args, {
         method: "DELETE",
-        path: `${assetsBase()}/config/statustype/${seg(args.status_id)}`,
-        summary: `Delete Assets status ${args.status_id}`,
+        path,
+        summary: `Delete Assets status "${cur.name}" [${args.status_id}]`,
+      }, { identity: { op: "assets-delete-status", status: args.status_id }, state: { present: true } }, async () => {
+        const back = await readOrNull(c, path);
+        return { ok: !back, observed: back };
       });
     },
   },

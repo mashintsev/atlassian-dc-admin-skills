@@ -7,6 +7,7 @@ import { runTool } from "../../src/runner.js";
 import { buildCql, confluencePageTools, replaceSection, resolvePageId, unifiedDiff } from "../../src/tools/confluence/pages.js";
 import { exitCodeFor } from "../../src/format.js";
 import { testContext, type Call } from "./helpers.js";
+import { CODE_CUT_MARKER, storageToMarkdown } from "../../src/markup.js";
 
 const tool = (name: string) => confluencePageTools.find((t) => t.name === name)!;
 
@@ -59,6 +60,37 @@ describe("helpers", () => {
 });
 
 describe("read tools", () => {
+  it("notes attachments once on page and historical Markdown bodies", async () => {
+    const attachmentPage = { ...PAGE, body: { storage: { value: '<p>Before</p><ac:image><ri:attachment ri:filename="diagram.png" /></ac:image><ac:image><ri:attachment ri:filename="details.png" /></ac:image>' } } };
+    for (const [name, args] of [
+      ["confluence_get_page", { page: "123" }],
+      ["confluence_get_page_history", { page: "123", version: 4 }],
+    ] as const) {
+      const { value } = await run(name, args, () => ({ body: attachmentPage }));
+      assert.equal(value.note.match(/confluence_download_content_attachments/g).length, 1);
+      assert.match(value.body, /!\[\]\(diagram\.png\)/);
+    }
+    const outline = await run("confluence_get_page", { page: "123", outline: true }, () => ({ body: PAGE }));
+    assert.equal(outline.value.note, undefined);
+  });
+
+  it("reads an attachment image, edits text and writes the image back as ri:attachment", async () => {
+    let current = { ...PAGE, body: { storage: { value: '<p>Before</p><ac:image ac:alt="Diagram"><ri:attachment ri:filename="diagram (v2) 100%.png" /></ac:image>' } } };
+    const responder = (call: Call) => {
+      if (call.method === "PUT") {
+        current = { ...current, version: { ...current.version, number: 5 }, body: call.body.body };
+        return { body: { id: current.id } };
+      }
+      return { body: current };
+    };
+    const read = await run("confluence_get_page", { page: "123" }, responder);
+    const update = await run("confluence_update_page", { page: "123", content: read.value.body.replace("Before", "After"), if_version: 4, dry_run: false }, responder);
+    assert.equal(update.error, undefined);
+    assert.match(current.body.storage.value, /<p>After<\/p>/);
+    assert.match(current.body.storage.value, /<ri:attachment ri:filename="diagram \(v2\) 100%\.png" \/>/);
+    assert.doesNotMatch(current.body.storage.value, /ri:url/);
+  });
+
   it("search strips highlight markers and asks for no excerpts", async () => {
     const { value, calls } = await run("confluence_search", { query: "plan", limit: 2 }, () => ({
       body: {
@@ -110,6 +142,46 @@ describe("read tools", () => {
 });
 
 describe("write tools", () => {
+  it("refuses Markdown code cut markers before requests for create, update and section writes", async () => {
+    const code = Array.from({ length: 201 }, (_, i) => `line ${i}`).join("\n");
+    const content = storageToMarkdown(`<ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[${code}]]></ac:plain-text-body></ac:structured-macro>`);
+    for (const [name, args] of [
+      ["confluence_create_page", { space_key: "DOC", title: "T", content }],
+      ["confluence_update_page", { page: "123", content }],
+      ["confluence_update_page_section", { page: "123", heading: "Goals", new_content: content }],
+    ] as const) {
+      const result = await run(name, args, () => ({ body: PAGE }));
+      assert.equal(result.error?.type, "ValidationError", name);
+      assert.match(result.error?.message ?? "", /cut in a read/);
+      assert.match(result.error?.message ?? "", /body_format=storage/);
+      assert.equal(result.calls.length, 0, name);
+    }
+  });
+
+  it("applies code cut protection to Markdown content files", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "pg-cut-"));
+    const file = join(dir, "body.md");
+    writeFileSync(file, `*(+1 lines: ${CODE_CUT_MARKER}; read it with body_format=storage or section before editing)*`);
+    const result = await run("confluence_update_page", { page: "123", content_file: file });
+    assert.equal(result.error?.type, "ValidationError");
+    assert.equal(result.calls.length, 0);
+  });
+
+  it("keeps explicit storage bodies containing marker text available", async () => {
+    const storage = `<p>${CODE_CUT_MARKER}</p>`;
+    const result = await run("confluence_update_page", { page: "123", content: storage, content_format: "storage" }, () => ({ body: PAGE }));
+    assert.equal(result.error, undefined);
+    assert.equal(result.value.request.body.body.storage.value, storage);
+  });
+
+  it("allows a complete Markdown code block at the 200-line read boundary", async () => {
+    const code = Array.from({ length: 200 }, (_, i) => `line ${i}`).join("\n");
+    const content = storageToMarkdown(`<ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[${code}]]></ac:plain-text-body></ac:structured-macro>`);
+    const result = await run("confluence_update_page", { page: "123", content }, () => ({ body: PAGE }));
+    assert.equal(result.error, undefined);
+    assert.match(result.value.request.body.body.storage.value, /line 199/);
+  });
+
   it("update dry run reads the page, bumps the version and sends nothing", async () => {
     const { value, calls } = await run("confluence_update_page", { page: "123", content: "<p>x</p>", content_format: "storage" }, () => ({ body: PAGE }));
     assert.equal(calls.length, 1);

@@ -20,8 +20,8 @@ describe("audit: jira issue read tools request small pages and explicit fields",
     assert.equal(q.get("expand"), null);
   });
 
-  it("jira_search caps maxResults", async () => {
-    const { params } = await run("jira_search", { jql: "x", limit: 500 }, () => ({ body: { total: 0, issues: [] } }));
+  it("jira_search requests its declared maximum", async () => {
+    const { params } = await run("jira_search", { jql: "x", limit: 100 }, () => ({ body: { total: 0, issues: [] } }));
     assert.equal(params[0].searchParams.get("maxResults"), "100");
   });
 

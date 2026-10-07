@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { seg, type AtlassianClient } from "../../client.js";
-import { ValidationError } from "../../errors.js";
+import { UnsupportedError, ValidationError, VerificationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { dryRunShape, guardedWrite } from "../util.js";
+import { alreadySatisfied, dryRunShape, guardedWrite } from "../util.js";
 
 const API = "/rest/api";
 const MAX_CATEGORY_PAGES = 50;
@@ -39,6 +39,15 @@ async function readSpaceCategories(client: AtlassianClient, spaceKey: string, ma
     if (!labels || !Array.isArray(labels.results)) {
       issues.push(`page ${pages} has an unknown metadata.labels response shape`);
       break;
+    }
+    // some Confluence versions (10.2) send no _links: a page shorter than its limit is then the last one
+    if (labels._links === undefined) {
+      const limit = Number(labels.limit);
+      if (Number.isFinite(limit) && labels.results.length < limit) labels._links = {};
+      else {
+        issues.push(`page ${pages} has no continuation links and may have more categories`);
+        break;
+      }
     }
     if (!labels._links || typeof labels._links !== "object" || Array.isArray(labels._links)) {
       issues.push(`page ${pages} has an unknown category continuation shape`);
@@ -115,13 +124,16 @@ export const confluenceSpaceCategoryTools: ToolDef[] = [
         path: `${API}/space/${seg(args.space_key)}/category/${seg(args.name)}`,
         summary: `Add category ${args.name} to space ${args.space_key}`,
       } as const;
-      if (args.dry_run !== false) return guardedWrite(c, args, request);
-
       const before = await readSpaceCategories(c, args.space_key);
-      if (!before.complete) throw new ValidationError("Cannot safely add a category when existing categories cannot be read completely");
       if (before.categories.some((category) => category.name === args.name)) {
-        return { dry_run: false, alreadySatisfied: true, space: args.space_key, category: args.name, verification: "present before write" };
+        return alreadySatisfied(request.summary, "the space already has this category", { space: args.space_key, category: args.name });
       }
+      if (args.dry_run !== false) {
+        const dry = await guardedWrite(c, args, request);
+        // the execution refuses an incomplete read; the dry run says so instead of failing
+        return before.complete ? dry : { ...dry, warning: `existing categories could not be read completely (${before.issues.join("; ")}); the change will be refused until they can` };
+      }
+      if (!before.complete) throw new ValidationError("Cannot safely add a category when existing categories cannot be read completely");
       const result = await guardedWrite(c, args, request);
       const after = await readSpaceCategories(c, args.space_key);
       const preserved = before.categories.every((category) =>
@@ -129,9 +141,35 @@ export const confluenceSpaceCategoryTools: ToolDef[] = [
       );
       const present = after.categories.some((category) => category.name === args.name);
       if (!after.complete || !present || !preserved) {
-        throw new ValidationError("Category request completed but read-back could not verify the addition and preserve existing categories");
+        throw new VerificationError(
+          "Category request completed but read-back could not verify the addition and preserve existing categories",
+          { complete: after.complete, categoryPresent: present, previousCategoriesPreserved: preserved },
+        );
       }
       return { ...result, verification: { complete: true, categoryPresent: present, previousCategoriesPreserved: preserved } };
+    },
+  },
+  {
+    name: "confluence_remove_space_category",
+    product: "confluence",
+    write: true,
+    description:
+      "Remove a team category from a space, keeping its other categories. A category the space does not have → " +
+      "already-satisfied. No removal request is verified for the supported Confluence version yet, so removing a present " +
+      "category answers Unsupported and sends nothing; remove it in the space's settings in the UI.",
+    inputShape: { space_key: z.string(), name: spaceCategoryNameSchema, ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("confluence");
+      const summary = `Remove category ${args.name} from space ${args.space_key}`;
+      const current = await readSpaceCategories(c, args.space_key);
+      if (current.complete && !current.categories.some((category) => category.name === args.name)) {
+        return alreadySatisfied(summary, "the space does not have this category");
+      }
+      // never a substitute: page labels on the homepage are not categories
+      throw new UnsupportedError(
+        `${summary}: no category removal request is verified for this Confluence version; remove it in the space's settings (Space tools → Overview → Edit space details)`,
+        { space: args.space_key, category: args.name, categoriesReadComplete: current.complete },
+      );
     },
   },
 ];

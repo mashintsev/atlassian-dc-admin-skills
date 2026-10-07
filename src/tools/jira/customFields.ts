@@ -16,6 +16,7 @@ import { seg, type AtlassianClient } from "../../client.js";
 import { isHttpStatusError, ValidationError, VerificationError } from "../../errors.js";
 import { requireJiraVersion } from "../../jiraVersion.js";
 import type { ToolDef } from "../types.js";
+import { resolveIssueType } from "./issueTypeRefs.js";
 import { alreadySatisfied, boolArg, dryRunShape, guardedWrite, listArg } from "../util.js";
 import { allFields, fieldPlaceholder, resolveField, type FieldRef } from "./fieldRefs.js";
 import { addScreenField } from "./screens.js";
@@ -126,7 +127,7 @@ async function contextWrite(
 
 const scopeShape = {
   project_ids: listArg.optional().describe("Project ids or keys, comma-separated"),
-  issue_type_ids: listArg.optional().describe("Issue type ids, comma-separated; omit for all issue types"),
+  issue_types: listArg.optional().describe("Issue type ids or exact names, comma-separated; omit for all issue types"),
   global: boolArg.optional().describe("All projects (cannot be combined with project_ids)"),
 };
 
@@ -144,6 +145,13 @@ async function pickContext(contexts: Context[], given: string): Promise<Context 
 }
 
 // -- tools --------------------------------------------------------------------------
+
+/** Issue type ids for ids or exact names (ids need no lookup). */
+async function issueTypeIds(client: AtlassianClient, given: string[]): Promise<string[]> {
+  const out: string[] = [];
+  for (const g of given) out.push((await resolveIssueType(client, g)).id!);
+  return out;
+}
 
 export const jiraCustomFieldTools: ToolDef[] = [
   {
@@ -197,36 +205,39 @@ export const jiraCustomFieldTools: ToolDef[] = [
       const created = await c.request("POST", req.path, { json });
       const stored = (await allFields(c)).find((f) => f.id === created?.id);
       if (!stored) throw new VerificationError(`Jira did not list the new field ${created?.id ?? args.name}`, { created });
-      return { dry_run: false, product: c.product, summary: req.summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: stored.id, name: stored.name, type: stored.schema?.custom } };
+      return { dry_run: false, product: c.product, summary: req.summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: stored.id, name: stored.name, type: stored.schema?.custom }, created: { type: "custom-field", name: stored.name, id: stored.id } };
     },
   },
   {
     name: "jira_create_field_context",
+    aliases: { field_id: "field", issue_type_ids: "issue_types" },
     product: "jira",
     write: true,
     description:
-      "Add a context to a custom field: global=true or project_ids, and issue_type_ids (omit for all). An identical " +
+      "Add a context to a custom field: global=true or project_ids, and issue_types (omit for all). An identical " +
       "context (same name and scope) → already-satisfied. Internal Jira API; Jira 11.3.x only.",
     inputShape: {
-      field_id: fieldArg,
+      field: fieldArg,
       name: z.string().trim().min(1),
       description: z.string().optional(),
       ...scopeShape,
       ...dryRunShape,
     },
     async handler({ client }, args) {
+      // names become ids before anything else, so the request and the plan compare ids
+      if (args.issue_types?.length) args.issue_types = await issueTypeIds(client("jira"), args.issue_types);
       const c = client("jira");
       await requireJiraVersion(c, "Custom field context changes");
       if (args.global && args.project_ids?.length) throw new ValidationError("Pass global=true or project_ids, not both");
       if (!args.global && !args.project_ids?.length) throw new ValidationError("Pass global=true or project_ids");
-      const field = await resolveField(c, args.field_id, { allowPending: args.dry_run !== false });
+      const field = await resolveField(c, args.field, { allowPending: args.dry_run !== false });
       const wanted = {
         name: args.name,
         description: args.description ?? "",
         allProjects: !!args.global,
         projects: args.global ? [] : await projectIds(c, args.project_ids),
-        allIssueTypes: !args.issue_type_ids?.length,
-        issueTypes: [...new Set<string>(args.issue_type_ids ?? [])].sort(),
+        allIssueTypes: !args.issue_types?.length,
+        issueTypes: [...new Set<string>(args.issue_types ?? [])].sort(),
       };
       const summary = `Add context '${args.name}' to ${fieldLabel(field)}: ${scopeLabel(wanted)}`;
       if (field.id) {
@@ -245,6 +256,7 @@ export const jiraCustomFieldTools: ToolDef[] = [
   },
   {
     name: "jira_update_field_context",
+    aliases: { field_id: "field", issue_type_ids: "issue_types" },
     product: "jira",
     write: true,
     description:
@@ -252,28 +264,30 @@ export const jiraCustomFieldTools: ToolDef[] = [
       "context, as Jira creates it with the field). The complete context is sent; attributes not given keep their stored " +
       "values. Internal Jira API; Jira 11.3.x only.",
     inputShape: {
-      field_id: fieldArg,
+      field: fieldArg,
       context_id: z.coerce.string().min(1).describe("Context id, or `default`"),
       name: z.string().trim().min(1).optional(),
       description: z.string().optional(),
       ...scopeShape,
-      all_issue_types: boolArg.optional().describe("true: all issue types (clears issue_type_ids)"),
+      all_issue_types: boolArg.optional().describe("true: all issue types (clears issue_types)"),
       ...dryRunShape,
     },
     async handler({ client }, args) {
+      // names become ids before anything else, so the request and the plan compare ids
+      if (args.issue_types?.length) args.issue_types = await issueTypeIds(client("jira"), args.issue_types);
       const c = client("jira");
       await requireJiraVersion(c, "Custom field context changes");
       if (args.global && args.project_ids?.length) throw new ValidationError("Pass global=true or project_ids, not both");
-      if (args.all_issue_types && args.issue_type_ids?.length) throw new ValidationError("Pass all_issue_types=true or issue_type_ids, not both");
-      const field = await resolveField(c, args.field_id, { allowPending: args.dry_run !== false });
+      if (args.all_issue_types && args.issue_types?.length) throw new ValidationError("Pass all_issue_types=true or issue_types, not both");
+      const field = await resolveField(c, args.field, { allowPending: args.dry_run !== false });
       const changes: Record<string, unknown> = {};
       if (args.name !== undefined) changes.name = args.name;
       if (args.description !== undefined) changes.description = args.description;
       if (args.global) Object.assign(changes, { allProjects: true, projects: [] });
       if (args.project_ids?.length) Object.assign(changes, { allProjects: false, projects: await projectIds(c, args.project_ids) });
       if (args.all_issue_types) Object.assign(changes, { allIssueTypes: true, issueTypes: [] });
-      if (args.issue_type_ids?.length) Object.assign(changes, { allIssueTypes: false, issueTypes: [...new Set<string>(args.issue_type_ids)].sort() });
-      if (!Object.keys(changes).length) throw new ValidationError("Nothing to change: pass name, description, global, project_ids, issue_type_ids or all_issue_types");
+      if (args.issue_types?.length) Object.assign(changes, { allIssueTypes: false, issueTypes: [...new Set<string>(args.issue_types)].sort() });
+      if (!Object.keys(changes).length) throw new ValidationError("Nothing to change: pass name, description, global, project_ids, issue_types or all_issue_types");
       const identity = { op: "update-context", field: field.ref, context: args.context_id, ...changes };
 
       if (!field.id) {
@@ -308,16 +322,17 @@ export const jiraCustomFieldTools: ToolDef[] = [
   },
   {
     name: "jira_delete_field_context",
+    aliases: { field_id: "field" },
     product: "jira",
     write: true,
     description: "Remove a context from a custom field (its option values and default go with it). Already gone → already-satisfied. Internal Jira API; Jira 11.3.x only.",
-    inputShape: { field_id: fieldArg, context_id: z.coerce.string().min(1), ...dryRunShape },
+    inputShape: { field: fieldArg, context_id: z.coerce.string().min(1), ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
       await requireJiraVersion(c, "Custom field context changes");
       // `default` could point at another context by the time a plan is applied; deletes need the id
       if (args.context_id === "default") throw new ValidationError("Deleting needs the context id, not `default`");
-      const field = await resolveField(c, args.field_id);
+      const field = await resolveField(c, args.field);
       const contexts = await readContexts(c, field.id!);
       const stored = await pickContext(contexts, args.context_id);
       const summary = `Delete context ${args.context_id}${stored ? ` '${stored.name}'` : ""} of ${fieldLabel(field)}`;
@@ -333,6 +348,7 @@ export const jiraCustomFieldTools: ToolDef[] = [
   },
   {
     name: "jira_add_field_to_screens",
+    aliases: { field_id: "field" },
     product: "jira",
     write: true,
     description:
@@ -340,7 +356,7 @@ export const jiraCustomFieldTools: ToolDef[] = [
       "own change (jira_add_screen_field): the dry run lists them, --plan records each as a separate item, placements " +
       "already in place are reported as satisfied.",
     inputShape: {
-      field_id: fieldArg,
+      field: fieldArg,
       placements: z.preprocess(
         (v) => (typeof v === "string" ? JSON.parse(v) : v),
         z.array(z.object({
@@ -356,12 +372,12 @@ export const jiraCustomFieldTools: ToolDef[] = [
       const batch: Array<{ tool: string; args: Record<string, unknown>; value: any }> = [];
       const satisfied: string[] = [];
       for (const p of args.placements) {
-        const one = { screen_id: p.screen_id, tab_id: p.tab_id, field_id: args.field_id, ...(p.position ? { position: p.position } : {}) };
+        const one = { screen_id: p.screen_id, tab_id: p.tab_id, field: args.field, ...(p.position ? { position: p.position } : {}) };
         const value: any = await addScreenField(c, { ...one, dry_run: true });
         if (value.already_satisfied) satisfied.push(`${value.summary}: ${value.reason}`);
         else batch.push({ tool: "jira_add_screen_field", args: one, value });
       }
-      const summary = `Place ${args.field_id} on ${args.placements.length} screen tab(s): ${batch.length} to add, ${satisfied.length} already in place`;
+      const summary = `Place ${args.field} on ${args.placements.length} screen tab(s): ${batch.length} to add, ${satisfied.length} already in place`;
       if (!batch.length) return alreadySatisfied(summary, satisfied.join("; "));
       if (args.dry_run !== false) return { dry_run: true, product: c.product, summary, batch, satisfied, request: batch[0].value.request };
       // executed directly (not through the CLI's per-placement confirmation): run them in order

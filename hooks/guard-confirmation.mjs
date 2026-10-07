@@ -39,7 +39,7 @@ if (tool === "Bash" && setsConfirmVar.test(text)) {
 if ((tool !== "Bash" && new RegExp(CONFIG + "$").test(text)) || (tool === "Bash" && bashWritesConfig.test(text))) {
   decide("deny", "The atlassian-dc-admin config files are edited by the user only.");
 }
-if (tool === "Bash" && /atlassian-admin\.mjs/.test(text) && /(dry_run=false|dry-run=false|"dry_run"\s*:\s*false|\sapply\s)/.test(text)) {
+if (tool === "Bash" && /atlassian-admin\.mjs/.test(text) && /(dry[_-]run=["']?(false|0|no|off)\b|"dry_run"\s*:\s*(false|0|"(false|0|no|off)")|\sapply\s)/i.test(text)) {
   decide("ask", "This applies changes to Jira/Confluence. The CLI will also ask you to confirm in a dialog.");
 }
 process.exit(0);

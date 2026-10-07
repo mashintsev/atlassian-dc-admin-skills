@@ -13,7 +13,7 @@ import { resolve } from "node:path";
 import { z } from "zod";
 import { seg, type AtlassianClient } from "../../client.js";
 import { ValidationError } from "../../errors.js";
-import { markdownToStorage, storageToMarkdown } from "../../markup.js";
+import { CODE_CUT_MARKER, markdownToStorage, storageToMarkdown } from "../../markup.js";
 import type { ToolDef } from "../types.js";
 import { boolArg, dryRunShape, guardedWrite, listArg, pageShape, serverPage } from "../util.js";
 
@@ -78,7 +78,16 @@ function bodyFrom(args: { content?: string; content_file?: string; content_forma
     if (!existsSync(file) || !statSync(file).isFile()) throw new ValidationError(`File not found: ${args.content_file}`);
     text = readFileSync(file, "utf8");
   }
-  return args.content_format === "storage" ? String(text) : markdownToStorage(String(text));
+  return writeBody(String(text), args.content_format);
+}
+
+/** Refuse a Markdown read's cut-code marker before any write preparation or request. */
+function writeBody(text: string, format?: string): string {
+  if (format === "storage") return text;
+  if (text.includes(CODE_CUT_MARKER)) {
+    throw new ValidationError("This code block was cut in a read; fetch the complete body with body_format=storage before editing and submitting it");
+  }
+  return markdownToStorage(text);
 }
 
 const contentShape = {
@@ -91,7 +100,39 @@ async function getPage(client: AtlassianClient, id: string, expand: string, extr
   return client.get(`${API}/content/${seg(id)}`, { expand, ...extra });
 }
 
-function compactPage(client: AtlassianClient, p: any, bodyFormat: "markdown" | "storage" | "none" = "none") {
+/** How much of a body a read returns: the outline, one section, and the character limit. */
+export interface BodyRead {
+  outline?: boolean;
+  section?: string;
+  maxChars?: number;
+}
+
+const DEFAULT_MAX_CHARS = 20_000;
+const MAX_CHARS_CAP = 100_000;
+const BODY_NARROWING = ["section", "outline", "max_chars"];
+
+const bodyReadShape = {
+  outline: boolArg.optional().describe("Return the heading tree with each section's size instead of the body"),
+  section: z.string().min(1).optional().describe("Return only the section under this heading (case-insensitive) and its subsections"),
+  max_chars: z.coerce.number().int().min(1).max(MAX_CHARS_CAP).optional().describe(`Longest body returned, cut at a block boundary (default ${DEFAULT_MAX_CHARS})`),
+};
+
+/** Cut a body at the last block boundary at or before `max`: a blank line (Markdown) or a closing block tag (storage). */
+function cutBody(body: string, max: number, format: "markdown" | "storage"): string {
+  if (body.length <= max) return body;
+  const head = body.slice(0, max);
+  let end = -1;
+  if (format === "markdown") {
+    end = head.lastIndexOf("\n\n");
+  } else {
+    const re = /<\/(p|h[1-6]|table|ul|ol|pre|blockquote|div|ac:structured-macro|ac:image|ac:layout)>/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(head))) end = m.index + m[0].length;
+  }
+  return (end > 0 ? head.slice(0, end) : head).trimEnd();
+}
+
+function compactPage(client: AtlassianClient, p: any, bodyFormat: "markdown" | "storage" | "none" = "none", read: BodyRead = {}) {
   const ancestors: any[] = p?.ancestors ?? [];
   const parent = ancestors.length ? ancestors[ancestors.length - 1] : undefined;
   const out: Record<string, unknown> = {
@@ -107,8 +148,31 @@ function compactPage(client: AtlassianClient, p: any, bodyFormat: "markdown" | "
     url: p?.id ? pageUrl(client, p.id) : undefined,
   };
   const storage = p?.body?.storage?.value;
-  if (bodyFormat !== "none" && typeof storage === "string") {
-    out.body = bodyFormat === "storage" ? storage : storageToMarkdown(storage, { baseUrl: client.config.baseUrl, pageId: String(p.id) });
+  if (bodyFormat === "none" || typeof storage !== "string") return out;
+  const convert = (xhtml: string) => (bodyFormat === "storage" ? xhtml : storageToMarkdown(xhtml, { baseUrl: client.config.baseUrl, pageId: String(p.id) }));
+  const sections = read.outline || read.section !== undefined ? splitSections(storage) : [];
+  if (read.outline) {
+    out.outline = sections.map((s) => ({ level: s.level, heading: s.heading, chars: convert(storage.slice(s.start, s.end)).length }));
+    return out;
+  }
+  let selected = storage;
+  if (read.section !== undefined) {
+    const want = read.section.trim().toLowerCase();
+    const hits = sections.filter((s) => s.heading.toLowerCase() === want);
+    const names = () => sections.slice(0, 30).map((s) => s.heading).join(", ") + (sections.length > 30 ? `, +${sections.length - 30} more` : "");
+    if (!hits.length) throw new ValidationError(`No section '${read.section}'; headings: ${names() || "(none)"}`);
+    if (hits.length > 1) throw new ValidationError(`Section '${read.section}' is ambiguous (${hits.length} headings); headings: ${names()}`);
+    selected = storage.slice(hits[0]!.start, hits[0]!.end);
+  }
+  const body = convert(selected);
+  if (bodyFormat === "markdown") {
+    out.note = "Bare image names are attachments of this page; download them with confluence_download_content_attachments";
+  }
+  const max = read.maxChars ?? DEFAULT_MAX_CHARS;
+  out.body = cutBody(body, max, bodyFormat);
+  if ((out.body as string).length < body.length) {
+    out.truncated = { shown: (out.body as string).length, total: body.length };
+    out.hint = "Read the rest with outline=true and section=<heading>, or a larger max_chars";
   }
   return out;
 }
@@ -166,23 +230,35 @@ export function unifiedDiff(a: string[], b: string[], fromLabel: string, toLabel
   return lines.join("\n");
 }
 
-/** Replace the body of the section under the first heading whose text equals `heading`. */
-export function replaceSection(storage: string, heading: string, fragment: string): string {
+export interface Section {
+  level: number;
+  heading: string;
+  /** Offset of the heading tag. */
+  start: number;
+  /** Offset right after the heading tag. */
+  bodyStart: number;
+  /** Offset of the next heading of the same or a higher level, or the end. */
+  end: number;
+}
+
+/** The headings (h1–h6) of a storage body with the extent of each section. */
+export function splitSections(storage: string): Section[] {
   const re = /<h([1-6])(\s[^>]*)?>([\s\S]*?)<\/h\1>/g;
-  const target = heading.trim();
+  const found: Array<Omit<Section, "end">> = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(storage))) {
-    const text = m[3].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
-    if (text !== target) continue;
-    const level = Number(m[1]);
-    const after = m.index + m[0].length;
-    const next = new RegExp(`<h([1-${level}])(\\s[^>]*)?>`, "g");
-    next.lastIndex = after;
-    const n = next.exec(storage);
-    const end = n ? n.index : storage.length;
-    return storage.slice(0, after) + fragment + storage.slice(end);
+    const heading = m[3]!.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
+    found.push({ level: Number(m[1]), heading, start: m.index, bodyStart: m.index + m[0].length });
   }
-  throw new ValidationError(`Heading not found: '${heading}'`);
+  return found.map((h, i) => ({ ...h, end: found.slice(i + 1).find((n) => n.level <= h.level)?.start ?? storage.length }));
+}
+
+/** Replace the body of the section under the first heading whose text equals `heading`. */
+export function replaceSection(storage: string, heading: string, fragment: string): string {
+  const target = heading.trim();
+  const s = splitSections(storage).find((x) => x.heading === target);
+  if (!s) throw new ValidationError(`Heading not found: '${heading}'`);
+  return storage.slice(0, s.bodyStart) + fragment + storage.slice(s.end);
 }
 
 /** Load the current page for an update and enforce if_version. */
@@ -228,7 +304,7 @@ export const confluencePageTools: ToolDef[] = [
       query: z.string().describe("Plain text or CQL"),
       spaces: listArg.optional().describe("Limit to these space keys"),
       include_excerpt: boolArg.optional(),
-      ...pageShape(25),
+      ...pageShape(25, 100),
     },
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
@@ -268,13 +344,16 @@ export const confluencePageTools: ToolDef[] = [
     product: "confluence",
     description:
       "One page by id, URL or tiny link (page), or by exact title + space_key. Metadata plus the body as Markdown " +
-      "(body_format=storage for raw XHTML, none for metadata only).",
+      "(body_format=storage for raw XHTML, none for metadata only). Long bodies are cut at max_chars (default 20,000); " +
+      "outline=true lists the headings, section=<heading> reads one section.",
     inputShape: {
       page: z.string().optional().describe("Page id, page URL or tiny link"),
       title: z.string().optional(),
       space_key: z.string().optional(),
       body_format: z.enum(["markdown", "storage", "none"]).optional().describe("Default markdown"),
+      ...bodyReadShape,
     },
+    narrowing: BODY_NARROWING,
     async handler({ client }, args) {
       const c = client("confluence");
       const bodyFormat = args.body_format ?? "markdown";
@@ -289,7 +368,7 @@ export const confluencePageTools: ToolDef[] = [
       } else {
         throw new ValidationError("Pass page, or title and space_key");
       }
-      return compactPage(c, p, bodyFormat);
+      return compactPage(c, p, bodyFormat, { outline: args.outline, section: args.section, maxChars: args.max_chars });
     },
   },
   {
@@ -356,6 +435,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_create_page",
+    unverifiable: "not checked: an existing page with the title is not compared (Confluence refuses a duplicate title in a space)",
     product: "confluence",
     write: true,
     description: "Create a page from Markdown (or storage XHTML) in a space, optionally under a parent page.",
@@ -380,6 +460,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_update_page",
+    unverifiable: "not checked beyond if_version: the body is not compared before writing",
     product: "confluence",
     write: true,
     description:
@@ -419,6 +500,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_update_page_section",
+    unverifiable: "not checked beyond the page version: the section is not compared before writing",
     product: "confluence",
     write: true,
     description:
@@ -437,8 +519,8 @@ export const confluencePageTools: ToolDef[] = [
     async handler({ client }, args) {
       const c = client("confluence");
       const id = resolvePageId(args.page);
+      const fragment = writeBody(args.new_content, args.content_format);
       const { page, current } = await currentForUpdate(c, id, args.if_version);
-      const fragment = args.content_format === "storage" ? args.new_content : markdownToStorage(args.new_content);
       const storage = replaceSection(String(page?.body?.storage?.value ?? ""), args.heading, fragment);
       const res = await guardedWrite(c, args, {
         method: "PUT",
@@ -457,6 +539,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_delete_page",
+    unverifiable: "not checked: the page is not read before or after",
     product: "confluence",
     write: true,
     description: "Move a page to the space trash (restorable by a space admin; children are not deleted).",
@@ -472,6 +555,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_move_page",
+    unverifiable: "not checked: the current parent is not compared",
     product: "confluence",
     write: true,
     description:
@@ -509,8 +593,10 @@ export const confluencePageTools: ToolDef[] = [
       page: z.string(),
       version: versionArg.optional(),
       body_format: z.enum(["markdown", "storage", "none"]).optional(),
+      ...bodyReadShape,
       ...pageShape(25),
     },
+    narrowing: BODY_NARROWING,
     async handler({ client }, args) {
       const c = client("confluence");
       const id = resolvePageId(args.page);
@@ -529,7 +615,7 @@ export const confluencePageTools: ToolDef[] = [
       }
       const bodyFormat = args.body_format ?? "markdown";
       const p = await getPage(c, id, `${bodyFormat === "none" ? "" : "body.storage,"}version,space`, { status: "historical", version: args.version });
-      return compactPage(c, p, bodyFormat);
+      return compactPage(c, p, bodyFormat, { outline: args.outline, section: args.section, maxChars: args.max_chars });
     },
   },
   {
@@ -542,7 +628,7 @@ export const confluencePageTools: ToolDef[] = [
       const id = resolvePageId(args.page);
       const load = async (v: number) => {
         const p = await getPage(c, id, "body.storage,version", { status: "historical", version: v });
-        return { title: p?.title, md: storageToMarkdown(String(p?.body?.storage?.value ?? ""), { baseUrl: c.config.baseUrl, pageId: id }) };
+        return { title: p?.title, md: storageToMarkdown(String(p?.body?.storage?.value ?? ""), { baseUrl: c.config.baseUrl, pageId: id, maxCodeLines: Infinity }) };
       };
       const [from, to] = await Promise.all([load(args.from_version), load(args.to_version)]);
       return {
@@ -570,6 +656,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_set_page_restrictions",
+    unverifiable: "not checked: current restrictions are not compared",
     product: "confluence",
     write: true,
     description:
@@ -604,6 +691,7 @@ export const confluencePageTools: ToolDef[] = [
   },
   {
     name: "confluence_copy_page",
+    unverifiable: "each call creates another copy",
     product: "confluence",
     write: true,
     description:

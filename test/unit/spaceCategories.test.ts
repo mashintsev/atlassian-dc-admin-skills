@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
+import { addResultToPlan } from "../../src/plan.js";
 import { runTool } from "../../src/runner.js";
 import { confluenceSpaceCategoryTools } from "../../src/tools/confluence/spaceCategories.js";
 import { testContext } from "./helpers.js";
@@ -96,7 +100,7 @@ describe("Confluence space categories", () => {
   });
 
   it("dry-runs an additive category POST and rejects invalid names", async () => {
-    const { ctx, calls } = testContext();
+    const { ctx, calls } = testContext(() => ({ body: { metadata: { labels: { results: [], _links: {} } } } }));
     const result = await runTool(writeTool, { space_key: "SAMPLE/KEY", name: "naïve" }, ctx);
 
     assert.equal(result.ok, true);
@@ -105,7 +109,7 @@ describe("Confluence space categories", () => {
     assert.equal((result.value as any).request.method, "POST");
     assert.equal((result.value as any).request.url, "https://wiki.example.com/rest/api/space/SAMPLE%2FKEY/category/na%C3%AFve");
     assert.equal((result.value as any).request.body, undefined);
-    assert.equal(calls.length, 0);
+    assert.deepEqual(calls.map((call) => call.method), ["GET"], "the dry run only reads the categories");
 
     for (const name of ["", "Upper", "white space", "bad/name"]) {
       const invalid = await runTool(writeTool, { space_key: "SAMPLE", name }, ctx);
@@ -130,6 +134,27 @@ describe("Confluence space categories", () => {
     assert.equal((result.value as any).verification.categoryPresent, true);
   });
 
+  it("reports an existing category as already satisfied in the dry run and the execution, sending nothing", async () => {
+    assert.equal(writeTool.name, "confluence_add_space_category");
+    const existing = () => ({ body: { metadata: { labels: { results: [{ prefix: "team", name: "ops" }], _links: {} } } } });
+    const dry = testContext(existing);
+    const d = await runTool(writeTool, { space_key: "SAMPLE", name: "ops" }, dry.ctx);
+    assert.equal((d as any).value.already_satisfied, true, JSON.stringify(d));
+    const file = join(mkdtempSync(join(tmpdir(), "cat-")), "plan.json");
+    assert.deepEqual(addResultToPlan(file, writeTool.name, { space_key: "SAMPLE", name: "ops" }, (d as any).value), []);
+    const run = testContext(existing);
+    const r = await runTool(writeTool, { space_key: "SAMPLE", name: "ops", dry_run: false }, run.ctx);
+    assert.equal((r as any).value.already_satisfied, true);
+    assert.ok(!run.calls.some((c) => c.method === "POST"));
+  });
+
+  it("reports a read-back without the category as a VerificationError", async () => {
+    const { ctx } = testContext((call) => (call.method === "POST" ? { body: {} } : { body: { metadata: { labels: { results: [], _links: {} } } } }));
+    const result = await runTool(writeTool, { space_key: "SAMPLE", name: "new-category", dry_run: false }, ctx);
+    assert.equal(result.ok, false);
+    assert.equal((result as any).error.type, "VerificationError");
+  });
+
   it("does not report success when category read-back is forbidden", async () => {
     let categoryReads = 0;
     const { ctx, calls } = testContext((call) => {
@@ -142,5 +167,17 @@ describe("Confluence space categories", () => {
 
     assert.equal(result.ok, false);
     assert.deepEqual(calls.map((call) => call.method), ["GET", "POST", "GET"]);
+  });
+});
+
+describe("category reads on Confluence versions without _links (live finding)", () => {
+  it("treats a short page without _links as complete, and a full one as incomplete", async () => {
+    const short = testContext(() => ({ body: { metadata: { labels: { results: [{ prefix: "team", name: "ops" }], start: 0, limit: 200, size: 1 } } } }));
+    const r: any = await runTool(readTool, { space_key: "SAMPLE" }, short.ctx);
+    assert.equal(r.value.complete, true, JSON.stringify(r.value));
+    assert.deepEqual(r.value.categories, [{ name: "ops", prefix: "team" }]);
+    const full = testContext(() => ({ body: { metadata: { labels: { results: [{ prefix: "team", name: "ops" }], start: 0, limit: 1, size: 1 } } } }));
+    const f: any = await runTool(readTool, { space_key: "SAMPLE" }, full.ctx);
+    assert.equal(f.value.complete, false);
   });
 });

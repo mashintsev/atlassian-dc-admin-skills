@@ -8,7 +8,8 @@
 import { z } from "zod";
 import { seg } from "../../client.js";
 import type { ToolDef } from "../types.js";
-import { boolArg, dryRunShape, guardedWrite, listArg, pageShape, paginate, serverPage } from "../util.js";
+import { resolveField } from "./fieldRefs.js";
+import { boolArg, capList, dryRunShape, fullListsShape, guardedWrite, listArg, pageShape, paginate, pick, serverPage } from "../util.js";
 
 const API = "/rest/api/2";
 const CF_SCAN_PAGE = 500;
@@ -23,6 +24,8 @@ export const jiraFieldTools: ToolDef[] = [
   {
     name: "jira_list_custom_fields",
     product: "jira",
+    // the type column (a long plugin key) is about half of the compact output; --fields=+type shows it
+    defaultFields: ["id", "name", "isAllProjects", "projects", "screensCount", "issuesWithValue", "lastValueUpdate"],
     description:
       "Custom fields with usage stats (issuesWithValue, projects, screensCount, lastValueUpdate). search and project_key " +
       "are filtered by Jira and paged server-side. unused_only / min_issues / sort_by_usage need usage numbers Jira cannot " +
@@ -94,31 +97,46 @@ export const jiraFieldTools: ToolDef[] = [
   },
   {
     name: "jira_get_field_contexts",
+    aliases: { field_id: "field" },
     product: "jira",
     description: "Contexts of a custom field: which projects and issue types each context applies to.",
-    inputShape: { field_id: z.string().describe("e.g. customfield_10100") },
+    narrowing: ["full_lists"],
+    inputShape: { field: z.coerce.string().min(1).describe("Field id (e.g. customfield_10100) or exact name"), ...fullListsShape },
     async handler({ client }, args) {
-      return client("jira").get(`${API}/field/${seg(args.field_id)}/contexts`);
+      const c = client("jira");
+      // a custom field id needs no lookup; a name is resolved through the field list
+      const id = /^customfield_\d+$/.test(args.field) ? args.field : (await resolveField(c, args.field)).id!;
+      const data = await c.get(`${API}/field/${seg(id)}/contexts`);
+      return (Array.isArray(data) ? data : data?.values ?? []).map((context: any) => {
+        const out = pick(context, ["id", "name", "description", "allProjects", "allIssueTypes"]);
+        capList(out, "projects", (context.projects ?? []).map((p: any) => typeof p === "object" ? pick(p, ["id", "key", "name"]) : p), args.full_lists);
+        capList(out, "issueTypes", (context.issueTypes ?? []).map((t: any) => typeof t === "object" ? pick(t, ["id", "name"]) : t), args.full_lists);
+        return out;
+      });
     },
   },
   {
     name: "jira_get_field_screens",
+    aliases: { field_id: "field" },
     product: "jira",
     description: "Screens (and tabs) a field is placed on.",
-    inputShape: { field_id: z.string(), ...pageShape(100) },
+    inputShape: { field: z.coerce.string().min(1).describe("Field id or exact name"), ...pageShape(100) },
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 100;
-      const data = await client("jira").get(`${API}/field/${seg(args.field_id)}/screens`, {
+      const c = client("jira");
+      const id = /^customfield_\d+$/.test(args.field) ? args.field : (await resolveField(c, args.field)).id!;
+      const data = await c.get(`${API}/field/${seg(id)}/screens`, {
         startAt: offset,
         maxResults: limit,
       });
       const values = Array.isArray(data) ? data : (data?.values ?? []);
-      return serverPage(values, offset, limit, data?.total, data?.isLast);
+      return serverPage(values.map((s: any) => ({ id: s.id, name: s.name, ...(s.tab !== undefined ? { tab: s.tab?.name ?? s.tab } : {}) })), offset, limit, data?.total, data?.isLast);
     },
   },
   {
     name: "jira_delete_custom_fields",
+    unverifiable: "not checked: the fields are not read first or after",
     product: "jira",
     write: true,
     description: "Permanently delete custom fields and all their values. Irreversible; check usage first.",

@@ -148,7 +148,7 @@ describe("storageToMarkdown", () => {
       '<ac:link><ri:user ri:username="ivan"/></ac:link> and <ac:structured-macro ac:name="jira"><ac:parameter ac:name="key">FDP-1</ac:parameter></ac:structured-macro></p>';
     assert.equal(
       storageToMarkdown(storage, { baseUrl: "https://wiki.example.com/", pageId: "123" }),
-      "![d](https://wiki.example.com/download/attachments/123/a%20b.png) ![](https://x.io/i.png)\n\nRunbook, the guide, @ivan and [JIRA:FDP-1]",
+      "![d](a%20b.png) ![](https://x.io/i.png)\n\nRunbook, the guide, @ivan and [JIRA:FDP-1]",
     );
     assert.equal(storageToMarkdown('<ac:image><ri:attachment ri:filename="a.png"/></ac:image>'), "![](a.png)");
   });
@@ -161,10 +161,10 @@ describe("storageToMarkdown", () => {
     assert.equal(storageToMarkdown(storage), "- [x] done\n- [ ] todo **soon**\n\n| A | B |\n| --- | --- |\n| 1 \\| x | 2 |");
   });
 
-  it("drops unknown macros to their body text", () => {
+  it("keeps unknown macros' body text under their name, and body-less ones as a marker", () => {
     assert.equal(
       storageToMarkdown('<ac:structured-macro ac:name="expand"><ac:parameter ac:name="title">More</ac:parameter><ac:rich-text-body><p>hidden</p></ac:rich-text-body></ac:structured-macro><ac:structured-macro ac:name="toc"/>'),
-      "hidden",
+      "[expand]\n\nhidden\n\n[toc]",
     );
   });
 
@@ -176,5 +176,71 @@ describe("storageToMarkdown", () => {
   it("returns empty string for empty input", () => {
     assert.equal(storageToMarkdown(""), "");
     assert.equal(markdownToStorage(""), "");
+  });
+});
+
+describe("storageToMarkdown read bounds (optimize-read-token-usage 5.x)", () => {
+  it("keeps rows in thead, tbody and tfoot in document order", () => {
+    const storage = '<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Body</td></tr></tbody><tfoot><tr><td>Footer</td></tr></tfoot></table>';
+    assert.equal(storageToMarkdown(storage), '| Header |\n| --- |\n| Body |\n| Footer |');
+  });
+
+  for (const [name, parameters, expected] of [
+    ["status", '<ac:parameter ac:name="title">DONE</ac:parameter>', "[status: DONE]"],
+    ["include", '<ac:parameter ac:name=""><ri:page ri:content-title="Shared" /></ac:parameter>', "[include: Shared]"],
+    ["toc", "", "[toc]"],
+    ["children", "", "[children]"],
+    ["jira", '<ac:parameter ac:name="key">APP-1</ac:parameter>', "[JIRA:APP-1]"],
+  ]) {
+    it(`keeps the meaning of the body-less ${name} macro`, () => {
+      assert.equal(storageToMarkdown(`<ac:structured-macro ac:name="${name}">${parameters}</ac:structured-macro>`), expected);
+    });
+  }
+
+  it("renders only a table's own rows; a nested table stays inside its cell (5.1)", () => {
+    const inner = "<table><tbody><tr><td>i1</td></tr><tr><td>i2</td></tr><tr><td>i3</td></tr><tr><td>i4</td></tr></tbody></table>";
+    const storage = `<table><tbody><tr><th>A</th><th>B</th></tr><tr><td>x</td><td>${inner}</td></tr><tr><td>y</td><td>z</td></tr></tbody></table>`;
+    const md = storageToMarkdown(storage);
+    const rows = md.split("\n").filter((l) => l.startsWith("| ") && !l.startsWith("| ---"));
+    assert.equal(rows.length, 3, md);
+    assert.equal(md.match(/i3/g)?.length, 1, md);
+    assert.match(rows[1]!, /^\| x \| .*i1.*i4.* \|$/);
+  });
+
+  it("renders attachment images as bare file names that write back as attachments (5.2)", () => {
+    const storage = '<p>See</p><ac:image ac:alt="d"><ri:attachment ri:filename="diagram 1.png" /></ac:image>';
+    const md = storageToMarkdown(storage, { baseUrl: "https://wiki.example.com/", pageId: "123" });
+    assert.equal(md, "See\n\n![d](diagram%201.png)");
+    assert.match(markdownToStorage(md.replace("See", "Seen")), /<ri:attachment ri:filename="diagram 1\.png" \/>/);
+  });
+
+  it("strips the instance base URL from same-instance links and keeps external ones (5.2)", () => {
+    const storage = '<p><a href="https://wiki.example.com/display/SP/Page">inside</a> and <a href="https://other.example.org/x">outside</a></p>';
+    assert.equal(storageToMarkdown(storage, { baseUrl: "https://wiki.example.com/" }), "[inside](/display/SP/Page) and [outside](https://other.example.org/x)");
+  });
+
+  it("renders meaningful body-less macros as short markers and names unknown macros (5.4)", () => {
+    const storage =
+      '<p>State: <ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Green</ac:parameter><ac:parameter ac:name="title">DONE</ac:parameter></ac:structured-macro></p>' +
+      '<ac:structured-macro ac:name="toc" /><ac:structured-macro ac:name="children" />' +
+      '<ac:structured-macro ac:name="include"><ac:parameter ac:name=""><ac:link><ri:page ri:content-title="Shared steps" /></ac:link></ac:parameter></ac:structured-macro>' +
+      '<ac:structured-macro ac:name="expand"><ac:parameter ac:name="title">More</ac:parameter><ac:rich-text-body><p>hidden</p></ac:rich-text-body></ac:structured-macro>';
+    const md = storageToMarkdown(storage);
+    assert.match(md, /State: \[status: DONE\]/);
+    assert.match(md, /\[toc\]/);
+    assert.match(md, /\[children\]/);
+    assert.match(md, /\[include: Shared steps\]/);
+    assert.match(md, /\[expand\]\n\nhidden/);
+  });
+
+  it("cuts code blocks over 200 lines in reads and keeps them whole when asked (5.4)", () => {
+    const code = Array.from({ length: 250 }, (_, i) => `line ${i}`).join("\n");
+    const storage = `<ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[${code}]]></ac:plain-text-body></ac:structured-macro>`;
+    const md = storageToMarkdown(storage);
+    assert.match(md, /line 199\n```/);
+    assert.ok(!md.includes("line 200"));
+    assert.match(md, /\+50 lines/);
+    assert.match(md, /body_format=storage/);
+    assert.ok(storageToMarkdown(storage, { maxCodeLines: Infinity }).includes("line 249"));
   });
 });

@@ -21,7 +21,7 @@ export const jiraWorklogTools: ToolDef[] = [
     name: "jira_get_worklog",
     product: "jira",
     description: "Worklogs of an issue, newest first: author, started, time spent, comment (Markdown). totalHours covers all worklogs.",
-    inputShape: { issue_key: z.string(), oldest_first: boolArg.optional(), ...pageShape(50) },
+    inputShape: { issue_key: z.string(), oldest_first: boolArg.optional(), ...pageShape(50, 100) },
     async handler({ client }, args) {
       // GET /issue/{key}/worklog has no paging params on DC (IssueResource#getIssueWorklog): one call, paged here
       const data = await client("jira").get(`${API}/issue/${seg(args.issue_key)}/worklog`);
@@ -41,6 +41,7 @@ export const jiraWorklogTools: ToolDef[] = [
   },
   {
     name: "jira_add_worklog",
+    unverifiable: "each call logs the time again",
     product: "jira",
     write: true,
     description:

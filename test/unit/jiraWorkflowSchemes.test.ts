@@ -16,8 +16,9 @@ const DRAFT = { id: 10100, name: "FDP WS", defaultWorkflow: "jira", issueTypeMap
 
 describe("workflow scheme CRUD", () => {
   it("creates a scheme from scratch", async () => {
+    const created = { id: 10200, name: "New WS", defaultWorkflow: "jira", issueTypeMappings: { "1": "Bug WF" } };
     const r = await run("jira_create_workflow_scheme", { name: "New WS", default_workflow: "jira", issue_type_mappings: '{"1":"Bug WF"}', dry_run: false }, (c) =>
-      c.method === "POST" ? { status: 201, body: { id: 10200, name: "New WS" } } : undefined);
+      c.method === "POST" ? { status: 201, body: { id: 10200, name: "New WS" } } : path(c) === "/rest/api/2/workflowscheme/10200" ? { body: created } : undefined);
     assert.ok(r.res.ok);
     const post = r.calls.find((c) => c.method === "POST")!;
     assert.equal(path(post), "/rest/api/2/workflowscheme");
@@ -57,7 +58,13 @@ describe("workflow scheme CRUD", () => {
 
 describe("workflow scheme drafts", () => {
   it("creates a draft", async () => {
-    const r = await run("jira_create_workflow_scheme_draft", { scheme_id: 10100, dry_run: false }, () => ({ body: WS }));
+    let drafted = false;
+    const r = await run("jira_create_workflow_scheme_draft", { scheme_id: 10100, dry_run: false }, (c) => {
+      if (c.method === "POST") { drafted = true; return { status: 201, body: WS }; }
+      if (path(c).endsWith("/draft")) return drafted ? { body: { ...WS, draft: true } } : { status: 404, body: {} };
+      return { body: WS };
+    });
+    assert.ok(r.res.ok, r.error);
     const post = r.calls.find((c) => c.method === "POST")!;
     assert.equal(path(post), "/rest/api/2/workflowscheme/10100/createdraft");
   });
@@ -130,8 +137,12 @@ describe("workflow scheme discovery", () => {
 
 describe("jira_replace_workflow_in_scheme", () => {
   it("moves every mapping of one workflow to another in one request", async () => {
-    const r = await run("jira_replace_workflow_in_scheme", { scheme_id: 10100, from_workflow: "Bug WF", to_workflow: "New Bug WF", dry_run: false }, () => ({ body: WS }));
-    assert.ok(r.res.ok);
+    const scheme = JSON.parse(JSON.stringify(WS));
+    const r = await run("jira_replace_workflow_in_scheme", { scheme_id: 10100, from_workflow: "Bug WF", to_workflow: "New Bug WF", dry_run: false }, (c) => {
+      if (c.method === "PUT") Object.assign(scheme, { defaultWorkflow: c.body.defaultWorkflow, issueTypeMappings: c.body.issueTypeMappings });
+      return { body: scheme };
+    });
+    assert.ok(r.res.ok, r.error);
     const puts = r.calls.filter((c) => c.method === "PUT");
     assert.equal(puts.length, 1);
     assert.equal(path(puts[0]), "/rest/api/2/workflowscheme/10100");
@@ -177,7 +188,7 @@ describe("review regressions", () => {
     assert.ok(del.res.ok, del.error);
     assert.match(del.value.summary, /Story WF/);
     const gone = await run("jira_delete_workflow_scheme_mapping", { scheme_id: 10100, issue_type_id: "5", update_draft_if_needed: true }, draftOrPublished);
-    assert.equal(gone.res.ok, false);
+    assert.equal(gone.value.already_satisfied, true, "no mapping in the draft: nothing to remove");
     const set = await run("jira_set_workflow_scheme_mapping", { scheme_id: 10100, issue_type_id: "1", workflow: "X", update_draft_if_needed: true }, draftOrPublished);
     assert.match(set.value.summary, /New Bug WF → X/);
   });

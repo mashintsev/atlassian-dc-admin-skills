@@ -17,7 +17,7 @@ import { seg, type AtlassianClient } from "../../client.js";
 import { UnsupportedError, ValidationError, VerificationError } from "../../errors.js";
 import { requireJiraVersion } from "../../jiraVersion.js";
 import type { ToolDef } from "../types.js";
-import { alreadySatisfied, dryRunShape, guardedWrite } from "../util.js";
+import { alreadySatisfied, dryRunShape, fullListsShape, guardedWrite, pageShape, serverPage } from "../util.js";
 import { fieldPlaceholder, resolveField, type FieldRef } from "./fieldRefs.js";
 
 const TYPE_PREFIX = "com.atlassian.jira.plugin.system.customfieldtypes";
@@ -124,8 +124,9 @@ function specificity(c: RawContext, pair: Pair): number {
   return p < 0 || t < 0 ? -1 : p + t;
 }
 
-function scopeLabel(c: RawContext): string {
-  return `${c.allProjects ? "all projects" : `projects ${c.projects.join(",")}`}; ${c.allIssueTypes ? "all issue types" : `issue types ${c.issueTypes.join(",")}`}`;
+function scopeLabel(c: RawContext, full = true): string {
+  const labels = (items: string[]) => full || items.length <= 10 ? items.join(",") : `${items.slice(0, 10).join(",")} (+${items.length - 10} more; total ${items.length}; full_lists=true)`;
+  return `${c.allProjects ? "all projects" : `projects ${labels(c.projects)}`}; ${c.allIssueTypes ? "all issue types" : `issue types ${labels(c.issueTypes)}`}`;
 }
 
 function pickContext(contexts: RawContext[], given: string | undefined): RawContext {
@@ -183,20 +184,52 @@ export const jiraFieldOptionTools: ToolDef[] = [
     name: "jira_get_custom_field_options",
     product: "jira",
     description:
-      "Options of a select-type custom field per context (or one context): id, value, disabled, in stored order, with the " +
-      "projects and issue types each context covers.",
-    inputShape: { field: fieldArg, context: contextArg },
+      "Option counts per context of a select-type custom field; give context to page its options (id, value, disabled) " +
+      "in stored order, with its project and issue type scope (first 10 labels; full_lists=true for all).",
+    narrowing: ["context", "limit", "offset", "full_lists"],
+    inputShape: { field: fieldArg, context: contextArg, ...fullListsShape, ...pageShape(100, MAX_OPTIONS) },
     async handler({ client }, args) {
       const c = client("jira");
       const field = await resolveField(c, args.field);
       requireOptionType(field);
       const all = await contextsOf(c, field.id!);
-      const chosen = args.context !== undefined ? [pickContext(all, args.context)] : all;
-      const contexts = [];
-      for (const ctx of chosen) {
-        contexts.push({ id: ctx.id, name: ctx.name, scope: scopeLabel(ctx), options: await readOptions(c, field.id!, pairOf(ctx)) });
+      const fieldView = { id: field.id, name: field.name, type: field.type };
+      const request = async (ctx: RawContext, offset: number, limit: number) => {
+        const pair = pairOf(ctx);
+        return c.get(`/rest/api/2/customFields/${numericId(field.id!)}/options`, {
+          projectIds: pair.projectId ?? undefined,
+          issueTypeIds: pair.issueTypeId ?? undefined,
+          startAt: offset,
+          // Older endpoints ignore startAt: request enough entries to slice locally.
+          maxResults: offset + limit,
+        });
+      };
+      if (args.context === undefined) {
+        const contexts = [];
+        for (const ctx of all) {
+          const data = await request(ctx, 0, 1);
+          const count = data?.total !== undefined
+            ? { optionCount: data.total }
+            : {
+              optionCount: null,
+              optionCountLowerBound: (await readOptions(c, field.id!, pairOf(ctx))).length,
+              optionCountComplete: false,
+              hint: "The endpoint did not report a total; pass context to page its options.",
+            };
+          contexts.push({ id: ctx.id, name: ctx.name, scope: scopeLabel(ctx, !!args.full_lists), ...count });
+        }
+        return { field: fieldView, contexts };
       }
-      return { field: { id: field.id, name: field.name, type: field.type }, contexts };
+      const ctx = pickContext(all, args.context);
+      const offset = args.offset ?? 0;
+      const limit = args.limit ?? 100;
+      const data = await request(ctx, offset, limit);
+      const options = (data?.options ?? []).map((o: any) => ({ id: Number(o.id), value: String(o.value), disabled: !!o.disabled }));
+      const items = data?.startAt !== undefined ? options.slice(0, limit) : options.slice(offset, offset + limit);
+      // A legacy prefix limited by maxResults is not evidence of the full total.
+      const total = data?.total;
+      const page = serverPage(items, offset, limit, total, data?.isLast && options.length <= limit ? true : undefined);
+      return { field: fieldView, context: { id: ctx.id, name: ctx.name, scope: scopeLabel(ctx, !!args.full_lists) }, ...page };
     },
   },
   {

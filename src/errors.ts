@@ -94,3 +94,29 @@ export class PermissionError extends Error {
     this.name = "PermissionDenied";
   }
 }
+
+/** Jira or Confluence answered with its login page: the token is missing, expired or rejected (exit 6). */
+export class AuthenticationRequiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthenticationRequired";
+  }
+}
+
+/** The resource needs a websudo (secure administrator) session, which token calls cannot open (exit 3). */
+export class WebSudoRequiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WebSudoRequired";
+  }
+}
+
+/** A proxy or gateway answered instead of the application (exit 10). */
+export class UpstreamError extends Error {
+  readonly status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "UpstreamError";
+    this.status = status;
+  }
+}

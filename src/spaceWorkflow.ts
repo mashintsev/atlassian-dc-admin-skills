@@ -381,7 +381,7 @@ export async function prepareSpaceUpdates(
   }
   if (existsSync(resolve(outputFile))) throw new ValidationError(`Refusing to overwrite existing plan file '${resolve(outputFile)}'`);
   const discoveryResult = await runToolByName("confluence_find_spaces_by_group", {
-    group: input.group, type: input.type, status: input.status,
+    group: input.group, type: input.type, status: input.status, include_audit: true,
   }, ctx);
   const discovery = requireToolValue<any>(discoveryResult, "Group-space discovery failed");
   if (discovery.completeForCaller !== true) {
@@ -703,6 +703,10 @@ export async function prepareSpaceWorkflowApply(
       continue;
     }
     const dry: any = dryResult.value;
+    if (dry?.already_satisfied) {
+      statuses[item.n - 1] = outcomeItem(item.n, "already-satisfied");
+      continue;
+    }
     activeItems.push({
       item,
       args,
@@ -901,6 +905,11 @@ export async function applySpaceWorkflow(
         }
       }
       const dryResult = await runToolByName(item.tool, { ...active.args, dry_run: true }, ctx);
+      if (dryResult.ok && (dryResult.value as any)?.already_satisfied) {
+        statuses[number - 1] = outcomeItem(number, "already-satisfied");
+        writeWorkflowOutcome(planFile, plan, statuses);
+        continue;
+      }
       if (!dryResult.ok || digestOf(dryResult.value) !== active.digest) {
         statuses[number - 1] = outcomeItem(number, "drifted", dryResult.ok ? "request changed after confirmation" : dryResult.error.message);
         writeWorkflowOutcome(planFile, plan, statuses);

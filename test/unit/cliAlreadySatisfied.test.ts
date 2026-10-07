@@ -74,6 +74,6 @@ describe("CLI and already-satisfied writes", () => {
     const items = JSON.parse(readFileSync(plan, "utf8")).items;
     assert.equal(items.length, 1);
     assert.equal(items[0].tool, "jira_add_screen_field");
-    assert.deepEqual(items[0].args, { screen_id: 10433, tab_id: 10633, field_id: "components" });
+    assert.deepEqual(items[0].args, { screen_id: 10433, tab_id: 10633, field: "components" });
   });
 });

@@ -7,10 +7,11 @@
  */
 
 import { z } from "zod";
-import { ValidationError } from "../../errors.js";
+import { ValidationError, VerificationError } from "../../errors.js";
 import type { AtlassianClient } from "../../client.js";
 import type { ToolDef } from "../types.js";
-import { boolArg, dryRunShape, filterByName, guardedWrite, listArg, MAX_PAGE, nameFilterShape, pageShape, paginate, serverPage } from "../util.js";
+import { issueTypePlaceholder, resolveIssueType } from "./issueTypeRefs.js";
+import { alreadySatisfied, boolArg, dryRunShape, filterByName, guardedWrite, listArg, MAX_PAGE, nameFilterShape, pageShape, paginate, serverPage } from "../util.js";
 
 const API = "/rest/api/2";
 
@@ -28,6 +29,15 @@ function holderLabel(h: any): string {
     ((h.type === "userCustomField" || h.type === "groupCustomField") && h.field?.name) ||
     h.parameter;
   return param ? `${h.type}:${param}` : h.type;
+}
+
+/** A holder as sent in a grant: `type:parameter`, or the bare type when it takes no parameter. */
+const holderKey = (h: any) => (h?.parameter !== undefined && h?.parameter !== null && h?.parameter !== "" ? `${h.type}:${h.parameter}` : String(h?.type));
+
+/** The grants of a permission scheme (raw, with their ids and holders). */
+async function schemeGrants(client: AtlassianClient, schemeId: number): Promise<any[]> {
+  const s = await client.get(`${API}/permissionscheme/${schemeId}`, { expand: "permissions" });
+  return s?.permissions ?? [];
 }
 
 async function getIssueTypeScheme(client: AtlassianClient, schemeId: number): Promise<any> {
@@ -93,14 +103,23 @@ export const jiraSchemeTools: ToolDef[] = [
       ...dryRunShape,
     },
     async handler({ client }, args) {
+      const c = client("jira");
       const holder: Record<string, string> = { type: args.holder_type };
       if (args.holder_parameter !== undefined) holder.parameter = args.holder_parameter;
-      return guardedWrite(client("jira"), args, {
-        method: "POST",
-        path: `${API}/permissionscheme/${args.scheme_id}/permission`,
-        json: { holder, permission: args.permission },
-        summary: `Grant ${args.permission} to ${holderLabel(holder)} in permission scheme ${args.scheme_id}`,
-      });
+      const summary = `Grant ${args.permission} to ${holderLabel(holder)} in permission scheme ${args.scheme_id}`;
+      const holdersOf = (grants: any[]) => grants.filter((g) => g.permission === args.permission).map((g) => holderKey(g.holder)).sort();
+      const before = holdersOf(await schemeGrants(c, args.scheme_id));
+      const wanted = holderKey(holder);
+      if (before.includes(wanted)) return alreadySatisfied(summary, "the scheme already grants this permission to this holder");
+      const req = { method: "POST" as const, path: `${API}/permissionscheme/${args.scheme_id}/permission`, json: { holder, permission: args.permission }, summary };
+      if (args.dry_run !== false) {
+        // drift covers this permission's holders only, so grants of other permissions in the same plan do not count
+        return { ...(await guardedWrite(c, args, req)), identity: { op: "add-permission-grant", scheme: args.scheme_id, permission: args.permission, holder: wanted }, state: { holders: before } };
+      }
+      const result = await guardedWrite(c, args, req);
+      const after = holdersOf(await schemeGrants(c, args.scheme_id));
+      if (!after.includes(wanted)) throw new VerificationError(`${summary}: the scheme does not list the grant afterwards`, { permission: args.permission, holders: after });
+      return result;
     },
   },
   {
@@ -110,11 +129,18 @@ export const jiraSchemeTools: ToolDef[] = [
     description: "Remove one grant (id from jira_get_permission_scheme) from a permission scheme.",
     inputShape: { scheme_id: z.coerce.number().int(), grant_id: z.coerce.number().int(), ...dryRunShape },
     async handler({ client }, args) {
-      return guardedWrite(client("jira"), args, {
-        method: "DELETE",
-        path: `${API}/permissionscheme/${args.scheme_id}/permission/${args.grant_id}`,
-        summary: `Delete grant ${args.grant_id} from permission scheme ${args.scheme_id}`,
-      });
+      const c = client("jira");
+      const summary = `Delete grant ${args.grant_id} from permission scheme ${args.scheme_id}`;
+      const grant = (await schemeGrants(c, args.scheme_id)).find((g) => Number(g.id) === args.grant_id);
+      if (!grant) return alreadySatisfied(summary, "the scheme has no such grant");
+      const req = { method: "DELETE" as const, path: `${API}/permissionscheme/${args.scheme_id}/permission/${args.grant_id}`, summary: `${summary} (${grant.permission} → ${holderLabel(grant.holder)})` };
+      if (args.dry_run !== false) return { ...(await guardedWrite(c, args, req)), identity: { op: "delete-permission-grant", scheme: args.scheme_id, grant: args.grant_id }, state: { permission: grant.permission, holder: holderKey(grant.holder) } };
+      const result = await guardedWrite(c, args, req);
+      const after = await schemeGrants(c, args.scheme_id);
+      if (after.some((g) => Number(g.id) === args.grant_id)) {
+        throw new VerificationError(`${summary}: the grant is still listed`, { permission: grant.permission, holders: after.filter((g) => g.permission === grant.permission).map((g) => holderKey(g.holder)).sort() });
+      }
+      return result;
     },
   },
   {
@@ -235,17 +261,25 @@ export const jiraSchemeTools: ToolDef[] = [
       // Jira rejects duplicate names case-insensitively; fail early, also in a dry run
       const existing: any[] = (await c.get(`${API}/issuetype`)) ?? [];
       const clash = existing.find((t) => String(t.name ?? "").toLowerCase() === args.name.toLowerCase());
-      if (clash) throw new ValidationError(`Issue type '${clash.name}' already exists (id ${clash.id})`);
+      const summary = `Create ${args.subtask ? "sub-task " : ""}issue type '${args.name}'`;
+      if (clash) {
+        // the same type already exists (exact name, kind, description when given): nothing to do
+        const sameKind = Boolean(clash.subtask) === Boolean(args.subtask);
+        const sameDescription = args.description === undefined || (clash.description ?? "") === args.description;
+        if (clash.name === args.name && sameKind && sameDescription) return alreadySatisfied(summary, `issue type ${clash.id} already exists with these settings`, { id: String(clash.id) });
+        throw new ValidationError(`Issue type '${clash.name}' already exists (id ${clash.id}) with other settings`);
+      }
       const json: Record<string, unknown> = { name: args.name };
       if (args.description !== undefined) json.description = args.description;
       json.type = args.subtask ? "subtask" : "standard";
       if (args.avatar_id !== undefined) json.avatarId = args.avatar_id;
-      return guardedWrite(c, args, {
-        method: "POST",
-        path: `${API}/issuetype`,
-        json,
-        summary: `Create ${args.subtask ? "sub-task " : ""}issue type '${args.name}'`,
-      });
+      const req = { method: "POST" as const, path: `${API}/issuetype`, json, summary };
+      if (args.dry_run !== false) return guardedWrite(c, args, req);
+      const result = await guardedWrite(c, args, req);
+      const back: any[] = (await c.get(`${API}/issuetype`)) ?? [];
+      const created = back.find((t) => t.name === args.name);
+      if (!created) throw new VerificationError(`${summary}: Jira does not list the issue type afterwards`, { names: back.map((t) => t.name) });
+      return { ...result, result: { id: String(created.id), name: created.name, subtask: Boolean(created.subtask) }, created: { type: "issue-type", name: created.name, id: String(created.id) } };
     },
   },
   {
@@ -293,31 +327,45 @@ export const jiraSchemeTools: ToolDef[] = [
   },
   {
     name: "jira_add_issue_types_to_scheme",
+    aliases: { issue_type_ids: "issue_types", default_issue_type_id: "default_issue_type" },
     product: "jira",
     write: true,
     description:
       "Add issue types (ids from jira_list_issue_types) to an issue type scheme, keeping its current types; " +
-      "default_issue_type_id optionally changes the default. Projects using the scheme can then create these types.",
+      "default_issue_type optionally changes the default. Projects using the scheme can then create these types.",
     inputShape: {
       scheme_id: z.coerce.number().int(),
-      issue_type_ids: listArg.describe("Issue type ids, comma-separated or array"),
-      default_issue_type_id: z.coerce.string().optional(),
+      issue_types: listArg.describe("Issue type ids or exact names, comma-separated or array"),
+      default_issue_type: z.coerce.string().optional().describe("Issue type id or exact name"),
       ...dryRunShape,
     },
     async handler({ client }, args) {
       const c = client("jira");
       const [scheme, allTypes] = await Promise.all([getIssueTypeScheme(c, args.scheme_id), c.get(`${API}/issuetype`)]);
       const byId = new Map<string, any>((Array.isArray(allTypes) ? allTypes : []).map((t: any) => [String(t.id), t]));
-      const unknown = args.issue_type_ids.filter((id: string) => !byId.has(id));
-      if (unknown.length) throw new ValidationError(`Unknown issue type id(s): ${unknown.join(", ")}`);
+      const types = Array.isArray(allTypes) ? allTypes : [];
+      // a name may refer to an issue type an earlier plan item creates: pending in the dry run, resolved on apply
+      const dryRun = args.dry_run !== false;
+      const resolve = (given: string) => resolveIssueType(c, given, { within: types, allowPending: dryRun });
+      const refs = [];
+      for (const given of args.issue_types) refs.push(await resolve(given));
+      const defaultRef = args.default_issue_type !== undefined ? await resolve(args.default_issue_type) : undefined;
+      const idOf = (r: { id?: string; name?: string }) => r.id ?? issueTypePlaceholder(r.name!);
+      const requestedIds: string[] = refs.map(idOf);
+      const defaultId = defaultRef ? idOf(defaultRef) : undefined;
 
       const current: string[] = (scheme?.issueTypes ?? []).map((t: any) => String(t.id));
-      const added = [...new Set<string>(args.issue_type_ids)].filter((id) => !current.includes(id));
-      if (!added.length) {
-        throw new ValidationError(`Issue type scheme ${args.scheme_id} already contains ${args.issue_type_ids.join(", ")}`);
+      const requested = [...new Set<string>(requestedIds)];
+      const added = requested.filter((id) => !current.includes(id));
+      const currentDefault = scheme?.defaultIssueType?.id !== undefined ? String(scheme.defaultIssueType.id) : undefined;
+      const defaultChange = defaultId !== undefined && String(defaultId) !== currentDefault;
+      const summaryBase = `Issue type scheme '${scheme?.name ?? args.scheme_id}'`;
+      if (!added.length && !defaultChange) {
+        return alreadySatisfied(`${summaryBase}: add ${requested.join(", ")}`, "the scheme already contains these issue types and default");
       }
+      // built from the scheme as it is now, so additions by earlier plan items are kept
       const issueTypeIds = [...current, ...added];
-      const defaultIssueTypeId = args.default_issue_type_id ?? scheme?.defaultIssueType?.id;
+      const defaultIssueTypeId = defaultId ?? currentDefault;
       if (defaultIssueTypeId !== undefined && !issueTypeIds.includes(String(defaultIssueTypeId))) {
         throw new ValidationError(`Default issue type ${defaultIssueTypeId} is not in the scheme`);
       }
@@ -326,14 +374,37 @@ export const jiraSchemeTools: ToolDef[] = [
       const json: Record<string, unknown> = { name: scheme?.name, description: scheme?.description ?? "" };
       if (defaultIssueTypeId !== undefined) json.defaultIssueTypeId = String(defaultIssueTypeId);
       json.issueTypeIds = issueTypeIds;
-      const names = added.map((id) => `${byId.get(id)?.name} (${id})`).join(", ");
-      const defaultNote = args.default_issue_type_id ? `; default → ${byId.get(String(args.default_issue_type_id))?.name}` : "";
-      return guardedWrite(c, args, {
-        method: "PUT",
+      const names = added.map((id) => (byId.has(id) ? `${byId.get(id)?.name} (${id})` : id)).join(", ");
+      const defaultNote = defaultChange ? `; default → ${byId.get(String(defaultId))?.name}` : "";
+      const req = {
+        method: "PUT" as const,
         path: `${API}/issuetypescheme/${args.scheme_id}`,
         json,
-        summary: `Issue type scheme '${scheme?.name ?? args.scheme_id}': add ${names}${defaultNote}`,
-      });
+        summary: `${summaryBase}: add ${names || "(none)"}${defaultNote}`,
+      };
+      if (args.dry_run !== false) {
+        return {
+          ...(await guardedWrite(c, args, req)),
+          // drift covers only what this item depends on: other items' additions to the same scheme don't count
+          // names stay names (also once resolved), so a type created by an earlier item does not look like drift
+          identity: {
+            op: "add-issue-types-to-scheme",
+            scheme: args.scheme_id,
+            issueTypes: refs.map((r) => JSON.stringify(r.ref)).sort(),
+            default: defaultRef ? defaultRef.ref : null,
+          },
+          state: { present: requested.filter((id) => current.includes(id)).sort(), ...(defaultChange ? { default: currentDefault ?? null } : {}) },
+        };
+      }
+      const result = await guardedWrite(c, args, req);
+      const back = await getIssueTypeScheme(c, args.scheme_id);
+      const backIds: string[] = (back?.issueTypes ?? []).map((t: any) => String(t.id));
+      const missing = requested.filter((id) => !backIds.includes(id));
+      const backDefault = back?.defaultIssueType?.id !== undefined ? String(back.defaultIssueType.id) : undefined;
+      if (missing.length || (defaultId !== undefined && backDefault !== String(defaultId))) {
+        throw new VerificationError(`${req.summary}: the scheme does not show the change afterwards`, { issueTypeIds: backIds, defaultIssueTypeId: backDefault ?? null, missing });
+      }
+      return { ...result, result: { issueTypeIds: backIds, defaultIssueTypeId: backDefault ?? null } };
     },
   },
 ];

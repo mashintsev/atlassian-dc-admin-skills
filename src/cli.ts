@@ -25,10 +25,10 @@ import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { z } from "zod";
 import { checkAvailableServices, findProjectConfig, loadDotenv, PROJECT_CONFIG_FILE, productSource, PRODUCTS } from "./config.js";
-import { EXIT, exitCodeFor, OUTPUT_FORMATS, render, renderError, type OutputFormat } from "./format.js";
+import { EXIT, exitCodeFor, largestParts, OUTPUT_FORMATS, render, renderError, type OutputFormat } from "./format.js";
 import { exceedsResponseLimit, maxResponseChars } from "./json.js";
 import { ConfirmationError, confirmChanges } from "./confirm.js";
-import { addResultToPlan, applyPlan, pendingItems, readPlan, recordDeclined, renderOutcomes, renderPlan } from "./plan.js";
+import { addResultToPlan, applyExitCode, applyPlan, pendingItems, readPlan, recordDeclined, renderOutcomes, renderPlan } from "./plan.js";
 import {
   applySpaceWorkflowWithConfirmation,
   prepareSpaceUpdates,
@@ -39,7 +39,7 @@ import {
   saveSpaceWorkflowVerification,
   verifySpaceWorkflow,
 } from "./spaceWorkflow.js";
-import { argsSchema, createContext, runToolByName, type RunResult } from "./runner.js";
+import { argsSchema, coerceArgs, createContext, runToolByName, suggest, type RunResult } from "./runner.js";
 import { ALL_TOOLS, findTool } from "./tools/index.js";
 import { spaceCategoryNameSchema } from "./tools/confluence/spaceCategories.js";
 
@@ -96,17 +96,45 @@ export function parseArgs(argv: string[]): { args: Record<string, unknown>; opti
       else options.out = raw;
       continue;
     }
-    let value: unknown = raw;
-    try {
-      value = JSON.parse(raw);
-    } catch {
-      // plain string
-    }
-    // keep identifiers like 00123 or 1e5 as strings unless they round-trip as numbers
-    if (typeof value === "number" && String(value) !== raw) value = raw;
-    args[key] = value;
+    // text as given: the runner converts it by the tool's parameter schema (coerceArgs)
+    args[key] = raw;
   }
   return { args, options };
+}
+
+const PRODUCT_WORDS = ["jira", "confluence", "both"];
+
+/** The description up to its first sentence or colon break, at most 100 characters. */
+function firstClause(description: string): string {
+  const cut = description.search(/[.:] /);
+  const clause = (cut > 0 ? description.slice(0, cut) : description).trim().replace(/\.$/, "");
+  return clause.length > 100 ? `${clause.slice(0, 99)}…` : clause;
+}
+
+/**
+ * `list [product | words…] [--writes|--reads] [--long]`: a product word filters by product; other words must
+ * all appear (case-insensitive) in a tool's name (with `_` as a space) or description.
+ */
+export function listTools(rest: string[]): string {
+  const words = rest.filter((a) => !a.startsWith("--")).map((w) => w.toLowerCase());
+  const product = words.length === 1 && PRODUCT_WORDS.includes(words[0]!) ? words[0] : undefined;
+  const search = product ? [] : words;
+  const tools = ALL_TOOLS.filter((t) => {
+    if (product) return t.product === product || t.product === "both";
+    const text = `${t.name.replace(/_/g, " ")} ${t.name} ${t.description}`.toLowerCase();
+    return search.every((w) => text.includes(w));
+  })
+    .filter((t) => !rest.includes("--writes") || t.write)
+    .filter((t) => !rest.includes("--reads") || !t.write);
+  if (!tools.length) {
+    return `no tool matches '${words.join(" ")}'; try a shorter term, or browse with list jira / list confluence`;
+  }
+  const lines = tools.map((t) => {
+    const name = `${t.name}${t.write ? " ✎" : ""}`;
+    if (rest.includes("--long")) return `${name} | ${t.description}`;
+    return search.length ? `${name} | ${firstClause(t.description)}` : name;
+  });
+  return [`${tools.length} tools (✎ = write, dry-run by default). Details: describe <tool>`, ...lines].join("\n");
 }
 
 function print(text: string): void {
@@ -129,13 +157,16 @@ export function output(res: RunResult, options: GlobalOptions): string {
     writeFileSync(file, json);
     return `saved | ${res.tool.name} | ${countOf(res.value)} | ${json.length} chars → ${file}`;
   }
-  const text = render(res.value, options.format, options.fields);
+  const narrowing = res.tool?.narrowing;
+  const text = render(res.value, options.format, options.fields, res.tool?.defaultFields, narrowing);
   if (exceedsResponseLimit(text)) {
+    // sizes of the largest fields or columns, so one retry can narrow the right part; never content
+    const largest = largestParts(res.value, options.format, options.fields, res.tool?.defaultFields).map((p) => `${p.part} ${p.chars}`).join(", ");
     return renderError(
       {
         type: "ResponseTooLarge",
-        message: `${text.length} characters, limit ${maxResponseChars()}`,
-        hint: "narrow it (filters, limit/offset, --fields=...), or save it with --out=FILE and grep the file",
+        message: `${text.length} characters, limit ${maxResponseChars()}${largest ? `; largest: ${largest}` : ""}`,
+        hint: `${narrowing?.length ? `narrow with ${narrowing.join("|")}` : "narrow it (filters, limit/offset, --fields=...)"}, or save it with --out=FILE and grep the file`,
       },
       options.format,
     );
@@ -151,16 +182,20 @@ function schemaType(p: any, sep: string): string {
   return p?.type ?? "any";
 }
 
-function describeTool(name: string, long: boolean): string | undefined {
+export function describeTool(name: string, long: boolean): string | undefined {
   const tool = findTool(name);
   if (!tool) return undefined;
   const schema: any = z.toJSONSchema(argsSchema(tool), { io: "input", unrepresentable: "any" });
   const required = new Set<string>(schema.required ?? []);
   const args = Object.entries<any>(schema.properties ?? {}).map(([k, p]) => {
     const type = schemaType(p, "|");
-    return `  ${k}${required.has(k) ? "" : "?"}: ${type}${p.description && long ? ` — ${p.description}` : ""}`;
+    const aliases = Object.entries(tool.aliases ?? {}).filter(([, c]) => c === k).map(([a]) => a);
+    const alias = aliases.length ? ` (alias: ${aliases.join(", ")})` : "";
+    return `  ${k}${required.has(k) ? "" : "?"}: ${type}${alias}${p.description && long ? ` — ${p.description}` : ""}`;
   });
-  return [`${tool.name} | ${tool.product}${tool.write ? " | WRITE (dry-run default)" : ""}`, tool.description, "args:", ...(args.length ? args : ["  (none)"])].join("\n");
+  const unverifiable = tool.unverifiable ? [`not verifiable: ${tool.unverifiable}; repeating the call sends the change again`] : [];
+  const columns = tool.defaultFields?.length ? [`default columns: ${tool.defaultFields.join(", ")} (--fields=+x adds, --fields=all shows all)`] : [];
+  return [`${tool.name} | ${tool.product}${tool.write ? " | WRITE (dry-run default)" : ""}`, tool.description, ...unverifiable, ...columns, "args:", ...(args.length ? args : ["  (none)"])].join("\n");
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -173,24 +208,15 @@ async function main(argv: string[]): Promise<number> {
   }
 
   if (command === "list") {
-    const filter = rest.find((a) => !a.startsWith("--"));
-    const products = ["jira", "confluence", "both"];
-    const tools = ALL_TOOLS.filter((t) =>
-      !filter ? true : products.includes(filter) ? t.product === filter || t.product === "both" : t.name.includes(filter),
-    )
-      .filter((t) => !rest.includes("--writes") || t.write)
-      .filter((t) => !rest.includes("--reads") || !t.write);
-    const lines = tools.map((t) =>
-      rest.includes("--long") ? `${t.name}${t.write ? " ✎" : ""} | ${t.description}` : `${t.name}${t.write ? " ✎" : ""}`,
-    );
-    print([`${tools.length} tools (✎ = write, dry-run by default). Details: describe <tool>`, ...lines].join("\n"));
+    print(listTools(rest));
     return EXIT.OK;
   }
 
   if (command === "describe") {
     const text = rest[0] ? describeTool(rest[0], true) : undefined;
     if (!text) {
-      print(`ERROR UsageError | Unknown tool: ${rest[0] ?? ""}\nhint: run: list <text>`);
+      const guesses = rest[0] ? suggest(rest[0], ALL_TOOLS.map((t) => t.name)) : [];
+      print(`ERROR UsageError | Unknown tool: ${rest[0] ?? ""}\nhint: ${guesses.length ? `did you mean ${guesses.join(", ")}? (or run: list <text>)` : "run: list <text>"}`);
       return EXIT.VALIDATION;
     }
     print(text);
@@ -395,7 +421,7 @@ async function main(argv: string[]): Promise<number> {
       recordDeclined(file, candidates.filter((i) => !approved.includes(i.n)).map((i) => i.n));
       const outcomes = await applyPlan(ctx, genericPlan, approved, file);
       print(renderOutcomes(outcomes));
-      return outcomes.every((o) => o.status === "done") ? EXIT.OK : EXIT.GENERIC;
+      return applyExitCode(outcomes);
     } finally {
       await close();
     }
@@ -444,6 +470,9 @@ async function main(argv: string[]): Promise<number> {
     print(renderError({ type: "UsageError", message: e.message }, "compact"));
     return EXIT.VALIDATION;
   }
+  // convert by schema before any check: dry_run=0/no/off must reach the confirmation gate as false
+  const known = findTool(command);
+  if (known) parsed.args = coerceArgs(known, parsed.args);
   if (parsed.options.plan) {
     const tool = findTool(command);
     if (!tool?.write) {

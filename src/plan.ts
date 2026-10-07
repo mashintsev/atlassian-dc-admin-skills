@@ -21,13 +21,22 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { runToolByName, type RunResult } from "./runner.js";
 import type { ToolContext } from "./tools/types.js";
+import { EXIT } from "./format.js";
 
 export type OutcomeStatus = "done" | "already-satisfied" | "failed" | "drifted" | "declined";
+
+/** An object an item created, so later items of the plan can refer to it by name. */
+export interface CreatedObject {
+  type: string;
+  name: string;
+  id: string;
+}
 
 export interface ItemOutcome {
   status: OutcomeStatus;
   at: string;
   detail?: string;
+  created?: CreatedObject;
 }
 
 export interface PlanItem {
@@ -147,6 +156,29 @@ export interface ApplyOutcome {
   /** `skipped`: finished in an earlier apply, not run again. */
   status: OutcomeStatus | "skipped";
   detail?: string;
+  /** For a drifted item: the dry-run call that plans it again. */
+  replan?: string;
+  created?: CreatedObject;
+}
+
+function createdObject(v: any): CreatedObject | undefined {
+  return v && typeof v.type === "string" && typeof v.name === "string" && v.id !== undefined && v.id !== null
+    ? { type: v.type, name: v.name, id: String(v.id) }
+    : undefined;
+}
+
+/** Objects created by earlier, applied items of a plan, newest first (for name resolution). */
+export function createdInPlan(plan: Plan, type: string): CreatedObject[] {
+  return plan.items.map((i) => i.outcome?.created).filter((c): c is CreatedObject => !!c && c.type === type).reverse();
+}
+
+/** `tool key=value … --plan=<file>`, shell-quoted, without dry_run. */
+export function replanCommand(tool: string, args: Record<string, unknown>): string {
+  const quote = (v: string) => (/^[\w.,:@\/-]+$/.test(v) ? v : `'${v.replace(/'/g, "'\\''")}'`);
+  const parts = Object.entries(args)
+    .filter(([k]) => k !== "dry_run")
+    .map(([k, v]) => `${k}=${quote(typeof v === "string" ? v : JSON.stringify(v))}`);
+  return [tool, ...parts, "--plan=<file>"].join(" ");
 }
 
 type Runner = (name: string, args: Record<string, unknown>, ctx: ToolContext) => Promise<RunResult>;
@@ -162,13 +194,25 @@ export function pendingItems(plan: Plan, only?: number[]): PlanItem[] {
  */
 export async function applyPlan(ctx: ToolContext, plan: Plan, only?: number[], file?: string, run: Runner = runToolByName): Promise<ApplyOutcome[]> {
   const out: ApplyOutcome[] = [];
+  // later items may refer by name to objects earlier items created (in this apply or an earlier one)
+  const createdNow: CreatedObject[] = [];
+  const runCtx: ToolContext = {
+    ...ctx,
+    created: (type) => [...createdNow.filter((c) => c.type === type).reverse(), ...createdInPlan(plan, type)],
+  };
   for (const it of plan.items.filter((i) => !only?.length || only.includes(i.n))) {
     if (isFinished(it)) {
       out.push({ n: it.n, summary: it.summary, status: "skipped", detail: `${it.outcome!.status} earlier` });
       continue;
     }
-    const outcome = await applyItem(ctx, it, run);
-    saveOutcome(file, it.n, { status: outcome.status as OutcomeStatus, at: new Date().toISOString(), detail: outcome.detail });
+    const outcome = await applyItem(runCtx, it, run);
+    if (outcome.created) createdNow.push(outcome.created);
+    saveOutcome(file, it.n, {
+      status: outcome.status as OutcomeStatus,
+      at: new Date().toISOString(),
+      detail: outcome.detail,
+      ...(outcome.created ? { created: outcome.created } : {}),
+    });
     out.push(outcome);
   }
   return out;
@@ -180,10 +224,12 @@ async function applyItem(ctx: ToolContext, it: PlanItem, run: Runner): Promise<A
   if (!again.ok) return { ...base, status: "failed", detail: again.error.message };
   if ((again.value as any)?.already_satisfied) return { ...base, status: "already-satisfied", detail: (again.value as any).reason };
   if (digestOf(again.value) !== it.digest) {
-    return { ...base, status: "drifted", detail: "the request differs from the approved one; re-plan it" };
+    return { ...base, status: "drifted", detail: "the request differs from the approved one; re-plan it", replan: replanCommand(it.tool, it.args) };
   }
   const res = await run(it.tool, { ...it.args, dry_run: false }, ctx);
-  return res.ok ? { ...base, status: "done" } : { ...base, status: "failed", detail: res.error.message };
+  if (!res.ok) return { ...base, status: "failed", detail: res.error.message };
+  const created = createdObject((res.value as any)?.created);
+  return { ...base, status: "done", ...(created ? { created } : {}) };
 }
 
 export function renderOutcomes(outcomes: ApplyOutcome[]): string {
@@ -191,6 +237,19 @@ export function renderOutcomes(outcomes: ApplyOutcome[]): string {
   const done = run.filter((o) => o.status === "done" || o.status === "already-satisfied").length;
   const skipped = outcomes.length - run.length;
   const lines = [`applied ${done}/${run.length}${skipped ? ` (${skipped} finished earlier, skipped)` : ""}`];
-  for (const o of outcomes) lines.push(`${o.n}. ${o.status.toUpperCase()} | ${o.summary}${o.detail ? ` | ${o.detail}` : ""}`);
+  for (const o of outcomes) {
+    lines.push(`${o.n}. ${o.status.toUpperCase()} | ${o.summary}${o.detail ? ` | ${o.detail}` : ""}`);
+    if (o.replan) lines.push(`   re-plan: ${o.replan}`);
+  }
+  if (outcomes.some((o) => o.status === "drifted")) {
+    lines.push("drifted: the target changed after approval; re-run the dry run of those items with --plan=<new file>, review, then apply it");
+  }
   return lines.join("\n");
+}
+
+/** `apply` exit code: failures win, then drift (stale, 5); done, already-satisfied and skipped items are success. */
+export function applyExitCode(outcomes: ApplyOutcome[]): number {
+  if (outcomes.some((o) => o.status === "failed")) return EXIT.GENERIC;
+  if (outcomes.some((o) => o.status === "drifted")) return EXIT.STALE;
+  return EXIT.OK;
 }

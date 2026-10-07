@@ -4,7 +4,7 @@
 
 See proposal.md and specs/. Current tools in `src/tools/jira/servicedesk.ts` read service desks, queues, request types and request type fields through the public `/rest/servicedeskapi` (with `X-ExperimentalApi: opt-in`). The change-plan infrastructure (`already-satisfied`, `identity`/`state` in dry runs, outcomes in the plan, read-back with `VerificationError`) and the Jira version gate exist (`src/plan.ts`, `src/jiraVersion.ts`).
 
-Verified on Jira 11.3.6 / JSM 11.3.5-QR-0008 (WADL and read-only responses; project SPP, service desk 3, project id 10503):
+Verified on Jira 11.3.6 / JSM 11.3.5-QR-0008 (WADL and read-only responses; a test project and service desk):
 
 | Need | Endpoint | Kind |
 |---|---|---|

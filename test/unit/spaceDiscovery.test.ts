@@ -43,7 +43,7 @@ describe("Confluence group space discovery", () => {
       }
       return undefined;
     });
-    const result = await runTool(tool, { group: "sample-team" }, ctx);
+    const result = await runTool(tool, { group: "sample-team", include_audit: true }, ctx);
 
     assert.equal(result.ok, true);
     if (!result.ok) return;
@@ -57,6 +57,27 @@ describe("Confluence group space discovery", () => {
     assert.deepEqual(value.audit.find((space: any) => space.key === "NoView").groupOperations, ["administer:space"]);
     assert.equal(calls.filter((call) => call.url.includes("/rest/api/space?")).length, 5);
     assert.ok(calls.some((call) => call.url.includes("/space/DoC/permissions/group/sample-team")));
+  });
+
+  it("omits nonmatching audit rows by default while preserving matches and counts", async () => {
+    const { ctx } = testContext((call) => {
+      const url = new URL(call.url);
+      if (url.pathname.startsWith("/rest/api/group/")) return groupResponse(call);
+      if (url.pathname === "/rest/api/space") return { body: {
+        totalSize: 2, results: ["YES", "NO"].map((key, i) => ({ id: String(i), key, name: key, type: "global", status: "current" })), _links: {},
+      } };
+      return { body: url.pathname.includes("/space/YES/")
+        ? [{ subject: { type: "group", name: "sample-team" }, operation: { operationKey: "read", targetType: "space" } }] : [] };
+    });
+    const result = await runTool(tool, { group: "sample-team", type: "global", status: "current" }, ctx);
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    const value = result.value as any;
+    assert.equal(value.inspected, 2);
+    assert.equal(value.selected, 1);
+    assert.deepEqual(value.matches.map((space: any) => space.key), ["YES"]);
+    assert.equal(value.completeForCaller, true);
+    assert.equal(value.audit, undefined);
   });
 
   it("reports permission failures as unknown and blocks complete results", async () => {
@@ -78,6 +99,8 @@ describe("Confluence group space discovery", () => {
     assert.equal(value.completeForCaller, false);
     assert.equal(value.siteCountCrossCheck.status, "not-applicable-for-filtered-scope");
     assert.equal(value.unknownReads[0].spaceKey, "FAIL");
+    assert.equal(value.audit, undefined);
+    assert.deepEqual(value.matches, []);
   });
 
   it("marks malformed lists, repeated cursors, and site count mismatches incomplete", async () => {
@@ -157,7 +180,7 @@ describe("Confluence group space discovery", () => {
       return { body: [] };
     });
     const result = await runTool(tool, {
-      group: "sample-team", type: "global", status: "current", max_spaces: 1,
+      group: "sample-team", type: "global", status: "current", max_spaces: 1, include_audit: true,
     }, ctx);
 
     assert.equal(result.ok, true);
