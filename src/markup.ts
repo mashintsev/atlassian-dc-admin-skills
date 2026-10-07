@@ -322,11 +322,22 @@ export function markdownToStorage(md: string): string {
 }
 
 export interface StorageToMarkdownOptions {
-  /** Instance base URL, used to build attachment download links for images. */
+  /** Instance base URL: links to it are shortened to their path. */
   baseUrl?: string;
-  /** Page id, used to build attachment download links for images. */
+  /** Page id of the body (kept for callers; attachment images render as bare file names). */
   pageId?: string;
+  /** Longest code block kept in a read, in lines (default 200); Infinity for diffs. */
+  maxCodeLines?: number;
 }
+
+/** Code blocks longer than this are cut in reads (the rest is counted, with a hint to read storage). */
+export const MAX_CODE_LINES = 200;
+
+/** Marker after a code block cut in a read. */
+export const CODE_CUT_MARKER = "code block cut in this read";
+
+/** Body-less macros that carry meaning, rendered as a short marker. */
+const MARKER_MACROS = new Set(["toc", "children", "pagetree", "recently-updated", "contentbylabel", "attachments", "livesearch"]);
 
 const PANEL_MACROS = new Set(["info", "note", "warning", "tip", "panel"]);
 
@@ -337,6 +348,19 @@ function macroName(node: any): string {
 function childByName(node: any, name: string): any | undefined {
   return Array.from(node.childNodes ?? []).find((c: any) => c.nodeName === name);
 }
+
+/** The first descendant with this node name (depth-first). */
+function descendantByName(node: any, name: string): any | undefined {
+  for (const c of Array.from(node.childNodes ?? []) as any[]) {
+    if (c.nodeName === name) return c;
+    const hit = descendantByName(c, name);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+/** A file name as a Markdown link target: characters that would end or break the target are escaped. */
+const linkTarget = (file: string) => file.replace(/[ ()<>%]/g, (ch) => encodeURIComponent(ch));
 
 function macroParam(node: any, name: string): string | undefined {
   for (const c of Array.from(node.childNodes ?? []) as any[]) {
@@ -374,15 +398,30 @@ function buildTurndown(opts: StorageToMarkdownOptions, codeBodies: string[]): Tu
   };
 
   // turndown tries the most recently added rule first, so the catch-all macro rules come first.
-  // Any other macro: keep its body text, drop parameters.
+  // Any other macro: its name as a marker, then its body text; parameters are dropped.
   addRule("otherMacro", {
     filter: (n: any) => n.nodeName === "AC:STRUCTURED-MACRO" || n.nodeName === "AC:MACRO",
     replacement: (_c: string, n: any) => {
+      const name = macroName(n);
+      const marker = name ? `[${name}]` : "";
       const rich = childByName(n, "AC:RICH-TEXT-BODY");
-      if (rich) return `\n\n${td.turndown(rich.innerHTML ?? "")}\n\n`;
+      if (rich) return `\n\n${marker ? `${marker}\n\n` : ""}${td.turndown(rich.innerHTML ?? "")}\n\n`;
       const plain = childByName(n, "AC:PLAIN-TEXT-BODY");
       const text = plain?.textContent?.replace(/@@PTB(\d+)@@/g, (_m: string, i: string) => codeBodies[Number(i)] ?? "");
-      return text ? `\n\n${text}\n\n` : "";
+      if (text) return `\n\n${marker ? `${marker}\n\n` : ""}${text}\n\n`;
+      return marker ? `\n\n${marker}\n\n` : "";
+    },
+  });
+  addRule("markerMacro", {
+    filter: (n: any) => n.nodeName === "AC:STRUCTURED-MACRO" && (MARKER_MACROS.has(macroName(n)) || ["status", "include", "excerpt-include"].includes(macroName(n))),
+    replacement: (_c: string, n: any) => {
+      const name = macroName(n);
+      if (name === "status") return `[status: ${(macroParam(n, "title") ?? "").trim() || macroParam(n, "colour") || "?"}]`;
+      if (name === "include" || name === "excerpt-include") {
+        const page = descendantByName(n, "RI:PAGE");
+        return `\n\n[${name}: ${page?.getAttribute("ri:content-title") ?? "?"}]\n\n`;
+      }
+      return `\n\n[${name}]\n\n`;
     },
   });
   addRule("macroParameter", { filter: (n: any) => n.nodeName === "AC:PARAMETER", replacement: () => "" });
@@ -392,8 +431,13 @@ function buildTurndown(opts: StorageToMarkdownOptions, codeBodies: string[]): Tu
     replacement: (_c: string, n: any) => {
       const lang = macroParam(n, "language") ?? "";
       const raw = childByName(n, "AC:PLAIN-TEXT-BODY")?.textContent ?? "";
-      const body = raw.replace(/@@PTB(\d+)@@/g, (_m: string, i: string) => codeBodies[Number(i)] ?? "");
-      return `\n\n\`\`\`${lang}\n${body.replace(/\n$/, "")}\n\`\`\`\n\n`;
+      const body = raw.replace(/@@PTB(\d+)@@/g, (_m: string, i: string) => codeBodies[Number(i)] ?? "").replace(/\n$/, "");
+      const lines = body.split("\n");
+      const max = opts.maxCodeLines ?? MAX_CODE_LINES;
+      if (lines.length <= max) return `\n\n\`\`\`${lang}\n${body}\n\`\`\`\n\n`;
+      // The marker tells callers to fetch the complete code before editing it.
+      const note = `*(+${lines.length - max} lines: ${CODE_CUT_MARKER}; read it with body_format=storage or section before editing)*`;
+      return `\n\n\`\`\`${lang}\n${lines.slice(0, max).join("\n")}\n\`\`\`\n\n${note}\n\n`;
     },
   });
 
@@ -425,10 +469,8 @@ function buildTurndown(opts: StorageToMarkdownOptions, codeBodies: string[]): Tu
       const url = childByName(n, "RI:URL");
       let src = "";
       if (att) {
-        const file = att.getAttribute("ri:filename") ?? "";
-        src = opts.baseUrl && opts.pageId
-          ? `${opts.baseUrl.replace(/\/+$/, "")}/download/attachments/${opts.pageId}/${encodeURIComponent(file)}`
-          : file;
+        // a bare file name: short, and the Markdown write path turns it back into an attachment image
+        src = linkTarget(att.getAttribute("ri:filename") ?? "");
       } else if (url) {
         src = url.getAttribute("ri:value") ?? "";
       }
@@ -466,10 +508,22 @@ function buildTurndown(opts: StorageToMarkdownOptions, codeBodies: string[]): Tu
     },
   });
 
+  const base = opts.baseUrl?.replace(/\/+$/, "");
+  if (base) {
+    td.addRule("sameInstanceLink", {
+      filter: (n: any) => n.nodeName === "A" && String(n.getAttribute("href") ?? "").startsWith(`${base}/`),
+      replacement: (content: string, n: any) => `[${content}](${String(n.getAttribute("href")).slice(base.length)})`,
+    });
+  }
+
   td.addRule("table", {
     filter: "table",
     replacement: (_c: string, n: any) => {
-      const rows = (Array.from(n.querySelectorAll("tr")) as any[]).map((tr) =>
+      // only this table's rows: rows of a table nested in a cell stay inside that cell
+      const own = (Array.from(n.childNodes) as any[]).flatMap((c) =>
+        c.nodeName === "TR" ? [c] : ["THEAD", "TBODY", "TFOOT"].includes(c.nodeName) ? (Array.from(c.childNodes) as any[]).filter((r) => r.nodeName === "TR") : [],
+      );
+      const rows = own.map((tr) =>
         (Array.from(tr.childNodes) as any[]).filter((c) => c.nodeName === "TH" || c.nodeName === "TD").map((c) => cellText(c, td)),
       );
       if (rows.length === 0) return "";

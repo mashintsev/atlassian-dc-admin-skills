@@ -1,0 +1,32 @@
+[
+  {
+    "id": "frag-1",
+    "version": 2,
+    "ownedBy": null,
+    "disabled": false,
+    "name": "Help link",
+    "type": "web-item",
+    "locationName": "Top navigation bar",
+    "FIELD_LOCATION": "system.top.navigation.bar",
+    "FIELD_KEY": "demo-help",
+    "FIELD_SECTION": "",
+    "FIELD_WEIGHT": "10",
+    "FIELD_MENU_LABEL": "Help",
+    "FIELD_MENU_LABEL_KEY": "",
+    "FIELD_LINK_DESTINATION": "https://help.example.com",
+    "FIELD_LINK_CONDITION": {
+      "script": "return true",
+      "scriptPath": null,
+      "parameters": {}
+    },
+    "FIELD_CLASS_NAME": "",
+    "FIELD_DO_WHAT": "NAVIGATE",
+    "FIELD_STYLE_CLASS": "",
+    "FIELD_NOTES": "",
+    "lastModifiedDate": 1780000000000,
+    "modifiedByAvatar": "",
+    "modifiedByDisplayName": "Admin",
+    "modifiedByUserKey": "JIRAUSER10000",
+    "canned-script": "com.onresolve.scriptrunner.canned.jira.fragments.CustomWebItem"
+  }
+]

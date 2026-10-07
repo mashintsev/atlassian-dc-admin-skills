@@ -1,0 +1,21 @@
+{
+  "sharedWithProjects": [
+    {
+      "id": 10100,
+      "key": "DEMO",
+      "name": "Demo Project",
+      "archived": false
+    }
+  ],
+  "sharedWithIssueTypes": [
+    "10004"
+  ],
+  "totalProjectsCount": 1,
+  "name": "Incident WF",
+  "state": "editable",
+  "displayName": "Incident WF",
+  "updatedDate": 1780000000000,
+  "isDraftWithChanges": false,
+  "draftWithChanges": false,
+  "hiddenProjectsCount": 0
+}

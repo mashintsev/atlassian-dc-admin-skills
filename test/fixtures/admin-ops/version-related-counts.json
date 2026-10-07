@@ -1,0 +1,6 @@
+{
+  "self": "https://jira.example.com/rest/api/2/version/10100",
+  "issuesFixedCount": 12,
+  "issuesAffectedCount": 3,
+  "issueCountWithCustomFieldsShowingVersion": 0
+}

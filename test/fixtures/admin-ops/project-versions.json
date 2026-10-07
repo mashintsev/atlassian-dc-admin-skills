@@ -1,0 +1,14 @@
+[
+  {
+    "id": "10100",
+    "name": "1.0",
+    "projectId": 10000,
+    "released": true
+  },
+  {
+    "id": "10101",
+    "name": "1.1",
+    "projectId": 10000,
+    "released": false
+  }
+]

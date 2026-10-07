@@ -1,0 +1,29 @@
+[
+  {
+    "id": "end-1",
+    "disabled": false,
+    "version": 4,
+    "endpoints": [
+      {
+        "name": "doSomething",
+        "method": "GET",
+        "groups": [
+          "jira-administrators"
+        ],
+        "config": {
+          "secretToken": "abc",
+          "script": "x"
+        }
+      }
+    ],
+    "resourcePath": "doSomething",
+    "editable": true,
+    "FIELD_NOTES": "",
+    "FIELD_SCRIPT_FILE_OR_SCRIPT": {
+      "script": "return 1",
+      "scriptPath": null,
+      "parameters": {}
+    },
+    "canned-script": "com.onresolve.scriptrunner.canned.common.rest.CustomRestEndpoint"
+  }
+]

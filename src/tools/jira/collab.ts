@@ -57,31 +57,35 @@ export const jiraCollabTools: ToolDef[] = [
   },
   {
     name: "jira_add_watcher",
+    unverifiable: "not checked: current watchers are not compared",
+    aliases: { username: "user" },
     product: "jira",
     write: true,
     description: "Add a user (username) as watcher of an issue.",
-    inputShape: { issue_key: z.string(), username: z.string(), ...dryRunShape },
+    inputShape: { issue_key: z.string(), user: z.string(), ...dryRunShape },
     async handler({ client }, args) {
       return guardedWrite(client("jira"), args, {
         method: "POST",
         path: `${API}/issue/${seg(args.issue_key)}/watchers`,
-        json: args.username,
-        summary: `Add watcher ${args.username} to ${args.issue_key}`,
+        json: args.user,
+        summary: `Add watcher ${args.user} to ${args.issue_key}`,
       });
     },
   },
   {
     name: "jira_remove_watcher",
+    unverifiable: "not checked: current watchers are not compared",
+    aliases: { username: "user" },
     product: "jira",
     write: true,
     description: "Remove a watcher (username) from an issue.",
-    inputShape: { issue_key: z.string(), username: z.string(), ...dryRunShape },
+    inputShape: { issue_key: z.string(), user: z.string(), ...dryRunShape },
     async handler({ client }, args) {
       return guardedWrite(client("jira"), args, {
         method: "DELETE",
         path: `${API}/issue/${seg(args.issue_key)}/watchers`,
-        params: { username: args.username },
-        summary: `Remove watcher ${args.username} from ${args.issue_key}`,
+        params: { username: args.user },
+        summary: `Remove watcher ${args.user} from ${args.issue_key}`,
       });
     },
   },

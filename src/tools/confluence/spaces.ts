@@ -7,10 +7,10 @@
  */
 
 import { z } from "zod";
-import { seg } from "../../client.js";
-import { isHttpStatusError, ValidationError } from "../../errors.js";
+import { seg, type AtlassianClient } from "../../client.js";
+import { isHttpStatusError, ValidationError, VerificationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { contains, dryRunShape, guardedWrite, listArg, pageShape, paginate, serverPage } from "../util.js";
+import { alreadySatisfied, capList, contains, fullListsShape, dryRunShape, guardedWrite, listArg, pageShape, paginate, serverPage } from "../util.js";
 
 const API = "/rest/api";
 /** Upper bound of the client-side space scan used only when CQL is rejected. */
@@ -53,6 +53,51 @@ function compactSpacePermission(p: any): Record<string, unknown> {
   };
 }
 
+/** The operations ("op:target") a subject holds in a space. */
+async function subjectOperations(client: AtlassianClient, spaceKey: string, type: string, subject?: string): Promise<Set<string>> {
+  const data = await client.get(subjectPath(`${API}/space/${seg(spaceKey)}/permissions`, type, subject));
+  const list: any[] = Array.isArray(data) ? data : (data?.results ?? []);
+  return new Set(list.map((p) => String(compactSpacePermission(p).operation)));
+}
+
+/** The space status ("current", "archived"), or null when the space does not exist. */
+async function spaceStatus(client: AtlassianClient, spaceKey: string): Promise<string | null> {
+  try {
+    const s = await client.get(`${API}/space/${seg(spaceKey)}`);
+    return String(s?.status ?? "current");
+  } catch (e) {
+    if (isHttpStatusError(e) && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/**
+ * Grant or revoke space permissions: already-satisfied when every requested operation already is (or
+ * is not) held; the request always carries the requested list.
+ */
+async function changeSpacePermissions(client: AtlassianClient, args: any, grant: boolean) {
+  const ops: string[] = args.operations.map((o: any) => `${o.operationKey}:${o.targetType}`);
+  const who = `${args.subject_type}${args.subject ? `:${args.subject}` : ""}`;
+  const summary = grant ? `Grant ${ops.join(", ")} in ${args.space_key} to ${who}` : `Revoke ${ops.join(", ")} in ${args.space_key} from ${who}`;
+  const before = await subjectOperations(client, args.space_key, args.subject_type, args.subject);
+  const pending = ops.filter((op) => before.has(op) !== grant);
+  if (!pending.length) return alreadySatisfied(summary, grant ? "the subject already has these permissions" : "the subject has none of these permissions");
+  const req = {
+    method: "PUT" as const,
+    path: `${subjectPath(`${API}/space/${seg(args.space_key)}/permissions`, args.subject_type, args.subject)}/${grant ? "grant" : "revoke"}`,
+    json: args.operations,
+    summary,
+  };
+  // the request carries only the requested operations, so changes to other operations (also by earlier plan
+  // items) leave it, and its plan fingerprint, unchanged; the space workflow relies on that request-only fingerprint
+  if (args.dry_run !== false) return guardedWrite(client, args, req);
+  const result = await guardedWrite(client, args, req);
+  const after = await subjectOperations(client, args.space_key, args.subject_type, args.subject);
+  const wrong = ops.filter((op) => after.has(op) !== grant);
+  if (wrong.length) throw new VerificationError(`${summary}: not in effect afterwards: ${wrong.join(", ")}`, { space: args.space_key, subject: who, operations: [...after].sort() });
+  return result;
+}
+
 export const confluenceSpaceTools: ToolDef[] = [
   {
     name: "confluence_list_spaces",
@@ -87,9 +132,10 @@ export const confluenceSpaceTools: ToolDef[] = [
         } catch (e) {
           if (!isHttpStatusError(e) || e.status !== 400) throw e;
           // Fallback when the instance rejects the CQL: scan at most SPACE_SCAN_MAX spaces.
-          const all = await c.getPagedConfluence(`${API}/space`, params, 200, SPACE_SCAN_MAX);
-          const items = all.map(compact).filter((sp) => contains(sp.name, args.name_contains) || contains(sp.key, args.name_contains));
-          return { fallback: `CQL rejected; scanned ${all.length} spaces`, ...paginate(items, args, 100) };
+          const read = await c.getPagedConfluenceResult(`${API}/space`, params, 200, SPACE_SCAN_MAX);
+          const items = read.items.map(compact).filter((sp) => contains(sp.name, args.name_contains) || contains(sp.key, args.name_contains));
+          const scanned = `CQL rejected; scanned ${read.items.length} spaces${read.truncated ? ` and stopped at ${read.cap}` : ""}`;
+          return { fallback: scanned, ...paginate(items, args, 100), ...(read.truncated ? { truncated: true, cap: read.cap } : {}) };
         }
       }
       const data = await c.get(`${API}/space`, { ...params, start: offset, limit });
@@ -128,6 +174,7 @@ export const confluenceSpaceTools: ToolDef[] = [
       space_key: z.string(),
       subject_type: z.enum(["user", "group", "anonymous"]).optional(),
       subject: z.string().optional(),
+      ...fullListsShape,
     },
     async handler({ client }, args) {
       const base = `${API}/space/${seg(args.space_key)}/permissions`;
@@ -140,7 +187,10 @@ export const confluenceSpaceTools: ToolDef[] = [
         (grouped[who] ??= []).push(String(p.operation));
       }
       for (const ops of Object.values(grouped)) ops.sort();
-      return { space: args.space_key, subjects: Object.keys(grouped).length, permissions: grouped };
+      const out: Record<string, unknown> = { space: args.space_key, subjects: Object.keys(grouped).length };
+      capList(out, "permissions", Object.entries(grouped), args.full_lists);
+      out.permissions = Object.fromEntries(out.permissions as [string, string[]][]);
+      return out;
     },
   },
   {
@@ -152,13 +202,7 @@ export const confluenceSpaceTools: ToolDef[] = [
       `e.g. read:space, create:page, delete:attachment, administer:space. Operations: ${SPACE_OPERATIONS.join(", ")}.`,
     inputShape: { space_key: z.string(), ...subjectShape, operations: operationsArg, ...dryRunShape },
     async handler({ client }, args) {
-      const base = `${API}/space/${seg(args.space_key)}/permissions`;
-      return guardedWrite(client("confluence"), args, {
-        method: "PUT",
-        path: `${subjectPath(base, args.subject_type, args.subject)}/grant`,
-        json: args.operations,
-        summary: `Grant ${args.operations.map((o: any) => `${o.operationKey}:${o.targetType}`).join(", ")} in ${args.space_key} to ${args.subject_type}${args.subject ? `:${args.subject}` : ""}`,
-      });
+      return changeSpacePermissions(client("confluence"), args, true);
     },
   },
   {
@@ -168,13 +212,7 @@ export const confluenceSpaceTools: ToolDef[] = [
     description: "Revoke space permissions ('operation:target' list) from a user, group or anonymous.",
     inputShape: { space_key: z.string(), ...subjectShape, operations: operationsArg, ...dryRunShape },
     async handler({ client }, args) {
-      const base = `${API}/space/${seg(args.space_key)}/permissions`;
-      return guardedWrite(client("confluence"), args, {
-        method: "PUT",
-        path: `${subjectPath(base, args.subject_type, args.subject)}/revoke`,
-        json: args.operations,
-        summary: `Revoke ${args.operations.map((o: any) => `${o.operationKey}:${o.targetType}`).join(", ")} in ${args.space_key} from ${args.subject_type}${args.subject ? `:${args.subject}` : ""}`,
-      });
+      return changeSpacePermissions(client("confluence"), args, false);
     },
   },
   {
@@ -192,7 +230,12 @@ export const confluenceSpaceTools: ToolDef[] = [
         args.subject_type === "unlicensed"
           ? `${API}/permissions/unlicensed`
           : subjectPath(`${API}/permissions`, args.subject_type, args.subject);
-      return client("confluence").get(path);
+      const data = await client("confluence").get(path);
+      const list: any[] = Array.isArray(data) ? data : (data?.results ?? []);
+      return {
+        subject: args.subject ? `${args.subject_type}:${args.subject}` : args.subject_type,
+        operations: list.map((permission) => String(compactSpacePermission(permission).operation)).sort(),
+      };
     },
   },
   {
@@ -202,11 +245,17 @@ export const confluenceSpaceTools: ToolDef[] = [
     description: "Archive a space (hidden from navigation and search by default; reversible in Space tools).",
     inputShape: { space_key: z.string(), ...dryRunShape },
     async handler({ client }, args) {
-      return guardedWrite(client("confluence"), args, {
-        method: "PUT",
-        path: `${API}/space/${seg(args.space_key)}/archive`,
-        summary: `Archive space ${args.space_key}`,
-      });
+      const c = client("confluence");
+      const summary = `Archive space ${args.space_key}`;
+      const status = await spaceStatus(c, args.space_key);
+      if (status === null) throw new ValidationError(`No space ${args.space_key}`);
+      if (status === "archived") return alreadySatisfied(summary, "the space is already archived");
+      const req = { method: "PUT" as const, path: `${API}/space/${seg(args.space_key)}/archive`, summary };
+      if (args.dry_run !== false) return guardedWrite(c, args, req);
+      const result = await guardedWrite(c, args, req);
+      const after = await spaceStatus(c, args.space_key);
+      if (after !== "archived") throw new VerificationError(`${summary}: the space is not archived afterwards`, { space: args.space_key, status: after });
+      return result;
     },
   },
   {
@@ -214,14 +263,14 @@ export const confluenceSpaceTools: ToolDef[] = [
     product: "confluence",
     write: true,
     description:
-      "Permanently delete a space and all its content. Runs as a long task: follow it with confluence_get_long_task.",
+      "Permanently delete a space and all its content. Already deleted (404) → already-satisfied. Confluence deletes it in a " +
+      "long task that can only be polled: the result is the task; follow it with confluence_get_long_task, then the space read answers 404.",
     inputShape: { space_key: z.string(), ...dryRunShape },
     async handler({ client }, args) {
-      return guardedWrite(client("confluence"), args, {
-        method: "DELETE",
-        path: `${API}/space/${seg(args.space_key)}`,
-        summary: `PERMANENTLY delete space ${args.space_key} and all its content`,
-      });
+      const c = client("confluence");
+      const summary = `PERMANENTLY delete space ${args.space_key} and all its content`;
+      if ((await spaceStatus(c, args.space_key)) === null) return alreadySatisfied(summary, "no such space (already deleted)");
+      return guardedWrite(c, args, { method: "DELETE", path: `${API}/space/${seg(args.space_key)}`, summary });
     },
   },
 ];

@@ -2,6 +2,7 @@ import { boundedAll, seg, type AtlassianClient } from "../../client.js";
 import { isHttpStatusError, ValidationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
 import { z } from "zod";
+import { boolArg } from "../util.js";
 
 const API = "/rest/api";
 const PAGE_SIZE = 100;
@@ -152,6 +153,7 @@ export const confluenceSpaceDiscoveryTools: ToolDef[] = [
     description: "Audit spaces for exact direct group permissions; only explicit read:space grants are selected.",
     inputShape: {
       group: z.string().min(1),
+      include_audit: boolArg.optional().describe("Include every space audit row (default: matches and unknown reads only)"),
       type: z.enum(["global", "personal"]).optional(),
       status: z.enum(["current", "archived"]).optional(),
       max_spaces: z.coerce.number().int().min(1).max(MAX_SPACES).optional()
@@ -262,7 +264,7 @@ export const confluenceSpaceDiscoveryTools: ToolDef[] = [
         issues,
         unknownReads,
         matches,
-        audit,
+        ...(args.include_audit ? { audit } : {}),
       };
     },
   },

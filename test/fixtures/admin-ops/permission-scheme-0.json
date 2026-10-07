@@ -1,0 +1,31 @@
+{
+  "id": 0,
+  "name": "Default Permission Scheme",
+  "description": "Default",
+  "permissions": [
+    {
+      "id": 10001,
+      "permission": "BROWSE_PROJECTS",
+      "holder": {
+        "type": "group",
+        "parameter": "jira-users"
+      }
+    },
+    {
+      "id": 10002,
+      "permission": "CREATE_ISSUES",
+      "holder": {
+        "type": "projectRole",
+        "parameter": "10001"
+      }
+    },
+    {
+      "id": 10003,
+      "permission": "ADMINISTER_PROJECTS",
+      "holder": {
+        "type": "projectRole",
+        "parameter": "10002"
+      }
+    }
+  ]
+}

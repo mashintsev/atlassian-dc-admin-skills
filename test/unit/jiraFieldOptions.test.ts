@@ -70,15 +70,16 @@ async function run(name: string, args: Record<string, unknown>, responder: (c: C
 }
 
 describe("jira_get_custom_field_options (2.1)", () => {
-  it("lists options per context in order with disabled state", async () => {
+  it("lists counts per context and pages one context in order with disabled state", async () => {
     const r = await run("jira_get_custom_field_options", { field: "Severity" }, fakeJira().responder);
     assert.ok(r.res.ok, JSON.stringify(r.error));
     const bank = r.value.contexts.find((c: any) => c.id === 10801);
-    assert.deepEqual(bank.options.map((o: any) => [o.value, o.disabled]), [["1", false], ["2", false], ["3", false], ["4", true]]);
+    assert.equal(bank.optionCount, 4);
     assert.equal(bank.scope, "projects 10100; issue types 10004");
-    assert.deepEqual(r.value.contexts.find((c: any) => c.id === 10800).options, []);
+    assert.equal(r.value.contexts.find((c: any) => c.id === 10800).optionCount, 0);
     const one = await run("jira_get_custom_field_options", { field: "customfield_10700", context: 10801 }, fakeJira().responder);
-    assert.equal(one.value.contexts.length, 1);
+    assert.equal(one.value.context.id, 10801);
+    assert.deepEqual(one.value.items.map((o: any) => [o.value, o.disabled]), [["1", false], ["2", false], ["3", false], ["4", true]]);
   });
 
   it("rejects field types without options", async () => {

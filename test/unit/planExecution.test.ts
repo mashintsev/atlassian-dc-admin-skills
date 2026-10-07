@@ -10,7 +10,7 @@ import { addToPlan, applyPlan, digestOf, readPlan, recordDeclined, renderPlan } 
 import { runToolByName, toToolError } from "../../src/runner.js";
 import { resolveField } from "../../src/tools/jira/fieldRefs.js";
 import { alreadySatisfied } from "../../src/tools/util.js";
-import { testContext } from "./helpers.js";
+import { fakeJiraUsers, testContext } from "./helpers.js";
 
 const tmpPlan = () => join(mkdtempSync(join(tmpdir(), "plan-")), "p.json");
 
@@ -47,7 +47,8 @@ describe("plan outcomes", () => {
     const file = tmpPlan();
     for (const g of ["g1", "g2", "g3", "g4", "g5"]) await plan(file, "jira_add_user_to_group", { group: g, username: "ivan" });
 
-    const failing = testContext((c) => (c.url.includes("groupname=g4") && c.method === "POST" ? { status: 500, body: { errorMessages: ["boom"] } } : undefined));
+    const directory = fakeJiraUsers({ fail: (c) => c.url.includes("groupname=g4") && c.method === "POST" });
+    const failing = testContext(directory.responder);
     const first = await applyPlan(failing.ctx, readPlan(file), [1, 2, 3, 4], file);
     recordDeclined(file, [5]);
     assert.deepEqual(first.map((o) => o.status), ["done", "done", "done", "failed"]);
@@ -60,7 +61,7 @@ describe("plan outcomes", () => {
     assert.match(text, /5\. \[declined\]/);
     assert.match(text, /remaining 2/);
 
-    const again = testContext();
+    const again = testContext(fakeJiraUsers().responder);
     const second = await applyPlan(again.ctx, readPlan(file), undefined, file);
     assert.deepEqual(second.filter((o) => o.status !== "skipped").map((o) => o.n), [4, 5]);
     assert.equal(again.calls.filter((c) => c.method === "POST").length, 2);

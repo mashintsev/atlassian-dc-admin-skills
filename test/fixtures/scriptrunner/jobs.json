@@ -1,0 +1,28 @@
+[
+  {
+    "@class": "com.onresolve.scriptrunner.canned.jira.jobs.JiraCustomScheduledJobCommand",
+    "id": "job-1",
+    "version": 3,
+    "ownedBy": null,
+    "scheduleType": "CRON",
+    "disabled": false,
+    "name": "Close stale requests",
+    "nextRunTime": 1790000000000,
+    "FIELD_USER_ID": "automation",
+    "FIELD_INTERVAL": "0 0 2 * * ?",
+    "FIELD_NOTES": "Nightly cleanup",
+    "FIELD_RUN_ONCE_DATE": null,
+    "FIELD_JOB_CODE": {
+      "script": null,
+      "scriptPath": "jobs/sample_job.groovy",
+      "parameters": {}
+    },
+    "FIELD_ADDITIONAL_SCRIPT": {
+      "script": "log.info('x')",
+      "scriptPath": null,
+      "parameters": {}
+    },
+    "FIELD_JQL_QUERY": "project = DEMO",
+    "canned-script": "com.onresolve.scriptrunner.canned.jira.jobs.JiraCustomScheduledJob"
+  }
+]

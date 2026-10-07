@@ -11,10 +11,11 @@
  */
 
 import { z } from "zod";
+import { cached } from "../../scanCache.js";
 import { boundedAll, seg, type AtlassianClient } from "../../client.js";
 import { isHttpStatusError, ValidationError, VerificationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { alreadySatisfied, dryRunShape, pageShape, paginate, serverPage } from "../util.js";
+import { alreadySatisfied, capList, dryRunShape, fullListsShape, pageShape, paginate, serverPage } from "../util.js";
 import { fieldPlaceholder, resolveField, type FieldRef } from "./fieldRefs.js";
 
 const API = "/rest/api/2";
@@ -31,23 +32,33 @@ function screensOf(data: any): any[] {
   return data?.screens ?? data?.values ?? [];
 }
 
-const screenLists = new WeakMap<AtlassianClient, Promise<Array<{ id: number; name: string }>>>();
+type ScreenList = Array<{ id: number; name: string }> & { truncated?: boolean };
+const screenLists = new WeakMap<AtlassianClient, Promise<ScreenList>>();
 
-/** Every screen (id, name), read once per client; Jira screen names are unique. */
-function allScreens(client: AtlassianClient): Promise<Array<{ id: number; name: string }>> {
+/**
+ * Every screen (id, name), read once per client; Jira screen names are unique. `truncated` when more
+ * than MAX_SCREENS exist. A failed read is not cached, so a retry in the same run reads again.
+ */
+export function allScreens(client: AtlassianClient): Promise<ScreenList> {
   let p = screenLists.get(client);
   if (!p) {
     p = (async () => {
       const out: Array<{ id: number; name: string }> = [];
-      for (let startAt = 0; out.length < MAX_SCREENS; startAt += SCREEN_PAGE) {
+      let more = false;
+      for (let startAt = 0; ; startAt += SCREEN_PAGE) {
         const data = await client.get(`${API}/screens`, { startAt, maxResults: SCREEN_PAGE });
         const page = screensOf(data);
         out.push(...page.map((s: any) => ({ id: Number(s.id), name: String(s.name) })));
         if (page.length < SCREEN_PAGE || (data?.total != null && out.length >= data.total)) break;
+        if (out.length >= MAX_SCREENS) {
+          more = true;
+          break;
+        }
       }
-      return out;
+      return Object.assign(out.slice(0, MAX_SCREENS), { truncated: more });
     })();
     screenLists.set(client, p);
+    p.catch(() => screenLists.delete(client));
   }
   return p;
 }
@@ -132,11 +143,16 @@ export interface UsageScan {
   unreadableProjects?: number;
   /** create/edit lookups whose screen could not be determined */
   unresolved?: number;
+  /** why not every project was covered (project cap or request budget) */
+  incomplete?: { reason: "project cap" | "request budget"; coveredProjects: number; totalProjects: number };
 }
+
+/** Default request budget per scanned project (the project, then a view and 3 operation lookups per issue type). */
+const REQUESTS_PER_PROJECT = 40;
 
 const forbiddenOrMissing = (e: unknown) => isHttpStatusError(e) && (e.status === 403 || e.status === 404);
 
-async function scanUsage(client: AtlassianClient, scanProjects: number): Promise<UsageScan> {
+async function scanUsage(client: AtlassianClient, scanProjects: number, maxRequests: number): Promise<UsageScan> {
   const [screens, probe, projectList] = await Promise.all([
     allScreens(client),
     probeField(client),
@@ -146,9 +162,19 @@ async function scanUsage(client: AtlassianClient, scanProjects: number): Promise
   const projects = (projectList ?? []).slice(0, scanProjects);
   const unreadable = new Set<string>();
   let unresolved = 0;
+  // every per-project request counts; past the budget the remaining projects are left out and reported
+  let used = 0;
+  let exhausted = false;
+  const take = () => {
+    if (used >= maxRequests) exhausted = true;
+    else used++;
+    return !exhausted;
+  };
+  let covered = 0;
 
   const perProject = await boundedAll(projects.map((p) => async () => {
     let issueTypes: any[];
+    if (!take()) return [];
     try {
       issueTypes = (await client.get(`${API}/project/${seg(p.key)}`))?.issueTypes ?? [];
     } catch (e) {
@@ -158,6 +184,7 @@ async function scanUsage(client: AtlassianClient, scanProjects: number): Promise
     const uses: ScreenUse[] = [];
     for (const it of issueTypes) {
       const base = { project: p.key, issueType: it.name, issueTypeId: String(it.id) };
+      if (!take()) return uses;
       try {
         const view = await client.get(`/rest/projectconfig/1/issuetype/${seg(p.key)}/${seg(it.id)}/fields`);
         if (view?.viewScreen) uses.push({ ...base, operation: "view", screenId: Number(view.viewScreen.screenId), screenName: view.viewScreen.screenName });
@@ -167,6 +194,7 @@ async function scanUsage(client: AtlassianClient, scanProjects: number): Promise
       }
       if (!probe) { unresolved += OPERATIONS.length; continue; }
       for (const op of OPERATIONS) {
+        if (!take()) return uses;
         try {
           const w = parseWhereIsMyField(await whereIsMyField(client, probe, p.key, String(it.id), op.id));
           const screenId = w.screenId ? Number(w.screenId) : w.screenName ? byName.get(w.screenName) : undefined;
@@ -185,9 +213,16 @@ async function scanUsage(client: AtlassianClient, scanProjects: number): Promise
         }
       }
     }
+    covered++;
     return uses;
   }), 4);
 
+  const total = (projectList ?? []).length;
+  const incomplete = exhausted
+    ? { reason: "request budget" as const, coveredProjects: covered, totalProjects: total }
+    : total > projects.length
+      ? { reason: "project cap" as const, coveredProjects: covered, totalProjects: total }
+      : undefined;
   return {
     uses: perProject.flat(),
     scannedProjects: projects.length,
@@ -195,18 +230,17 @@ async function scanUsage(client: AtlassianClient, scanProjects: number): Promise
     truncatedScan: (projectList ?? []).length > projects.length || undefined,
     unreadableProjects: unreadable.size || undefined,
     unresolved: unresolved || undefined,
+    incomplete,
   };
 }
 
-const usageScans = new WeakMap<AtlassianClient, Map<number, Promise<UsageScan>>>();
-
-/** Usage scan, shared by all tools of one run (a plan apply dry-runs many screen changes). */
-export function screenUsageScan(client: AtlassianClient, scanProjects = DEFAULT_PROJECT_SCAN): Promise<UsageScan> {
-  let byCap = usageScans.get(client);
-  if (!byCap) usageScans.set(client, (byCap = new Map()));
-  let p = byCap.get(scanProjects);
-  if (!p) byCap.set(scanProjects, (p = scanUsage(client, scanProjects)));
-  return p;
+/**
+ * Usage scan, shared by all tools of one run (a plan apply dry-runs many screen changes) through the scan
+ * cache; project archive/restore clear it, and a failed scan is not kept.
+ */
+export function screenUsageScan(client: AtlassianClient, scanProjects = DEFAULT_PROJECT_SCAN, maxRequests?: number): Promise<UsageScan> {
+  const budget = maxRequests ?? scanProjects * REQUESTS_PER_PROJECT;
+  return cached(client, "screen-usage", `${scanProjects}/${budget}`, () => scanUsage(client, scanProjects, budget));
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -225,7 +259,7 @@ function summarizeUsage(scan: UsageScan, screenId: number) {
     warning: shared
       ? `Shared screen: used by ${plural(projects.length, "project")} and ${plural(issueTypes.size, "issue type")}; a change affects all of them`
       : undefined,
-    complete: !scan.truncatedScan && !scan.unreadableProjects && !scan.unresolved,
+    complete: !scan.truncatedScan && !scan.unreadableProjects && !scan.unresolved && !scan.incomplete,
   };
 }
 
@@ -345,7 +379,7 @@ async function runChange(client: AtlassianClient, dryRun: boolean, c: ChangeSpec
 const tabShape = {
   screen_id: z.coerce.number().int(),
   tab_id: z.coerce.number().int(),
-  field_id: z.coerce.string().min(1).describe("Field id (customfield_N, labels...) or exact field name"),
+  field: z.coerce.string().min(1).describe("Field id (customfield_N, labels...) or exact field name"),
 };
 
 const positionArg = z.coerce.number().int().min(1).describe("1-based position on the tab");
@@ -357,12 +391,12 @@ function fieldLabel(f: FieldRef): string {
 /** Shared by jira_add_screen_field and jira_add_field_to_screens. */
 export async function addScreenField(
   client: AtlassianClient,
-  args: { screen_id: number; tab_id: number; field_id: string; position?: number; dry_run?: boolean },
+  args: { screen_id: number; tab_id: number; field: string; position?: number; dry_run?: boolean },
 ) {
   const dryRun = args.dry_run !== false;
   const [st, field] = await Promise.all([
     loadTab(client, args.screen_id, args.tab_id),
-    resolveField(client, args.field_id, { allowPending: dryRun }),
+    resolveField(client, args.field, { allowPending: dryRun }),
   ]);
   const label = fieldLabel(field);
   const where = `${st.screen.name} / ${st.tab.name}`;
@@ -418,34 +452,45 @@ export const jiraScreenTools: ToolDef[] = [
   {
     name: "jira_get_screen_usage",
     product: "jira",
+    narrowing: ["limit", "offset", "full_lists"],
     description:
       "Where a screen is used: projects, issue types and operations (create/edit/view), the screen schemes and issue type " +
       "screen schemes when Jira names them, and a sharing warning. Scans projects through the bundled 'Where is my field' " +
       "and project-config plugins (internal APIs, verified on Jira 11.3); `complete` is false when the scan was cut or " +
       "some projects could not be read. Large instances: --out or a subagent.",
-    inputShape: { screen_id: z.coerce.number().int(), ...scanShape, ...pageShape(100) },
+    inputShape: {
+      screen_id: z.coerce.number().int(),
+      ...fullListsShape,
+      ...scanShape,
+      max_requests: z.coerce.number().int().min(1).max(200_000).optional()
+        .describe(`Request budget of the scan (default ${REQUESTS_PER_PROJECT} per scanned project); past it the result says incomplete`),
+      ...pageShape(100),
+    },
     async handler({ client }, args) {
       const c = client("jira");
-      const [scan, screens] = await Promise.all([screenUsageScan(c, args.scan_projects ?? DEFAULT_PROJECT_SCAN), allScreens(c)]);
+      const [scan, screens] = await Promise.all([screenUsageScan(c, args.scan_projects ?? DEFAULT_PROJECT_SCAN, args.max_requests), allScreens(c)]);
       const s = summarizeUsage(scan, args.screen_id);
       const { uses: _uses, ...meta } = scan;
       const items = s.uses.map((u) => ({ project: u.project, issueType: u.issueType, operation: u.operation }));
-      return {
+      const out: Record<string, unknown> = {
         screen: { id: args.screen_id, name: screens.find((x) => x.id === args.screen_id)?.name ?? null },
         ...paginate(items, args, 100),
-        projects: s.projects,
-        screenSchemes: s.screenSchemes,
-        issueTypeScreenSchemes: s.issueTypeScreenSchemes,
         warning: s.warning,
         ...meta,
         complete: s.complete,
       };
+      capList(out, "projects", s.projects, args.full_lists);
+      capList(out, "screenSchemes", s.screenSchemes, args.full_lists);
+      capList(out, "issueTypeScreenSchemes", s.issueTypeScreenSchemes, args.full_lists);
+      return out;
     },
   },
   {
     name: "jira_add_screen_field",
+    aliases: { field_id: "field" },
     product: "jira",
     write: true,
+    invalidates: [],
     description:
       "Add a field to a screen tab, optionally at a 1-based position. Already on the tab → already-satisfied; on another " +
       "tab of the screen → error. The dry run shows the order before/after and the projects using the screen; after the " +
@@ -457,14 +502,16 @@ export const jiraScreenTools: ToolDef[] = [
   },
   {
     name: "jira_remove_screen_field",
+    aliases: { field_id: "field" },
     product: "jira",
     write: true,
+    invalidates: [],
     description: "Remove a field from a screen tab. Not on the tab → already-satisfied. The screen is read back after the change.",
     inputShape: { ...tabShape, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
       const dryRun = args.dry_run !== false;
-      const [st, field] = await Promise.all([loadTab(c, args.screen_id, args.tab_id), resolveField(c, args.field_id, { allowPending: true })]);
+      const [st, field] = await Promise.all([loadTab(c, args.screen_id, args.tab_id), resolveField(c, args.field, { allowPending: true })]);
       const label = fieldLabel(field);
       const where = `${st.screen.name} / ${st.tab.name}`;
       if (!field.id || !st.order.includes(field.id)) {
@@ -483,8 +530,10 @@ export const jiraScreenTools: ToolDef[] = [
   },
   {
     name: "jira_move_screen_field",
+    aliases: { field_id: "field", after_field: "after_field_id" },
     product: "jira",
     write: true,
+    invalidates: [],
     description: "Move a field on a screen tab to a 1-based position or right after another field (after_field_id). Already there → already-satisfied.",
     inputShape: {
       ...tabShape,
@@ -500,7 +549,7 @@ export const jiraScreenTools: ToolDef[] = [
       const dryRun = args.dry_run !== false;
       const [st, field, after] = await Promise.all([
         loadTab(c, args.screen_id, args.tab_id),
-        resolveField(c, args.field_id),
+        resolveField(c, args.field),
         args.after_field_id !== undefined ? resolveField(c, args.after_field_id) : Promise.resolve(undefined),
       ]);
       const label = fieldLabel(field);

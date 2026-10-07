@@ -1,0 +1,26 @@
+[
+  {
+    "description": "",
+    "iconURL": "/images/icons/statuses/open.png",
+    "id": "1",
+    "name": "Open"
+  },
+  {
+    "description": "",
+    "iconURL": "x",
+    "id": "3",
+    "name": "In Progress"
+  },
+  {
+    "description": "",
+    "iconURL": "x",
+    "id": "10001",
+    "name": "Resolved"
+  },
+  {
+    "description": "",
+    "iconURL": "x",
+    "id": "10100",
+    "name": "Escalated"
+  }
+]

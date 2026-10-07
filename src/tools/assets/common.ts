@@ -89,6 +89,14 @@ export function compactSchema(s: any): Record<string, unknown> {
   };
 }
 
+/** Longest attribute value a read shows; the rest is counted. */
+export const MAX_VALUE = 120;
+
+/** A long string cut to `max` characters with the number left out. */
+export function cutValue(v: unknown, max = MAX_VALUE): unknown {
+  return typeof v === "string" && v.length > max ? `${v.slice(0, max)}…(+${v.length - max})` : v;
+}
+
 /** One attribute value as an agent reads it: display value, or the referenced object's key. */
 function valueOf(v: any): unknown {
   if (v?.referencedObject) return v.referencedObject.objectKey ?? v.referencedObject.label;
@@ -98,21 +106,25 @@ function valueOf(v: any): unknown {
 }
 
 /**
- * Compact object: identity plus `attributes: {Name: value | [values]}`.
+ * Compact object: identity plus `attributes: {Name: value | [values]}`, values cut to MAX_VALUE characters.
  * `names` maps objectTypeAttributeId → name when the response does not embed the definition.
- * `only` keeps just those attribute names (case-insensitive).
+ * `only` keeps just those attribute names (case-insensitive). `maxAttributes` keeps the first N and
+ * counts the rest in `moreAttributes`.
  */
-export function compactObject(o: any, names?: Map<number, string>, only?: string[]): Record<string, unknown> {
+export function compactObject(o: any, names?: Map<number, string>, only?: string[], maxAttributes?: number): Record<string, unknown> {
   const wanted = only?.length ? new Set(only.map((n) => n.toLowerCase())) : undefined;
   const attributes: Record<string, unknown> = {};
   for (const a of o?.attributes ?? []) {
     const name = a.objectTypeAttribute?.name ?? names?.get(a.objectTypeAttributeId) ?? `#${a.objectTypeAttributeId}`;
     if (["Key", "Created", "Updated"].includes(name) && !wanted) continue; // already in the identity / noise
     if (wanted && !wanted.has(name.toLowerCase())) continue;
-    const values = (a.objectAttributeValues ?? []).map(valueOf).filter((v: unknown) => v !== null && v !== "");
+    const values = (a.objectAttributeValues ?? []).map(valueOf).filter((v: unknown) => v !== null && v !== "").map((v: unknown) => cutValue(v));
     if (values.length === 0) continue;
     attributes[name] = values.length === 1 ? values[0] : values;
   }
+  const names_ = Object.keys(attributes);
+  const more = maxAttributes !== undefined && names_.length > maxAttributes ? names_.length - maxAttributes : 0;
+  for (const n of more ? names_.slice(maxAttributes) : []) delete attributes[n];
   return {
     id: o?.id,
     key: o?.objectKey,
@@ -120,6 +132,7 @@ export function compactObject(o: any, names?: Map<number, string>, only?: string
     type: o?.objectType?.name,
     updated: o?.updated,
     attributes,
+    ...(more ? { moreAttributes: `+${more} more` } : {}),
   };
 }
 

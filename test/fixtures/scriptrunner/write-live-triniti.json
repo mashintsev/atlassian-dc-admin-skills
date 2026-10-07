@@ -1,0 +1,44 @@
+{
+  "evidenceType": "live-cli-probe",
+  "date": "2026-10-07",
+  "jira": "11.3.7",
+  "scriptrunner": "10.14.0",
+  "operation": "script-root-write",
+  "request": {
+    "method": "PUT",
+    "endpoint": "/rest/scriptrunner/latest/idea/file",
+    "contentType": "application/octet-stream",
+    "encoding": "base64 text",
+    "parameters": [
+      "filePath",
+      "rootPath"
+    ]
+  },
+  "probes": [
+    {
+      "path": "temp/codex-sr-check-20261007/byte-check.groovy",
+      "size": 68,
+      "sha256": "960e61c13fe723d4cb8f0dd1419d92b9bfe54a5e1517e3e921d2357221582c3c",
+      "utf8Bom": true,
+      "lineEndings": "CRLF",
+      "missingParentsCreated": true,
+      "cliExitCode": 0,
+      "independentReadBackByteEqual": true
+    },
+    {
+      "path": "temp/codex-sr-check-20261007/invalid-syntax.groovy",
+      "size": 7,
+      "sha256": "a5d3700224b5aef9837e7674c4dbec3598c87489c0ecd4aeb1b91978058619e8",
+      "validGroovySyntax": false,
+      "cliExitCode": 0,
+      "independentReadBackByteEqual": true
+    }
+  ],
+  "limits": {
+    "rawHttpStatusAndResponseBody": "not captured by the CLI",
+    "compilationTriggeredOnSave": "unknown",
+    "scriptExecuted": false,
+    "otherMajorCombinations": "allowed by user policy; not live-tested"
+  },
+  "cleanup": "Probe files remain in the requested temp folder; no DELETE sent."
+}

@@ -162,3 +162,12 @@ describe("calendars (3.4)", () => {
     assert.equal(again.value.already_satisfied, true);
   });
 });
+
+describe("calendar update already in effect (unify 3.5)", () => {
+  it("jira_update_sla_calendar reports already-satisfied and sends nothing when the settings match", async () => {
+    const jsm = fakeJsm();
+    const cal = jsm.calendars[0];
+    const r = await run("jira_update_sla_calendar", { service_desk: "BANK", calendar: cal.name, name: cal.name }, jsm.responder);
+    assert.equal(r.value?.already_satisfied, true, JSON.stringify(r.error ?? r.value));
+  });
+});

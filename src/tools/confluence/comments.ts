@@ -16,7 +16,7 @@ import { dryRunShape, guardedWrite, pageShape, serverPage } from "../util.js";
 
 const API = "/rest/api";
 /** Only what compactComment reads: body, author/date, thread parent, inline anchor and resolution. */
-const COMMENT_EXPAND = "body.view,version,ancestors,extensions.inlineProperties,extensions.resolution";
+const COMMENT_EXPAND = "body.storage,version,ancestors,extensions.inlineProperties,extensions.resolution";
 
 /** Markdown unless it already looks like storage XHTML (same rule as mcp-atlassian). */
 export function toStorage(body: string, format?: "markdown" | "storage"): string {
@@ -25,16 +25,23 @@ export function toStorage(body: string, format?: "markdown" | "storage"): string
   return body.trim().startsWith("<") ? body : markdownToStorage(body);
 }
 
+const readBodyShape = {
+  max_body_chars: z.coerce.number().int().min(1).max(20000).optional().describe("Maximum comment body characters (default 2000, maximum 20000)"),
+};
+
 const bodyShape = {
   body: z.string().describe("Markdown (default) or storage XHTML"),
   body_format: z.enum(["markdown", "storage"]).optional().describe("Default: storage when the body starts with '<', else markdown"),
 };
 
-export function compactComment(c: any, baseUrl?: string): Record<string, unknown> {
+export function compactComment(c: any, baseUrl?: string, maxBodyChars = 2000): Record<string, unknown> {
   const ancestors: any[] = c.ancestors ?? [];
   const parent =
     c.container?.type === "comment" ? c.container.id : [...ancestors].reverse().find((a) => a.type === "comment")?.id;
-  const html = c.body?.view?.value ?? c.body?.storage?.value ?? "";
+  const storage = c.body?.storage?.value ?? "";
+  const markdown = storage ? storageToMarkdown(storage, { baseUrl, pageId: c.container?.id }) : "";
+  const body = markdown.length <= maxBodyChars ? markdown
+    : `${markdown.slice(0, maxBodyChars)}…(+${markdown.length - maxBodyChars} chars)`;
   return {
     id: c.id,
     author: c.version?.by?.username ?? c.version?.by?.displayName,
@@ -43,7 +50,7 @@ export function compactComment(c: any, baseUrl?: string): Record<string, unknown
     location: c.extensions?.location,
     selection: c.extensions?.inlineProperties?.originalSelection,
     resolution: c.extensions?.resolution?.status,
-    body: html ? storageToMarkdown(html, { baseUrl, pageId: c.container?.id }) : "",
+    body,
   };
 }
 
@@ -80,13 +87,14 @@ export const confluenceCommentTools: ToolDef[] = [
       page_id: z.coerce.string(),
       location: z.enum(["footer", "inline", "resolved"]).optional().describe("Default: all locations"),
       ...pageShape(25),
+      ...readBodyShape,
     },
     async handler({ client }, args) {
       const c = client("confluence");
       const offset = args.offset ?? 0;
       const limit = args.limit ?? 25;
       const { results, last } = await commentPage(c, args.page_id, offset, limit, args.location);
-      const items = results.map((x) => compactComment({ ...x, container: x.container ?? { id: args.page_id, type: "page" } }, c.config.baseUrl));
+      const items = results.map((x) => compactComment({ ...x, container: x.container ?? { id: args.page_id, type: "page" } }, c.config.baseUrl, args.max_body_chars));
       return { page_id: args.page_id, ...serverPage(items, offset, limit, null, last) };
     },
   },
@@ -94,7 +102,7 @@ export const confluenceCommentTools: ToolDef[] = [
     name: "confluence_get_inline_comments",
     product: "confluence",
     description: "Inline comments of a page with the highlighted text they are anchored to (server-side paging).",
-    inputShape: { page_id: z.coerce.string(), ...pageShape(25) },
+    inputShape: { page_id: z.coerce.string(), ...pageShape(25), ...readBodyShape },
     async handler({ client }, args) {
       const c = client("confluence");
       const offset = args.offset ?? 0;
@@ -102,12 +110,13 @@ export const confluenceCommentTools: ToolDef[] = [
       const { results, last } = await commentPage(c, args.page_id, offset, limit, "inline");
       const items = results
         .filter((x) => !x.extensions?.location || x.extensions.location === "inline")
-        .map((x) => compactComment({ ...x, container: x.container ?? { id: args.page_id, type: "page" } }, c.config.baseUrl));
+        .map((x) => compactComment({ ...x, container: x.container ?? { id: args.page_id, type: "page" } }, c.config.baseUrl, args.max_body_chars));
       return { page_id: args.page_id, ...serverPage(items, offset, limit, null, last) };
     },
   },
   {
     name: "confluence_add_comment",
+    unverifiable: "each call adds another comment",
     product: "confluence",
     write: true,
     description: "Add a footer comment to a page or blog post.",
@@ -127,6 +136,7 @@ export const confluenceCommentTools: ToolDef[] = [
   },
   {
     name: "confluence_reply_to_comment",
+    unverifiable: "each call adds another reply",
     product: "confluence",
     write: true,
     description: "Reply to an existing comment (threaded under it).",
@@ -149,6 +159,7 @@ export const confluenceCommentTools: ToolDef[] = [
   },
   {
     name: "confluence_add_inline_comment",
+    unverifiable: "each call adds another inline comment",
     product: "confluence",
     write: true,
     description:

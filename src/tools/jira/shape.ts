@@ -3,6 +3,7 @@
  * compact issue shape, epic field discovery and DC user identifiers.
  */
 
+import { ValidationError } from "../../errors.js";
 import type { AtlassianClient } from "../../client.js";
 import { jiraWikiToMarkdown } from "../../markup.js";
 
@@ -25,7 +26,38 @@ function userName(u: any): string | undefined {
  * Fields that are not in the standard set (custom fields, extra requested fields) are kept
  * under `fields` as returned, so `fields=customfield_10100` still reaches the caller.
  */
-export function compactIssue(issue: any, opts: { body?: boolean; markdown?: boolean } = {}): Record<string, unknown> {
+/** List tools refuse `fields=*all`: every field of 20–100 issues is never needed at once. */
+export function refuseAllFields(fields: unknown): void {
+  if (typeof fields === "string" && fields.split(",").some((f) => f.trim() === "*all")) {
+    throw new ValidationError("fields=*all is not supported in issue lists: name the fields (e.g. fields=customfield_10100), or read one issue with jira_get_issue fields=*all");
+  }
+}
+
+/**
+ * A field value reduced to what a reader needs: options to their value (cascading: "parent / child"),
+ * users to their name, SLAs to the remaining time or breached state, other references to name/key/title.
+ */
+export function flattenFieldValue(v: any): unknown {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v !== "object") return v;
+  if (Array.isArray(v)) {
+    const items = v.map(flattenFieldValue).filter((x) => x !== undefined);
+    return items.length ? items : undefined;
+  }
+  if (v.ongoingCycle || v.completedCycles) {
+    const on = v.ongoingCycle;
+    if (on) return on.breached ? `breached (${on.remainingTime?.friendly ?? "?"})` : `${on.remainingTime?.friendly ?? "?"} remaining`;
+    const last = (v.completedCycles ?? []).at(-1);
+    return last ? (last.breached ? "completed, breached" : "completed") : undefined;
+  }
+  if (typeof v.value === "string") return v.child?.value ? `${v.value} / ${v.child.value}` : v.value;
+  for (const k of ["name", "displayName", "key", "title"]) if (typeof v[k] === "string") return v[k];
+  return v;
+}
+
+const NOISE_FIELDS = ["comment", "worklog", "watches", "votes", "progress", "aggregateprogress"];
+
+export function compactIssue(issue: any, opts: { body?: boolean; markdown?: boolean; flatten?: boolean } = {}): Record<string, unknown> {
   const f = issue?.fields ?? {};
   const out: Record<string, unknown> = {
     key: issue?.key,
@@ -51,8 +83,14 @@ export function compactIssue(issue: any, opts: { body?: boolean; markdown?: bool
     "summary", "status", "issuetype", "priority", "assignee", "reporter", "created", "updated", "labels",
     "components", "fixVersions", "parent", "resolution", "duedate", "description",
   ]);
-  const extra = Object.fromEntries(Object.entries(f).filter(([k, v]) => !known.has(k) && v != null));
-  if (Object.keys(extra).length) out.fields = extra;
+  const extra = Object.fromEntries(Object.entries(f).filter(([k, v]) => !known.has(k) && !NOISE_FIELDS.includes(k) && v != null));
+  if (opts.flatten) {
+    // list rows: one readable column per extra field
+    for (const [k, v] of Object.entries(extra)) {
+      const flat = flattenFieldValue(v);
+      if (flat !== undefined) out[k] = flat;
+    }
+  } else if (Object.keys(extra).length) out.fields = extra;
   return out;
 }
 

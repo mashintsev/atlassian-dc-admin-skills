@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { addToPlan, applyPlan, readPlan, renderOutcomes, renderPlan } from "../../src/plan.js";
 import { runToolByName } from "../../src/runner.js";
-import { testContext } from "./helpers.js";
+import { fakeJiraUsers, testContext } from "./helpers.js";
 
 async function plan(file: string, tool: string, args: Record<string, unknown>) {
   const { ctx } = testContext();
@@ -23,10 +23,10 @@ describe("change plans", () => {
     assert.equal(p.items.length, 2);
     assert.match(renderPlan(p, file), /2 change\(s\)[\s\S]*1\. Add ivan to g1[\s\S]*2\. Deactivate user olga/);
 
-    const { ctx, calls } = testContext();
+    const { ctx, calls } = testContext(fakeJiraUsers().responder);
     const outcomes = await applyPlan(ctx, p);
-    assert.deepEqual(outcomes.map((o) => o.status), ["done", "done"]);
-    assert.deepEqual(calls.map((c) => c.method), ["POST", "PUT"]);
+    assert.deepEqual(outcomes.map((o) => o.status), ["done", "done"], JSON.stringify(outcomes));
+    assert.deepEqual(calls.filter((c) => c.method !== "GET").map((c) => c.method), ["POST", "PUT"]);
     assert.match(renderOutcomes(outcomes), /^applied 2\/2/);
   });
 
@@ -34,10 +34,10 @@ describe("change plans", () => {
     const file = join(mkdtempSync(join(tmpdir(), "plan-")), "p.json");
     await plan(file, "jira_add_user_to_group", { group: "g1", username: "ivan" });
     await plan(file, "jira_add_user_to_group", { group: "g2", username: "ivan" });
-    const { ctx, calls } = testContext();
+    const { ctx, calls } = testContext(fakeJiraUsers().responder);
     const outcomes = await applyPlan(ctx, readPlan(file), [2]);
     assert.equal(outcomes.length, 1);
-    assert.match(calls[0].url, /groupname=g2/);
+    assert.match(calls.filter((c) => c.method !== "GET")[0]!.url, /groupname=g2/);
   });
 
   it("skips an item whose request changed since it was approved", async () => {

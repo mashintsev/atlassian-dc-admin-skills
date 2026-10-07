@@ -1,0 +1,22 @@
+[
+  {
+    "id": "fld-1",
+    "version": 1,
+    "fieldConfigurationSchemeId": 10500,
+    "customFieldId": 10900,
+    "fieldConfigSchemeName": "Default",
+    "searcherName": "Free Text Searcher",
+    "relatedProjects": [],
+    "isAllProjects": true,
+    "name": "Computed age",
+    "desc": "Days since created",
+    "FIELD_PREVIEW_ISSUE": "DEMO-1",
+    "FIELD_IS_MULTIPLE": "false",
+    "CONFIGURATION_SCRIPT": {
+      "script": null,
+      "scriptPath": "jobs/sample_job.groovy",
+      "parameters": {}
+    },
+    "canned-script": "com.onresolve.scriptrunner.canned.jira.fields.editable.CustomScriptFieldItem"
+  }
+]

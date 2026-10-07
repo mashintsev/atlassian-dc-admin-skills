@@ -101,6 +101,7 @@ export const pluginTools: ToolDef[] = [
   },
   {
     name: "atlassian_set_plugin_enabled",
+    unverifiable: "not checked: the app's current state is not compared",
     product: "both",
     write: true,
     description: "Enable or disable an app. Disabling a system plugin can break the instance.",

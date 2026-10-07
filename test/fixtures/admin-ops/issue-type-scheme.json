@@ -1,0 +1,23 @@
+{
+  "id": "10300",
+  "name": "TEST Issue Types",
+  "description": "",
+  "defaultIssueType": {
+    "id": "3",
+    "name": "Task"
+  },
+  "issueTypes": [
+    {
+      "id": "3",
+      "name": "Task"
+    },
+    {
+      "id": "10004",
+      "name": "Incident"
+    },
+    {
+      "id": "10005",
+      "name": "Change"
+    }
+  ]
+}

@@ -421,8 +421,12 @@ export const jiraRequestTypeTools: ToolDef[] = [
   {
     name: "jira_get_request_type_form",
     product: "jira",
-    description: "A request type's form: visible fields in order (label, description, required), hidden fields with their preset values, and fields that can still be added. Internal JSM API.",
-    inputShape: { service_desk: sdArg, request_type: rtArg },
+    description: "A request type's form: visible fields in order (label, description, required) and hidden fields with their preset values; include_addable=true also lists the fields that can still be added. Internal JSM API.",
+    inputShape: {
+      service_desk: sdArg,
+      request_type: rtArg,
+      include_addable: boolArg.optional().describe("Default false: only count the fields that can be added (often hundreds)"),
+    },
     async handler({ client }, args) {
       const c = client("jira");
       const sd = await resolveServiceDesk(c, args.service_desk);
@@ -432,7 +436,9 @@ export const jiraRequestTypeTools: ToolDef[] = [
         requestType: { id: rt.id, name: rt.name },
         visible: form.visible.map((r) => ({ fieldId: r.fieldId, name: r.name, label: r.label, description: r.description || undefined, required: r.sdRequired || r.jiraRequired })),
         hidden: form.hidden.map((r) => ({ fieldId: r.fieldId, name: r.name, preset: r.values[r.fieldId] ?? [] })),
-        addable: form.unused.map((r) => ({ fieldId: r.fieldId, name: r.name })),
+        ...(args.include_addable
+          ? { addable: form.unused.map((r) => ({ fieldId: r.fieldId, name: r.name })) }
+          : { addableCount: form.unused.length, hint: "include_addable=true lists the fields that can be added" }),
       };
     },
   },

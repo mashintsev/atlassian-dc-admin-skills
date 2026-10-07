@@ -28,12 +28,12 @@ export function filterByName<T extends { name?: unknown }>(items: T[], needle?: 
 /** Upper bound for any page size a tool requests from the server or returns. */
 export const MAX_PAGE = 500;
 
-export function pageShape(defaultLimit: number) {
+export function pageShape(defaultLimit: number, max = MAX_PAGE) {
   return {
     offset: z.coerce.number().int().min(0).optional()
       .describe("Number of items to skip (default 0). Use nextOffset from the previous page."),
-    limit: z.coerce.number().int().min(1).max(MAX_PAGE).optional()
-      .describe(`Maximum number of items to return (default ${defaultLimit}, max ${MAX_PAGE})`),
+    limit: z.coerce.number().int().min(1).max(max).optional()
+      .describe(`Maximum number of items to return (default ${defaultLimit}, max ${max})`),
   };
 }
 
@@ -76,6 +76,43 @@ export const boolArg = z.preprocess((v) => {
   return v;
 }, z.boolean());
 
+/**
+ * A parameter given as JSON text (or already parsed). Broken JSON becomes a validation issue
+ * that names the problem and an example, instead of an internal error.
+ */
+export function jsonArg<T extends z.ZodType>(schema: T, example: string) {
+  return z.preprocess((v, ctx) => {
+    if (typeof v !== "string") return v;
+    try {
+      return JSON.parse(v);
+    } catch (e) {
+      ctx.addIssue({ code: "custom", message: `invalid JSON (${(e as Error).message}); expected e.g. ${example}` });
+      return z.NEVER;
+    }
+  }, schema);
+}
+
+/** Entries a membership or sharing list shows by default; `full_lists=true` returns all of them. */
+export const LIST_PREVIEW = 10;
+
+export const fullListsShape = {
+  full_lists: boolArg.optional().describe(`Return complete member and sharing lists (default: the first ${LIST_PREVIEW} and a total)`),
+};
+
+/**
+ * Put a membership or sharing list on `out[key]`: the first LIST_PREVIEW entries and `${key}Total`
+ * when there are more, or everything when `full` is set.
+ */
+export function capList(out: Record<string, unknown>, key: string, list: readonly unknown[] | null | undefined, full?: boolean): void {
+  const all = list ?? [];
+  if (full || all.length <= LIST_PREVIEW) {
+    out[key] = [...all];
+    return;
+  }
+  out[key] = all.slice(0, LIST_PREVIEW);
+  out[`${key}Total`] = all.length;
+}
+
 // -- guarded writes -----------------------------------------------------------
 
 export const dryRunShape = {
@@ -89,6 +126,10 @@ export interface WriteRequest {
   path: string;
   params?: Params;
   json?: Json;
+  /** Form parameters sent as application/x-www-form-urlencoded (instead of json). */
+  urlencoded?: Record<string, string | number | boolean>;
+  /** Raw text body (instead of json), sent with contentType. */
+  body?: string;
   contentType?: string;
   summary: string;
   /** Body keys to mask in the echoed request (e.g. password). */
@@ -118,7 +159,7 @@ export async function guardedWrite(client: AtlassianClient, args: { dry_run?: bo
       ? Object.fromEntries(Object.entries(req.json).map(([k, v]) => [k, req.secretKeys!.includes(k) ? "***" : v]))
       : req.json;
   const fileList = req.files ? describeFiles(req.files) : undefined;
-  const request: Record<string, unknown> = { method: req.method, url: client.url(req.path, req.params), body: echoedBody };
+  const request: Record<string, unknown> = { method: req.method, url: client.url(req.path, req.params), body: req.urlencoded ?? req.body ?? echoedBody };
   if (fileList) request.files = fileList.map(({ name, bytes }) => ({ name, bytes }));
 
   if (args.dry_run !== false) {
@@ -139,6 +180,8 @@ export async function guardedWrite(client: AtlassianClient, args: { dry_run?: bo
     params: req.params,
     json: form ? undefined : req.json,
     form,
+    urlencoded: req.urlencoded,
+    body: req.body,
     contentType: req.contentType,
     headers: req.headers,
   });

@@ -10,7 +10,8 @@ import { z } from "zod";
 import { boundedAll, seg } from "../../client.js";
 import { ValidationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { boolArg, contains, dryRunShape, guardedWrite, listArg, pageShape, paginate, pick, serverPage } from "../util.js";
+import { resolveIssueType } from "./issueTypeRefs.js";
+import { boolArg, contains, dryRunShape, guardedWrite, jsonArg, listArg, pageShape, paginate, pick, serverPage } from "../util.js";
 import { API } from "./shape.js";
 
 const VERSION_KEYS = ["id", "name", "description", "released", "archived", "startDate", "releaseDate", "overdue"];
@@ -44,30 +45,36 @@ export const jiraProjectMetaTools: ToolDef[] = [
     description: "Issue types you can create in a project: id, name, subtask flag (localized names included).",
     inputShape: { project_key: z.string() },
     async handler({ client }, args) {
-      const types = await client("jira").getPaged(`${API}/issue/createmeta/${seg(args.project_key)}/issuetypes`, "values", {}, 50, MAX_TYPES);
-      return types.map((t: any) => ({
+      const read = await client("jira").getPagedResult(`${API}/issue/createmeta/${seg(args.project_key)}/issuetypes`, "values", {}, 50, MAX_TYPES);
+      const items = read.items.map((t: any) => ({
         id: t.id,
         name: t.name,
         subtask: t.subtask ?? false,
         untranslatedName: t.untranslatedName && t.untranslatedName !== t.name ? t.untranslatedName : undefined,
         description: t.description,
       }));
+      // the plain list unless the cap cut it, then say so
+      return read.truncated ? { items, truncated: true, cap: read.cap } : items;
     },
   },
   {
     name: "jira_get_create_fields",
+    aliases: { issue_type_id: "issue_type" },
     product: "jira",
     description:
       "Fields on the create screen of a project + issue type: id, name, required, type. Use jira_get_field_options for allowed values.",
     inputShape: {
       project_key: z.string(),
-      issue_type_id: z.coerce.string(),
+      issue_type: z.coerce.string().min(1).describe("Issue type id or exact name"),
       required_only: boolArg.optional(),
       name_contains: z.string().optional(),
       ...pageShape(100),
     },
     async handler({ client }, args) {
-      const path = `${API}/issue/createmeta/${seg(args.project_key)}/issuetypes/${seg(args.issue_type_id)}`;
+      const typeId = /^\d+$/.test(args.issue_type)
+        ? args.issue_type
+        : (await resolveIssueType(client("jira"), args.issue_type, { within: (await client("jira").getPagedResult(`${API}/issue/createmeta/${seg(args.project_key)}/issuetypes`, "values", {}, 50, MAX_TYPES)).items })).id!;
+      const path = `${API}/issue/createmeta/${seg(args.project_key)}/issuetypes/${seg(typeId)}`;
       const map = (f: any) => ({
         id: f.fieldId ?? f.key,
         name: f.name,
@@ -83,12 +90,12 @@ export const jiraProjectMetaTools: ToolDef[] = [
         return serverPage((data?.values ?? []).map(map), offset, limit, data?.total, data?.isLast);
       }
       // filters have no server-side equivalent: fetch the (capped) field list once, then page
-      const fields = await client("jira").getPaged(path, "values", {}, 50, MAX_FIELDS);
-      const items = fields
+      const read = await client("jira").getPagedResult(path, "values", {}, 50, MAX_FIELDS);
+      const items = read.items
         .filter((f: any) => !args.required_only || f.required)
         .filter((f: any) => contains(f.name, args.name_contains) || contains(f.fieldId, args.name_contains))
         .map(map);
-      return paginate(items, args, 100);
+      return { ...paginate(items, args, 100), ...(read.truncated ? { truncated: true, cap: read.cap } : {}) };
     },
   },
   {
@@ -106,14 +113,17 @@ export const jiraProjectMetaTools: ToolDef[] = [
     async handler({ client }, args) {
       const c = client("jira");
       const key = seg(args.project_key);
-      let types: any[] = await c.getPaged(`${API}/issue/createmeta/${key}/issuetypes`, "values", {}, 50, MAX_TYPES);
+      const typeRead = await c.getPagedResult(`${API}/issue/createmeta/${key}/issuetypes`, "values", {}, 50, MAX_TYPES);
+      let types: any[] = typeRead.items;
       if (args.issue_types?.length) {
         const want = new Set(args.issue_types.map((t: string) => t.toLowerCase()));
         types = types.filter((t) => want.has(String(t.id)) || want.has(String(t.name).toLowerCase()));
       }
       const skipped = types.length > MAX_FANOUT_TYPES ? types.slice(MAX_FANOUT_TYPES).map((t) => t.name) : [];
       types = types.slice(0, MAX_FANOUT_TYPES);
-      const perType = await boundedAll(types.map((t) => () => c.getPaged(`${API}/issue/createmeta/${key}/issuetypes/${seg(t.id)}`, "values", {}, 50, MAX_FIELDS)));
+      const perTypeRead = await boundedAll(types.map((t) => () => c.getPagedResult(`${API}/issue/createmeta/${key}/issuetypes/${seg(t.id)}`, "values", {}, 50, MAX_FIELDS)));
+      const perType = perTypeRead.map((r) => r.items);
+      const truncated = typeRead.truncated || perTypeRead.some((r) => r.truncated);
       const merged = new Map<string, { id: string; name: string; required: boolean; custom: boolean; type?: string; issueTypes: string[] }>();
       perType.forEach((fields, i) => {
         for (const f of fields) {
@@ -130,7 +140,7 @@ export const jiraProjectMetaTools: ToolDef[] = [
           ...f,
           issueTypes: f.issueTypes.length === types.length ? "all" : f.issueTypes.join(","),
         }));
-      const page = paginate(items, args, 100);
+      const page = { ...paginate(items, args, 100), ...(truncated ? { truncated: true, cap: `${MAX_TYPES} types / ${MAX_FIELDS} fields per type` } : {}) };
       return skipped.length ? { ...page, skippedIssueTypes: skipped.join(",") } : page;
     },
   },
@@ -156,12 +166,12 @@ export const jiraProjectMetaTools: ToolDef[] = [
         return serverPage((data?.values ?? []).map((v: any) => pick(v, VERSION_KEYS)), offset, limit, data?.total, data?.isLast);
       }
       // no server-side status/name filter on DC: read the (capped) list once, filter, then page
-      const all = await c.getPaged(path, "values", { orderBy: "-sequence" }, 100, 2000);
-      const items = all
+      const read = await c.getPagedResult(path, "values", { orderBy: "-sequence" }, 100, 2000);
+      const items = read.items
         .filter((v: any) => !args.unreleased_only || (!v.released && !v.archived))
         .filter((v: any) => contains(v.name, args.name_contains))
         .map((v: any) => pick(v, VERSION_KEYS));
-      return paginate(items, args, 50);
+      return { ...paginate(items, args, 50), ...(read.truncated ? { truncated: true, cap: read.cap } : {}) };
     },
   },
   {
@@ -186,6 +196,7 @@ export const jiraProjectMetaTools: ToolDef[] = [
   },
   {
     name: "jira_create_version",
+    unverifiable: "not checked: existing versions are not compared (Jira refuses a duplicate name)",
     product: "jira",
     write: true,
     description: "Create a version (release) in a project. Dates are YYYY-MM-DD.",
@@ -209,13 +220,14 @@ export const jiraProjectMetaTools: ToolDef[] = [
   },
   {
     name: "jira_batch_create_versions",
+    unverifiable: "not checked: existing versions are not compared (Jira refuses duplicate names)",
     product: "jira",
     write: true,
     description:
       "Create several versions in a project (one request each). versions: JSON array of {name, startDate?, releaseDate?, description?, released?}.",
     inputShape: {
       project_key: z.string(),
-      versions: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.record(z.string(), z.any())).min(1)),
+      versions: jsonArg(z.array(z.record(z.string(), z.any())).min(1), '[{"name":"1.0","releaseDate":"2026-03-01"}]'),
       ...dryRunShape,
     },
     async handler({ client }, args) {
@@ -250,6 +262,7 @@ export const jiraProjectMetaTools: ToolDef[] = [
   },
   {
     name: "jira_update_version",
+    unverifiable: "not checked: current values are not compared",
     product: "jira",
     write: true,
     description: "Rename a version, change its dates or description, or mark it released/archived.",

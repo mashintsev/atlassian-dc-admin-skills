@@ -1,0 +1,294 @@
+{
+  "isDraft": false,
+  "layout": {
+    "statuses": [
+      {
+        "id": "I<1>",
+        "name": "Create",
+        "initial": true,
+        "stepId": 1,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "S<1>",
+        "name": "Open",
+        "initial": false,
+        "stepId": 1,
+        "statusId": "1",
+        "x": 0,
+        "y": 0,
+        "statusCategory": {
+          "colourName": "blue-gray",
+          "id": 2
+        },
+        "description": ""
+      },
+      {
+        "id": "S<2>",
+        "name": "In Progress",
+        "initial": false,
+        "stepId": 2,
+        "statusId": "3",
+        "x": 0,
+        "y": 0,
+        "statusCategory": {
+          "colourName": "yellow",
+          "id": 4
+        },
+        "description": ""
+      },
+      {
+        "id": "S<3>",
+        "name": "Resolved",
+        "initial": false,
+        "stepId": 3,
+        "statusId": "10001",
+        "x": 0,
+        "y": 0,
+        "statusCategory": {
+          "colourName": "green",
+          "id": 3
+        },
+        "description": ""
+      }
+    ],
+    "transitions": [
+      {
+        "id": "IA<1:I<1>:S<1>>",
+        "name": "Create",
+        "sourceId": "I<1>",
+        "targetId": "S<1>",
+        "actionId": 1,
+        "initial": true,
+        "description": "",
+        "globalTransition": false,
+        "loopedTransition": false,
+        "sourceAngle": 0,
+        "targetAngle": 0,
+        "transitionOptions": [
+          {
+            "key": "properties.key",
+            "name": "Properties",
+            "count": 0,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransitionMetaAttributes.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=1",
+            "weight": 10
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:conditions",
+            "name": "Conditions",
+            "count": 1,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransition.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=1&descriptorTab=conditions",
+            "weight": 20
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:validators",
+            "name": "Validators",
+            "count": 0,
+            "url": "x",
+            "weight": 30
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:postfunctions",
+            "name": "Post Functions",
+            "count": 3,
+            "url": "x",
+            "weight": 40
+          }
+        ]
+      },
+      {
+        "id": "A<11:S<1>:S<2>>",
+        "name": "Start progress",
+        "sourceId": "S<1>",
+        "targetId": "S<2>",
+        "actionId": 11,
+        "initial": false,
+        "description": "",
+        "globalTransition": false,
+        "loopedTransition": false,
+        "sourceAngle": 0,
+        "targetAngle": 0,
+        "transitionOptions": [
+          {
+            "key": "properties.key",
+            "name": "Properties",
+            "count": 0,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransitionMetaAttributes.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=11",
+            "weight": 10
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:conditions",
+            "name": "Conditions",
+            "count": 1,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransition.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=11&descriptorTab=conditions",
+            "weight": 20
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:validators",
+            "name": "Validators",
+            "count": 0,
+            "url": "x",
+            "weight": 30
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:postfunctions",
+            "name": "Post Functions",
+            "count": 3,
+            "url": "x",
+            "weight": 40
+          }
+        ],
+        "screenId": 10010,
+        "screenName": "Workflow Screen"
+      },
+      {
+        "id": "A<21:S<2>:S<3>>",
+        "name": "Resolve",
+        "sourceId": "S<2>",
+        "targetId": "S<3>",
+        "actionId": 21,
+        "initial": false,
+        "description": "",
+        "globalTransition": false,
+        "loopedTransition": false,
+        "sourceAngle": 0,
+        "targetAngle": 0,
+        "transitionOptions": [
+          {
+            "key": "properties.key",
+            "name": "Properties",
+            "count": 0,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransitionMetaAttributes.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=21",
+            "weight": 10
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:conditions",
+            "name": "Conditions",
+            "count": 1,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransition.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=21&descriptorTab=conditions",
+            "weight": 20
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:validators",
+            "name": "Validators",
+            "count": 0,
+            "url": "x",
+            "weight": 30
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:postfunctions",
+            "name": "Post Functions",
+            "count": 3,
+            "url": "x",
+            "weight": 40
+          }
+        ]
+      },
+      {
+        "id": "A<31:S<1>:S<1>>",
+        "name": "Reopen",
+        "sourceId": "S<1>",
+        "targetId": "S<1>",
+        "actionId": 31,
+        "initial": false,
+        "description": "",
+        "globalTransition": true,
+        "loopedTransition": false,
+        "sourceAngle": 0,
+        "targetAngle": 0,
+        "transitionOptions": [
+          {
+            "key": "properties.key",
+            "name": "Properties",
+            "count": 0,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransitionMetaAttributes.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=31",
+            "weight": 10
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:conditions",
+            "name": "Conditions",
+            "count": 1,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransition.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=31&descriptorTab=conditions",
+            "weight": 20
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:validators",
+            "name": "Validators",
+            "count": 0,
+            "url": "x",
+            "weight": 30
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:postfunctions",
+            "name": "Post Functions",
+            "count": 3,
+            "url": "x",
+            "weight": 40
+          }
+        ]
+      },
+      {
+        "id": "A<41:S<-1>:S<-1>>",
+        "name": "Comment",
+        "sourceId": "S<-1>",
+        "targetId": "S<-1>",
+        "actionId": 41,
+        "initial": false,
+        "description": "",
+        "globalTransition": true,
+        "loopedTransition": true,
+        "sourceAngle": 0,
+        "targetAngle": 0,
+        "transitionOptions": [
+          {
+            "key": "properties.key",
+            "name": "Properties",
+            "count": 0,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransitionMetaAttributes.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=31",
+            "weight": 10
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:conditions",
+            "name": "Conditions",
+            "count": 1,
+            "url": "https://jira.example.com/secure/admin/workflows/ViewWorkflowTransition.jspa?workflowMode=live&workflowName=Incident%20WF&workflowTransition=31&descriptorTab=conditions",
+            "weight": 20
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:validators",
+            "name": "Validators",
+            "count": 0,
+            "url": "x",
+            "weight": 30
+          },
+          {
+            "key": "com.atlassian.jira.plugin.system.workfloweditor.transition.tabs:postfunctions",
+            "name": "Post Functions",
+            "count": 3,
+            "url": "x",
+            "weight": 40
+          }
+        ]
+      }
+    ],
+    "updatedDate": 1780000000000,
+    "updateAuthor": {
+      "userName": "admin",
+      "displayName": "Admin"
+    },
+    "loopedTransitionContainer": {
+      "x": 10,
+      "y": 10
+    }
+  },
+  "workflowPermissions": {
+    "administrator": true,
+    "editWorkflow": true,
+    "createStatus": true,
+    "editStatus": true,
+    "deleteStatus": true,
+    "editPropertyOptions": true,
+    "selectScreenOnTransition": true
+  }
+}

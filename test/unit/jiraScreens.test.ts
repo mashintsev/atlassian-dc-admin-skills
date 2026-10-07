@@ -130,6 +130,39 @@ describe("jira_get_screen_usage (3.2)", () => {
     assert.match(r.value.warning, /2 projects/);
   });
 
+  it("caps sharing projects at ten and restores the full list on request", async () => {
+    const wideUsage = (c: Call) => path(c) === "/rest/api/2/project"
+      ? { body: Array.from({ length: 12 }, (_, i) => ({ key: `DEMO${i}`, id: String(10100 + i) })) }
+      : usage(c);
+    const r = await run("jira_get_screen_usage", { screen_id: 10433 }, wideUsage);
+    assert.equal(r.value.projects.length, 10);
+    assert.equal(r.value.projectsTotal, 12);
+    const full = await run("jira_get_screen_usage", { screen_id: 10433, full_lists: true }, wideUsage);
+    assert.equal(full.value.projects.length, 12);
+    assert.equal(full.value.projectsTotal, undefined);
+  });
+
+  it("stops at the request budget and says the result is incomplete", async () => {
+    const r = await run("jira_get_screen_usage", { screen_id: 10433, max_requests: 6 }, usage);
+    assert.ok(r.res.ok, JSON.stringify(r.error));
+    assert.equal(r.value.incomplete.reason, "request budget");
+    assert.ok(r.value.incomplete.coveredProjects < 2);
+    assert.equal(r.value.incomplete.totalProjects, 2);
+    assert.equal(r.value.complete, false);
+    assert.ok(r.calls.length <= 6 + 4, `sent ${r.calls.length} requests`);
+  });
+
+  it("scans once per run, and again after a write that changes usage", async () => {
+    const { ctx, calls } = testContext(usage);
+    const scans = () => calls.filter((c) => path(c) === "/rest/api/2/project").length;
+    await runToolByName("jira_get_screen_usage", { screen_id: 10433 }, ctx);
+    await runToolByName("jira_get_screen_usage", { screen_id: 10434 }, ctx);
+    assert.equal(scans(), 1);
+    await runToolByName("jira_archive_project", { project_key: "OPS", dry_run: false }, ctx);
+    await runToolByName("jira_get_screen_usage", { screen_id: 10433 }, ctx);
+    assert.ok(scans() >= 2, "the archive cleared the cached scan");
+  });
+
   it("reports a truncated scan", async () => {
     const r = await run("jira_get_screen_usage", { screen_id: 10433, scan_projects: 1 }, usage);
     assert.equal(r.value.scannedProjects, 1);

@@ -28,6 +28,7 @@ export const jiraLinkTools: ToolDef[] = [
   },
   {
     name: "jira_link_to_epic",
+    unverifiable: "not checked: the current epic link is not compared",
     product: "jira",
     write: true,
     description:
@@ -48,6 +49,7 @@ export const jiraLinkTools: ToolDef[] = [
   },
   {
     name: "jira_create_issue_link",
+    unverifiable: "each call may add another link of the same type",
     product: "jira",
     write: true,
     description:
@@ -86,6 +88,7 @@ export const jiraLinkTools: ToolDef[] = [
   },
   {
     name: "jira_create_remote_issue_link",
+    unverifiable: "not checked: existing remote links are not compared",
     product: "jira",
     write: true,
     description: "Add a web link (remote link) to an issue: URL, title, optional summary, relationship and 16x16 icon.",
@@ -114,6 +117,7 @@ export const jiraLinkTools: ToolDef[] = [
   },
   {
     name: "jira_remove_issue_link",
+    unverifiable: "not checked: the link is not read before or after",
     product: "jira",
     write: true,
     description: "Delete an issue link by id (the id of an entry in the issue's issuelinks field).",

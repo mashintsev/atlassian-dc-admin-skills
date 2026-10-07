@@ -38,23 +38,39 @@ describe("registry", () => {
 });
 
 describe("guarded writes", () => {
-  it("dry run describes the request without calling the server", async () => {
-    const r = await run("jira_add_user_to_group", { group: "jira-admins", username: "ivan" });
-    assert.equal(r.ok, true);
-    assert.equal(r.calls.length, 0);
+  /** A Jira that keeps one user's group memberships, so writes are checked before and read back after. */
+  function membership() {
+    const groups: string[] = [];
+    return (c: any) => {
+      const u = new URL(c.url);
+      if (c.method === "POST" && u.pathname === "/rest/api/2/group/user") {
+        groups.push(u.searchParams.get("groupname")!);
+        return { status: 201, body: {} };
+      }
+      if (u.pathname === "/rest/api/2/user") return { body: { name: "ivan", key: "ivan", groups: { size: groups.length, items: groups.map((name) => ({ name })) } } };
+      return undefined;
+    };
+  }
+  const writes = (calls: any[]) => calls.filter((c) => c.method !== "GET");
+
+  it("dry run describes the request and sends no write (reads only)", async () => {
+    const r = await run("jira_add_user_to_group", { group: "jira-admins", user: "ivan" }, membership());
+    assert.equal(r.ok, true, JSON.stringify(r.json));
+    assert.equal(writes(r.calls).length, 0);
     assert.equal(r.json.dry_run, true);
     assert.equal(r.json.request.method, "POST");
     assert.equal(r.json.request.url, "https://jira.example.com/rest/api/2/group/user?groupname=jira-admins");
     assert.deepEqual(r.json.request.body, { name: "ivan" });
   });
 
-  it("dry_run=false executes exactly the described request", async () => {
-    const r = await run("jira_add_user_to_group", { group: "jira-admins", username: "ivan", dry_run: false });
-    assert.equal(r.json.dry_run, false);
-    assert.equal(r.calls.length, 1);
-    assert.equal(r.calls[0].method, "POST");
-    assert.equal(r.calls[0].url, r.json.request.url);
-    assert.deepEqual(r.calls[0].body, { name: "ivan" });
+  it("dry_run=false sends exactly the described write", async () => {
+    const r = await run("jira_add_user_to_group", { group: "jira-admins", user: "ivan", dry_run: false }, membership());
+    assert.equal(r.json.dry_run, false, JSON.stringify(r.json));
+    const w = writes(r.calls);
+    assert.equal(w.length, 1);
+    assert.equal(w[0].method, "POST");
+    assert.equal(w[0].url, r.json.request.url);
+    assert.deepEqual(w[0].body, { name: "ivan" });
   });
 
   it("accepts dry_run as the string 'false' from the CLI", async () => {
@@ -65,11 +81,18 @@ describe("guarded writes", () => {
   });
 
   it("masks passwords in the echoed request but sends them", async () => {
+    let created = false;
     const r = await run("jira_create_user", {
       username: "new.user", email: "n@example.com", display_name: "New User", password: "p@ss", dry_run: false,
+    }, (c: any) => {
+      if (c.method === "POST") { created = true; return { status: 201, body: {} }; }
+      if (new URL(c.url).pathname === "/rest/api/2/user") {
+        return created ? { body: { name: "new.user", emailAddress: "n@example.com", displayName: "New User" } } : { status: 404, body: {} };
+      }
+      return undefined;
     });
-    assert.equal(r.json.request.body.password, "***");
-    assert.equal(r.calls[0].body.password, "p@ss");
+    assert.equal(r.json.request.body.password, "***", JSON.stringify(r.json));
+    assert.equal(writes(r.calls)[0].body.password, "p@ss");
   });
 
   it("uses user key or username for Jira user writes", async () => {
@@ -190,7 +213,8 @@ describe("read tools", () => {
 describe("parseArgs", () => {
   it("separates global options from tool arguments", () => {
     const { args, options } = parseArgs(['{"a":1}', "b=true", "c=[1,2]", "d=text", "--dry-run=false", "id=00123", "fields=summary", "--format=json", "--fields=-description", "--out=x.json"]);
-    assert.deepEqual(args, { a: 1, b: true, c: [1, 2], d: "text", dry_run: false, id: "00123", fields: "summary" });
+    // values stay text; the runner converts them by each tool's schema (coerceArgs)
+    assert.deepEqual(args, { a: 1, b: "true", c: "[1,2]", d: "text", dry_run: "false", id: "00123", fields: "summary" });
     assert.equal(options.format, "json");
     assert.equal(options.fields, "-description");
     assert.equal(options.out, "x.json");

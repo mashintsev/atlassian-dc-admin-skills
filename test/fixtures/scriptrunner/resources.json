@@ -1,0 +1,19 @@
+[
+  {
+    "@class": "com.onresolve.scriptrunner.canned.common.resources.DatabaseConnection",
+    "id": "res-1",
+    "version": 1,
+    "ownedBy": null,
+    "poolName": "reporting",
+    "disabled": false,
+    "driverClassName": "org.postgresql.Driver",
+    "jdbcUrl": "jdbc:postgresql://db.example.com/report?user=reader&password=secret",
+    "dataSourceUser": "reader",
+    "dataSourcePassword": "s3cret",
+    "poolPropertyOverrides": "maxActive=5",
+    "previewSql": "select * from accounts",
+    "readOnly": true,
+    "listingPageIdentifier": "db",
+    "canned-script": "com.onresolve.scriptrunner.canned.common.resources.DatabaseConnection"
+  }
+]

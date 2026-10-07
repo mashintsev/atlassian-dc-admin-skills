@@ -190,7 +190,7 @@ export const confluenceAttachmentTools: ToolDef[] = [
       content_id: z.coerce.string(),
       filename: z.string().optional().describe("Exact file name"),
       media_type: z.string().optional().describe("Exact MIME type, e.g. image/png"),
-      ...pageShape(50),
+      ...pageShape(50, 100),
     },
     async handler({ client }, args) {
       const offset = args.offset ?? 0;
@@ -207,6 +207,7 @@ export const confluenceAttachmentTools: ToolDef[] = [
   },
   {
     name: "confluence_upload_attachment",
+    unverifiable: "each call stores a new attachment version",
     product: "confluence",
     write: true,
     description: "Upload a local file to a page. An existing attachment with the same name gets a new version.",
@@ -217,6 +218,7 @@ export const confluenceAttachmentTools: ToolDef[] = [
   },
   {
     name: "confluence_upload_attachments",
+    unverifiable: "each call stores new attachment versions",
     product: "confluence",
     write: true,
     description: "Upload several local files to a page (same name → new version). Per-file failures are reported.",
@@ -270,6 +272,7 @@ export const confluenceAttachmentTools: ToolDef[] = [
   },
   {
     name: "confluence_delete_attachment",
+    unverifiable: "not checked: the attachment is not read before or after",
     product: "confluence",
     write: true,
     description: "Delete an attachment (att… id) from its page.",

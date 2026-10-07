@@ -1,0 +1,14 @@
+{
+  "self": "https://jira.example.com/rest/api/2/filter/10200",
+  "id": "10200",
+  "name": "Open incidents",
+  "owner": { "name": "alice", "displayName": "Alice" },
+  "jql": "project = TEST AND status = Open",
+  "viewUrl": "https://jira.example.com/issues/?filter=10200",
+  "searchUrl": "https://jira.example.com/rest/api/2/search?jql=project+%3D+TEST",
+  "favourite": true,
+  "sharePermissions": [{ "id": 501, "type": "project", "project": { "id": "10100", "key": "TEST", "name": "Test" }, "view": true, "edit": false }],
+  "editable": true,
+  "sharedUsers": { "size": 0, "items": [] },
+  "subscriptions": { "size": 0, "items": [] }
+}

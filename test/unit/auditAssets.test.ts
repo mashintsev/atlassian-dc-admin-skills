@@ -27,7 +27,7 @@ describe("assets read tools: paging, server-side filters, minimal payload", () =
     assert.equal(p.get("includeAttributesDeep"), "0");
     assert.equal(p.get("includeExtendedInfo"), "false");
     assert.equal(p.get("page"), "1");
-    assert.equal(p.get("resultPerPage"), "25");
+    assert.equal(p.get("resultPerPage"), "20");
   });
 
   it("assets_search with attributes keeps reference depth 1 and pages", async () => {

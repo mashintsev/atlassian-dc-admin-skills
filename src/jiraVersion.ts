@@ -18,6 +18,8 @@ export function jiraVersion(client: AtlassianClient): Promise<string> {
   if (!v) {
     v = client.get("/rest/api/2/serverInfo").then((info: any) => String(info?.version ?? ""));
     versions.set(client, v);
+    // a failed read is not kept: a retry in the same run reads again
+    v.catch(() => versions.delete(client));
   }
   return v;
 }
@@ -46,6 +48,8 @@ export function jsmVersion(client: AtlassianClient): Promise<string> {
   if (!v) {
     v = client.get("/rest/servicedeskapi/info").then((info: any) => String(info?.version ?? ""));
     jsmVersions.set(client, v);
+    // a failed read is not kept: a retry in the same run reads again
+    v.catch(() => jsmVersions.delete(client));
   }
   return v;
 }

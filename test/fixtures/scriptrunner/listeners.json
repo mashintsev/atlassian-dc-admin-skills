@@ -1,0 +1,31 @@
+[
+  {
+    "projects": [
+      "DEMO"
+    ],
+    "events": [
+      1,
+      2
+    ],
+    "FIELD_SCRIPT_FILE_OR_SCRIPT": {
+      "script": null,
+      "scriptPath": "jobs/sample_job.groovy",
+      "parameters": {}
+    },
+    "canned-script": "com.onresolve.scriptrunner.canned.jira.events.CustomListener",
+    "@class": "x",
+    "id": "lis-1",
+    "version": 5,
+    "FIELD_NOTES": null,
+    "FIELD_FUNCTION_ID": "abc",
+    "friendlyEventNames": "Issue Created, Issue Updated",
+    "name": "Notify on create",
+    "relatedProjects": [
+      {
+        "key": "DEMO",
+        "name": "Demo"
+      }
+    ],
+    "FIELD_LISTENER_NOTES": "Sends a mail"
+  }
+]

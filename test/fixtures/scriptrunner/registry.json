@@ -1,0 +1,12 @@
+[
+  {
+    "filename": "sample_job.groovy",
+    "filepath": "jobs/sample_job.groovy",
+    "filetype": "groovy"
+  },
+  {
+    "filename": "helper.groovy",
+    "filepath": "lib/helper.groovy",
+    "filetype": "groovy"
+  }
+]

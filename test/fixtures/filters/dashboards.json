@@ -1,0 +1,4 @@
+{ "startAt": 0, "maxResults": 2, "total": 3, "dashboards": [
+  { "id": "10000", "name": "System Dashboard", "self": "https://jira.example.com/rest/api/2/dashboard/10000", "view": "https://jira.example.com/secure/Dashboard.jspa?selectPageId=10000" },
+  { "id": "10100", "name": "Ops board", "self": "https://jira.example.com/rest/api/2/dashboard/10100", "view": "https://jira.example.com/secure/Dashboard.jspa?selectPageId=10100" }
+] }

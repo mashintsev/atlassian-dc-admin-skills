@@ -15,7 +15,8 @@
     "test": "node --import tsx --test \"test/unit/**/*.test.ts\"",
     "cli": "tsx src/cli.ts",
     "docs": "tsx scripts/gen-reference.ts",
-    "bench": "tsx scripts/token-bench.ts"
+    "bench": "tsx scripts/token-bench.ts",
+    "bench:reads": "tsx scripts/read-bench.ts"
   },
   "dependencies": {
     "marked": "^18.0.14",

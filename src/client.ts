@@ -12,14 +12,88 @@ import { readFileSync } from "node:fs";
 import { rootCertificates } from "node:tls";
 import { Agent, fetch as undiciFetch } from "undici";
 import { loadConfig, type Product, type ProductConfig } from "./config.js";
-import { HttpStatusError, ValidationError } from "./errors.js";
+import { AuthenticationRequiredError, HttpStatusError, UpstreamError, ValidationError, WebSudoRequiredError } from "./errors.js";
 
 const PAGINATION_MAX = 1000; // safety cap so paging never loops forever
 /** Default cap of items an auto-paging helper collects; callers that need more must say so. */
 export const DEFAULT_MAX_ITEMS = 1000;
 const MAX_CONCURRENCY = 8; // DC answers 403/429 to bursts of parallel requests
-const RATE_LIMIT_RETRIES = 4;
-const RATE_LIMIT_MAX_WAIT_MS = 10_000;
+/** Attempts per request: 429 for any method; 502/503/504, resets and timeouts for reads only. */
+const MAX_ATTEMPTS = 5;
+/** A server asking to wait longer than this ends the retries with its error. */
+const MAX_RETRY_WAIT_MS = 60_000;
+const BACKOFF_BASE_MS = 1_000;
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+const TRANSIENT_CODES = new Set(["ECONNRESET", "ETIMEDOUT", "EPIPE", "UND_ERR_SOCKET", "UND_ERR_CONNECT_TIMEOUT"]);
+
+/** Time seam: tests replace these so retries neither wait nor depend on randomness. */
+export const timing = {
+  sleep: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)),
+  now: () => Date.now(),
+  random: () => Math.random(),
+};
+
+/** Wait asked for by `Retry-After` (seconds or HTTP date), or undefined. */
+function retryAfterMs(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const at = Date.parse(value);
+  return Number.isFinite(at) ? Math.max(0, at - timing.now()) : undefined;
+}
+
+/** Exponential backoff with jitter, so parallel workers do not retry in lockstep. */
+function backoffMs(attempt: number): number {
+  return Math.round(BACKOFF_BASE_MS * 2 ** attempt * (0.5 + timing.random()));
+}
+
+const looksLikeHtml = (text: string) => /^\s*(<!doctype html|<html)/i.test(text);
+
+/**
+ * The error for an HTML page where JSON was expected (or with an error status): login page, websudo
+ * prompt, or a proxy/gateway page. Never includes the HTML itself.
+ */
+function htmlError(status: number, text: string, loginReason: string | null, method: string, url: string): Error {
+  const where = `${method} ${url}`;
+  if (/WebSudoAuthenticate|webSudoPassword|websudo/i.test(text)) {
+    return new WebSudoRequiredError(`${where}: Jira asks for administrator (websudo) re-authentication`);
+  }
+  // Jira's own login page, or a single sign-on provider it redirected to (OAuth2/SAML)
+  if (loginReason || /login\.jsp|os_destination|id="login-form"|oauth2\/[^"' ]*authorize|SAMLRequest/i.test(text)) {
+    return new AuthenticationRequiredError(`${where}: the server answered with its login page${loginReason ? ` (${loginReason})` : ""}`);
+  }
+  return new UpstreamError(`${where}: HTTP ${status} with an HTML page from a proxy or gateway instead of the application`, status);
+}
+
+/**
+ * Whether a REST call ended on a login page: Jira's own login.jsp, or another host (a single sign-on
+ * provider) that answered something other than JSON. A redirect to the canonical host or port of the same
+ * Jira still answers JSON and is data.
+ */
+function redirectedToLogin(finalUrl: string, baseUrl: string, text: string): boolean {
+  try {
+    const u = new URL(finalUrl);
+    if (/\/login\.jsp$/.test(u.pathname)) return true;
+    return u.host !== new URL(baseUrl).host && !isJsonText(text);
+  } catch {
+    return false;
+  }
+}
+
+function isJsonText(text: string): boolean {
+  if (!text.trim()) return true;
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isTransient(e: any): boolean {
+  if (e?.name === "TimeoutError") return true;
+  return e?.message === "fetch failed" && TRANSIENT_CODES.has(String(e?.cause?.code ?? ""));
+}
 
 /** JSON value shorthand — REST responses are untyped at the boundary. */
 export type Json = any;
@@ -32,6 +106,10 @@ export interface RequestOptions {
   json?: Json;
   /** multipart/form-data body (attachments); the boundary header is set by fetch */
   form?: FormData;
+  /** application/x-www-form-urlencoded body (form parameters of internal resources) */
+  urlencoded?: Record<string, string | number | boolean>;
+  /** Raw text body, sent as is with `contentType` */
+  body?: string;
   contentType?: string;
   accept?: string;
   /** Extra headers for this call only (e.g. X-ExperimentalApi: opt-in for Service Desk). */
@@ -40,6 +118,8 @@ export interface RequestOptions {
 
 export interface FetchResponse {
   status: number;
+  /** Final URL after redirects (a login or SSO redirect ends elsewhere). */
+  url?: string;
   headers: { get(name: string): string | null };
   text(): Promise<string>;
   arrayBuffer?(): Promise<ArrayBuffer>;
@@ -69,15 +149,26 @@ export function seg(value: string | number): string {
   return encodeURIComponent(String(value));
 }
 
-/** Run thunks with at most `limit` in flight; results keep input order. */
+/**
+ * Run thunks with at most `limit` in flight; results keep input order. After the first failure no new
+ * thunk starts (those in flight finish and are dropped). The client's limiter bounds the actual requests,
+ * also when fan-outs are nested.
+ */
 export async function boundedAll<T>(thunks: Array<() => Promise<T>>, limit = MAX_CONCURRENCY): Promise<T[]> {
   const results = new Array<T>(thunks.length);
   let next = 0;
+  let failed = false;
   async function worker(): Promise<void> {
     for (;;) {
+      if (failed) return;
       const i = next++;
       if (i >= thunks.length) return;
-      results[i] = await thunks[i]();
+      try {
+        results[i] = await thunks[i]();
+      } catch (e) {
+        failed = true;
+        throw e;
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, thunks.length) }, () => worker()));
@@ -98,11 +189,69 @@ export function tlsOptions(config: ProductConfig): { rejectUnauthorized: boolean
   return { rejectUnauthorized: config.verifySsl, ca: [...rootCertificates, readFileSync(config.caFile, "utf8")] };
 }
 
+/**
+ * Requests in flight for one client: at most `limit`, which halves on a 429 (never below 2) and grows by
+ * one after every 20 consecutive successes, up to `max` (ATLASSIAN_MAX_CONCURRENCY, default 8).
+ */
+export class RequestLimiter {
+  readonly max: number;
+  limit: number;
+  private active = 0;
+  private successes = 0;
+  private readonly waiting: Array<() => void> = [];
+
+  constructor(max: number) {
+    this.max = Math.max(1, max);
+    this.limit = this.max;
+  }
+
+  async acquire(): Promise<void> {
+    if (this.active < this.limit) {
+      this.active++;
+      return;
+    }
+    await new Promise<void>((resolve) => this.waiting.push(resolve));
+  }
+
+  release(): void {
+    const next = this.active <= this.limit ? this.waiting.shift() : undefined;
+    if (next) next(); // the slot passes to the waiting request
+    else this.active--;
+  }
+
+  throttled(): void {
+    this.limit = Math.min(this.limit, Math.max(2, Math.floor(this.limit / 2)));
+    this.successes = 0;
+  }
+
+  succeeded(): void {
+    if (++this.successes < 20) return;
+    this.successes = 0;
+    if (this.limit < this.max) {
+      this.limit++;
+      // a new slot exists only while fewer requests run than the raised limit (a 429 may have left more in flight)
+      const next = this.active < this.limit ? this.waiting.shift() : undefined;
+      if (next) {
+        this.active++;
+        next();
+      }
+    }
+  }
+}
+
+function configuredConcurrency(): number {
+  const n = Number(process.env.ATLASSIAN_MAX_CONCURRENCY);
+  return Number.isInteger(n) && n > 0 ? n : MAX_CONCURRENCY;
+}
+
 export class AtlassianClient {
   readonly product: Product;
   readonly config: ProductConfig;
   private readonly agent?: Agent;
   private readonly fetchImpl: FetchLike;
+  readonly limiter = new RequestLimiter(configuredConcurrency());
+  /** The last `atlassian.xsrf.token` cookie Jira set on any response. */
+  private xsrfCookie?: string;
 
   constructor(config: ProductConfig, fetchImpl?: FetchLike) {
     this.product = config.product;
@@ -127,7 +276,11 @@ export class AtlassianClient {
     return this.config.baseUrl + (path.startsWith("/") ? path : `/${path}`) + buildQuery(params);
   }
 
-  /** Send with 429 retry; throws HttpStatusError on >= 400 (body read as text for the message). */
+  /**
+   * Send with retries: 429 for any method (Jira rejects throttled requests before processing them);
+   * 502/503/504, connection resets and timeouts only for GET/HEAD, so a write is never repeated.
+   * Throws HttpStatusError on >= 400 (body read as text for the message).
+   */
   private async send(method: string, url: string, opts: RequestOptions): Promise<FetchResponse> {
     const headers: Record<string, string> = { ...this.config.headers, ...(opts.headers ?? {}) };
     if (opts.accept) headers.Accept = opts.accept;
@@ -135,28 +288,72 @@ export class AtlassianClient {
     if (this.agent) init.dispatcher = this.agent;
     if (opts.form !== undefined) {
       init.body = opts.form;
+    } else if (opts.urlencoded !== undefined) {
+      init.body = new URLSearchParams(Object.entries(opts.urlencoded).map(([k, v]): [string, string] => [k, String(v)])).toString();
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+    } else if (opts.body !== undefined) {
+      init.body = opts.body;
+      headers["Content-Type"] = opts.contentType ?? "text/plain";
     } else if (opts.json !== undefined) {
       init.body = JSON.stringify(opts.json);
       headers["Content-Type"] = opts.contentType ?? "application/json";
     }
+    const read = method === "GET" || method === "HEAD";
 
     for (let attempt = 0; ; attempt++) {
-      const res = await this.fetchImpl(url, { ...init, signal: AbortSignal.timeout(this.config.timeoutMs) });
-      if (res.status === 429 && attempt < RATE_LIMIT_RETRIES) {
-        await res.text();
-        const retryAfterS = Number(res.headers.get("retry-after"));
-        const waitMs = Number.isFinite(retryAfterS) && retryAfterS > 0 ? retryAfterS * 1000 : 1000 * 2 ** attempt;
-        await new Promise((r) => setTimeout(r, Math.min(waitMs, RATE_LIMIT_MAX_WAIT_MS)));
-        continue;
+      const last = attempt >= MAX_ATTEMPTS - 1;
+      let res: FetchResponse;
+      await this.limiter.acquire();
+      try {
+        res = await this.fetchImpl(url, { ...init, signal: AbortSignal.timeout(this.config.timeoutMs) });
+      } catch (e) {
+        this.limiter.release();
+        if (read && !last && isTransient(e)) {
+          await timing.sleep(backoffMs(attempt));
+          continue;
+        }
+        throw e;
       }
-      if (res.status >= 400) throw new HttpStatusError(res.status, await res.text(), url, method);
+      this.limiter.release();
+      const cookie = /atlassian\.xsrf\.token=([^;,\s]+)/.exec(res.headers.get("set-cookie") ?? "")?.[1];
+      if (cookie) this.xsrfCookie = cookie;
+      if (res.status === 429) this.limiter.throttled();
+      else if (res.status < 400) this.limiter.succeeded();
+      const retryable = res.status === 429 || (read && RETRYABLE_STATUS.has(res.status));
+      if (retryable && !last) {
+        const asked = retryAfterMs(res.headers.get("retry-after"));
+        if (asked === undefined || asked <= MAX_RETRY_WAIT_MS) {
+          await res.text();
+          await timing.sleep(asked ?? backoffMs(attempt));
+          continue;
+        }
+      }
+      if (res.status >= 400) {
+        const text = await res.text();
+        if (looksLikeHtml(text)) {
+          const e = htmlError(res.status, text, res.headers.get("x-seraph-loginreason"), method, url);
+          // other HTML error pages (an HTML 404, say) keep their HTTP status; tools rely on it
+          if (!(e instanceof UpstreamError) || RETRYABLE_STATUS.has(res.status)) throw e;
+        }
+        throw new HttpStatusError(res.status, text, url, method);
+      }
       return res;
     }
   }
 
   async request(method: string, path: string, opts: RequestOptions = {}): Promise<Json> {
-    const res = await this.send(method, this.url(path, opts.params), opts);
-    return parse(await res.text());
+    const url = this.url(path, opts.params);
+    const res = await this.send(method, url, opts);
+    const text = await res.text();
+    // a REST call that ended on a login page or on another host (SSO redirect) needs authentication
+    if (res.url && redirectedToLogin(res.url, this.config.baseUrl, text)) {
+      throw new AuthenticationRequiredError(`${method} ${url}: redirected to a login page (${new URL(res.url).host})`);
+    }
+    // a 200 HTML page (login, websudo, proxy) on a REST call is an error, never data
+    if (looksLikeHtml(text) || res.headers.get("x-seraph-loginreason")?.includes("FAILED")) {
+      throw htmlError(res.status, text, res.headers.get("x-seraph-loginreason"), method, url);
+    }
+    return parse(text);
   }
 
   /**
@@ -165,10 +362,10 @@ export class AtlassianClient {
    * on any response; undefined when Jira sets none.
    */
   async xsrfToken(): Promise<string | undefined> {
+    if (this.xsrfCookie) return this.xsrfCookie;
     const res = await this.send("GET", this.url("/rest/api/2/serverInfo"), {});
     await res.text();
-    const cookies = res.headers.get("set-cookie") ?? "";
-    return /atlassian\.xsrf\.token=([^;,\s]+)/.exec(cookies)?.[1];
+    return this.xsrfCookie;
   }
 
   /** GET a binary body (attachments, exports). `path` may be an absolute URL on the same host. */
@@ -189,32 +386,59 @@ export class AtlassianClient {
 
   /** Auto-page endpoints returning `{startAt, maxResults, total, <key>}` (Jira style). */
   async getPaged(path: string, key = "values", params: Params = {}, pageSize = 50, maxItems = DEFAULT_MAX_ITEMS): Promise<Json[]> {
+    return (await this.getPagedResult(path, key, params, pageSize, maxItems)).items;
+  }
+
+  /** Like getPaged, and says whether items were left behind because of the cap. */
+  async getPagedResult(path: string, key = "values", params: Params = {}, pageSize = 50, maxItems = DEFAULT_MAX_ITEMS): Promise<PagedResult> {
     const results: Json[] = [];
     let start = 0;
-    for (let i = 0; i < PAGINATION_MAX && results.length < maxItems; i++) {
+    let more = false;
+    for (let i = 0; i < PAGINATION_MAX; i++) {
       const data = await this.get(path, { ...params, startAt: start, maxResults: pageSize });
       const batch: Json[] = (data && data[key]) || [];
       results.push(...batch);
       const total: number = data?.total ?? (data?.isLast ? results.length : Infinity);
       if (batch.length === 0 || results.length >= total || data?.isLast === true) break;
+      if (results.length >= maxItems) {
+        more = true;
+        break;
+      }
       start += batch.length;
     }
-    return results.slice(0, maxItems);
+    return { items: results.slice(0, maxItems), truncated: more || results.length > maxItems, cap: maxItems };
   }
 
   /** Auto-page Confluence `{results, start, limit, size, _links.next}` responses. */
   async getPagedConfluence(path: string, params: Params = {}, pageSize = 100, maxItems = DEFAULT_MAX_ITEMS): Promise<Json[]> {
+    return (await this.getPagedConfluenceResult(path, params, pageSize, maxItems)).items;
+  }
+
+  /** Like getPagedConfluence, and says whether items were left behind because of the cap. */
+  async getPagedConfluenceResult(path: string, params: Params = {}, pageSize = 100, maxItems = DEFAULT_MAX_ITEMS): Promise<PagedResult> {
     const results: Json[] = [];
     let start = 0;
-    for (let i = 0; i < PAGINATION_MAX && results.length < maxItems; i++) {
+    let more = false;
+    for (let i = 0; i < PAGINATION_MAX; i++) {
       const data = await this.get(path, { ...params, start, limit: pageSize });
       const batch: Json[] = data?.results ?? [];
       results.push(...batch);
       if (batch.length === 0 || !data?._links?.next) break;
+      if (results.length >= maxItems) {
+        more = true;
+        break;
+      }
       start += batch.length;
     }
-    return results.slice(0, maxItems);
+    return { items: results.slice(0, maxItems), truncated: more || results.length > maxItems, cap: maxItems };
   }
+}
+
+/** Items collected by a paging helper; `truncated` when the cap stopped it before the end. */
+export interface PagedResult {
+  items: Json[];
+  truncated: boolean;
+  cap: number;
 }
 
 function parse(text: string): Json {

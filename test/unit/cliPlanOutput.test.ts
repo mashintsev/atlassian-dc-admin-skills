@@ -10,8 +10,9 @@ function runPlan(format: string) {
   const dir = mkdtempSync(join(tmpdir(), "cli-plan-output-"));
   const plan = join(dir, "plan.json");
   return spawnSync(process.execPath, [
-    "--import", "tsx", "src/cli.ts", "jira_add_user_to_group",
-    "group=sample-team", "username=sample-user", `--plan=${plan}`, `--format=${format}`,
+    // a write whose dry run needs no read: this test runs the real CLI without a server
+    "--import", "tsx", "src/cli.ts", "jira_kill_user_sessions",
+    "user=sample-user", `--plan=${plan}`, `--format=${format}`,
   ], { encoding: "utf8", env: { ...process.env, ...TEST_ENV } });
 }
 

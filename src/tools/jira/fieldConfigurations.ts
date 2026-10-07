@@ -20,7 +20,7 @@ import { z } from "zod";
 import type { AtlassianClient } from "../../client.js";
 import { isHttpStatusError, UnsupportedError, ValidationError } from "../../errors.js";
 import type { ToolDef } from "../types.js";
-import { alreadySatisfied, dryRunShape, nameFilterShape, pageShape, serverPage } from "../util.js";
+import { alreadySatisfied, capList, dryRunShape, fullListsShape, nameFilterShape, pageShape, serverPage } from "../util.js";
 import { resolveField } from "./fieldRefs.js";
 import { parseWhereIsMyField, probeField, whereIsMyField } from "./screens.js";
 
@@ -147,41 +147,50 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 export const jiraFieldConfigurationTools: ToolDef[] = [
   {
     name: "jira_get_field_configuration",
+    aliases: { issue_type_id: "issue_type" },
     product: "jira",
     description:
       "The field configuration a project uses (per issue type, or field_configuration_id): its fields with description, " +
-      "hidden/visible and required/optional (paged, name_contains), and the projects that share it. Without issue_type_id, " +
+      "hidden/visible and required/optional (paged, name_contains), and the projects that share it. Without issue_type, " +
       "issue types are grouped by configuration (fields only when there is one). Field configuration schemes are not " +
       "readable through REST. Internal and plugin APIs, verified on Jira 11.3.",
     inputShape: {
       project_key: z.string().min(1),
-      issue_type_id: z.coerce.string().optional(),
+      issue_type: z.coerce.string().optional().describe("Issue type id or exact name"),
       field_configuration_id: z.coerce.number().int().optional(),
       ...nameFilterShape,
       ...pageShape(50),
+      ...fullListsShape,
     },
     async handler({ client }, args) {
       const c = client("jira");
       const result = (configurations: unknown[], hint?: string) => ({
         project: args.project_key,
         fieldConfigurationScheme: null,
-        fieldConfigurationSchemeNote: "Jira has no REST resource for field configuration schemes",
+        fieldConfigurationSchemeNote: "Field configuration schemes are not readable over REST.",
         configurations,
         hint,
       });
+      // the projects sharing a configuration: the default one is shared by every project without a scheme
+      const shared = async (id: number, isDefault: boolean) => {
+        const out: Record<string, unknown> = {};
+        capList(out, "sharedWith", await sharedWith(c, id, isDefault), args.full_lists);
+        return out;
+      };
 
       if (args.field_configuration_id !== undefined) {
         const cfg = await identify(c, args.field_configuration_id);
         return result([{
           ...cfg, default: cfg.isDefault, isDefault: undefined,
-          sharedWith: await sharedWith(c, cfg.id, cfg.isDefault),
+          ...(await shared(cfg.id, cfg.isDefault)),
           fields: await fieldsPage(c, cfg.id, cfg.isDefault, args),
         }]);
       }
 
       const project: any = await c.get(`/rest/api/2/project/${encodeURIComponent(args.project_key)}`);
-      const types: any[] = (project?.issueTypes ?? []).filter((t: any) => !args.issue_type_id || String(t.id) === args.issue_type_id);
-      if (!types.length) throw new ValidationError(`Project ${args.project_key} has no issue type ${args.issue_type_id}`);
+      const want = args.issue_type?.toLowerCase();
+      const types: any[] = (project?.issueTypes ?? []).filter((t: any) => !want || String(t.id) === args.issue_type || String(t.name).toLowerCase() === want);
+      if (!types.length) throw new ValidationError(`Project ${args.project_key} has no issue type ${args.issue_type}`);
       const probe = await probeField(c);
       const groups = new Map<string, string[]>();
       const failed: string[] = [];
@@ -209,7 +218,7 @@ export const jiraFieldConfigurationTools: ToolDef[] = [
           configurations.push({ id: null, name, issueTypes, unresolved: `no field configuration id found for '${name}' (${how}); pass field_configuration_id` });
           continue;
         }
-        configurations.push({ id, name, default: isDefault, issueTypes, sharedWith: await sharedWith(c, id, isDefault) });
+        configurations.push({ id, name, default: isDefault, issueTypes, ...(await shared(id, isDefault)) });
       }
       if (failed.length) {
         configurations.push({ id: null, name: null, issueTypes: failed, unresolved: "the bundled 'Where is my field' plugin did not name a field configuration; pass field_configuration_id" });
@@ -220,12 +229,13 @@ export const jiraFieldConfigurationTools: ToolDef[] = [
         return result(configurations);
       }
       return result(configurations, configurations.length > 1
-        ? "Issue types use different field configurations: pass issue_type_id or field_configuration_id for the fields"
+        ? "Issue types use different field configurations: pass issue_type or field_configuration_id for the fields"
         : undefined);
     },
   },
   {
     name: "jira_update_field_description",
+    aliases: { field_id: "field" },
     product: "jira",
     write: true,
     description:
@@ -235,13 +245,13 @@ export const jiraFieldConfigurationTools: ToolDef[] = [
       "UI; running the tool again verifies it (already-satisfied).",
     inputShape: {
       field_configuration_id: z.coerce.number().int(),
-      field_id: z.coerce.string().min(1).describe("customfield_N, a system field id, or the exact field name"),
+      field: z.coerce.string().min(1).describe("customfield_N, a system field id, or the exact field name"),
       description: z.string(),
       ...dryRunShape,
     },
     async handler({ client }, args) {
       const c = client("jira");
-      const field = await resolveField(c, args.field_id);
+      const field = await resolveField(c, args.field);
       const cfg = await identify(c, args.field_configuration_id);
       const found = await configItem(c, cfg.isDefault ? -1 : cfg.id, field.id!, field.name ?? field.id!);
       if (!found) throw new ValidationError(`${field.name} (${field.id}) is not in field configuration ${cfg.name} (${cfg.id})`);

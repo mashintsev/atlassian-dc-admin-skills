@@ -1,0 +1,83 @@
+[
+  {
+    "info": {
+      "rootPath": "/var/scriptroot/scripts",
+      "defaultRoot": true
+    },
+    "files": {
+      "project-a": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/jobs": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/jobs/close.groovy": {
+        "isFile": true,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/lib": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/lib/Helper.groovy": {
+        "isFile": true,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/отчёт.groovy": {
+        "isFile": true,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/conf": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/conf/app.properties": {
+        "isFile": true,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "project-a/empty": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "other": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      },
+      "other/x.groovy": {
+        "isFile": true,
+        "rootPath": "/var/scriptroot/scripts",
+        "lastModified": 1780000000000
+      }
+    }
+  },
+  {
+    "info": {
+      "rootPath": "/var/scriptroot/extra",
+      "defaultRoot": false
+    },
+    "files": {
+      "shared": {
+        "isFile": false,
+        "rootPath": "/var/scriptroot/extra",
+        "lastModified": 1780000000000
+      },
+      "shared/util.groovy": {
+        "isFile": true,
+        "rootPath": "/var/scriptroot/extra",
+        "lastModified": 1780000000000
+      }
+    }
+  }
+]

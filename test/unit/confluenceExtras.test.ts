@@ -62,7 +62,7 @@ describe("registry hygiene", () => {
       assert.equal("dry_run" in t.inputShape, !!t.write, t.name);
       assert.ok(t.name.startsWith(`${t.product}_`), t.name);
     }
-    assert.equal(all.length, 20);
+    assert.equal(all.length, 21);
   });
 });
 
@@ -148,8 +148,8 @@ describe("comments", () => {
       return {
         body: {
           results: [
-            { id: "1", body: { view: { value: "<p>hi</p>" } }, version: { by: { username: "ivan" }, when: "2026-10-01T10:00:00.000+03:00" }, container: { id: "42", type: "page" } },
-            { id: "2", body: { view: { value: "<p>re</p>" } }, container: { id: "1", type: "comment" }, extensions: { location: "footer" } },
+            { id: "1", body: { storage: { value: "<p>hi</p>" } }, version: { by: { username: "ivan" }, when: "2026-10-01T10:00:00.000+03:00" }, container: { id: "42", type: "page" } },
+            { id: "2", body: { storage: { value: "<p>re</p>" } }, container: { id: "1", type: "comment" }, extensions: { location: "footer" } },
           ],
           _links: { next: "/n" },
         },
@@ -159,6 +159,8 @@ describe("comments", () => {
     assert.equal(r.value.returned, 2);
     assert.equal(r.value.nextOffset, 2);
     assert.equal(r.value.items[0].author, "ivan");
+    assert.equal(r.value.items[0].body, "hi");
+    assert.equal(r.value.items[1].body, "re");
     assert.equal(r.value.items[1].parent, "1");
   });
 
