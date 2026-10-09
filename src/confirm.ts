@@ -2,7 +2,8 @@
  * Interactive user confirmation for every change the CLI executes.
  *
  * The confirmation goes to the person, not to the calling agent: a native dialog
- * (macOS `osascript`, Linux `zenity`) or the controlling terminal when the CLI runs in one.
+ * (macOS `osascript`, Windows PowerShell WinForms, Linux `zenity`) or the controlling terminal
+ * when the CLI runs in one.
  * The agent only sees the outcome. One change → Apply/Cancel; several changes (a plan) →
  * a checklist where the user ticks each change or keeps all of them selected.
  *
@@ -106,6 +107,83 @@ function zenityList(title: string, items: ConfirmItem[], timeoutS: number): numb
   return res.stdout.trim().split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0);
 }
 
+// -- Windows --------------------------------------------------------------------
+
+// WinForms dialog run by Windows PowerShell 5.1 (built into Windows 10/11). The data comes as
+// base64 UTF-8 JSON in an environment variable and the script as -EncodedCommand, so nothing
+// user-controlled reaches the command line and non-ASCII text survives. Focus starts on Cancel.
+const WIN_CONFIRM_PS = String.raw`
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+[System.Windows.Forms.Application]::EnableVisualStyles()
+$d = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($env:ATLASSIAN_WIN_CONFIRM)) | ConvertFrom-Json
+$state = @{ timedOut = $false }
+$f = New-Object System.Windows.Forms.Form
+$f.Text = $d.title; $f.Width = 960; $f.Height = 460; $f.StartPosition = 'CenterScreen'
+$f.TopMost = $true; $f.MinimizeBox = $false; $f.MaximizeBox = $false
+$f.Font = New-Object System.Drawing.Font('Segoe UI', 10)
+if ($d.single) {
+  $box = New-Object System.Windows.Forms.TextBox
+  $box.Multiline = $true; $box.ReadOnly = $true; $box.ScrollBars = 'Vertical'; $box.Text = $d.items[0].text
+} else {
+  $box = New-Object System.Windows.Forms.CheckedListBox
+  $box.CheckOnClick = $true; $box.HorizontalScrollbar = $true
+  foreach ($it in $d.items) { [void]$box.Items.Add($it.text, $true) }
+}
+$box.Dock = 'Fill'
+$lbl = New-Object System.Windows.Forms.Label
+$lbl.Dock = 'Top'; $lbl.Height = 34; $lbl.Padding = New-Object System.Windows.Forms.Padding(6, 8, 6, 0)
+$panel = New-Object System.Windows.Forms.FlowLayoutPanel
+$panel.Dock = 'Bottom'; $panel.Height = 48; $panel.FlowDirection = 'RightToLeft'; $panel.Padding = New-Object System.Windows.Forms.Padding(6)
+$cancel = New-Object System.Windows.Forms.Button
+$cancel.Text = 'Cancel'; $cancel.Width = 120; $cancel.Height = 32; $cancel.DialogResult = 'Cancel'
+$ok = New-Object System.Windows.Forms.Button
+$ok.Width = 160; $ok.Height = 32; $ok.DialogResult = 'OK'
+if ($d.single) { $lbl.Text = 'Apply this change?'; $ok.Text = 'Apply' } else { $lbl.Text = 'Tick the changes to apply (all are ticked):'; $ok.Text = 'Apply selected' }
+$panel.Controls.Add($cancel); $panel.Controls.Add($ok)
+$f.Controls.Add($box); $f.Controls.Add($lbl); $f.Controls.Add($panel)
+$f.CancelButton = $cancel
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = [int]$d.timeout * 1000
+$timer.Add_Tick({ $state.timedOut = $true; $timer.Stop(); $f.Close() })
+$f.Add_Shown({ $f.Activate(); $cancel.Focus(); $timer.Start() })
+$r = $f.ShowDialog()
+$timer.Stop()
+if ($state.timedOut) { 'TIMEOUT' }
+elseif ($r -ne [System.Windows.Forms.DialogResult]::OK) { 'CANCEL' }
+elseif ($d.single) { 'APPLY' }
+else {
+  $picked = @(foreach ($i in $box.CheckedIndices) { $d.items[$i].n })
+  if ($picked.Count -eq 0) { 'CANCEL' } else { 'PICKED ' + ($picked -join ',') }
+}
+`;
+
+function winConfirm(title: string, items: ConfirmItem[], single: boolean, timeoutS: number): string | undefined {
+  const data = Buffer.from(
+    JSON.stringify({ title, single, timeout: timeoutS, items: items.map((it) => ({ n: it.n, text: line(it) })) }),
+    "utf8",
+  ).toString("base64");
+  // No windowsHide: SW_HIDE can also hide the dialog itself; -WindowStyle Hidden hides only the console.
+  const res = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
+      "-EncodedCommand", Buffer.from(WIN_CONFIRM_PS, "utf16le").toString("base64")],
+    { encoding: "utf8", timeout: (timeoutS + 30) * 1000, env: { ...process.env, ATLASSIAN_WIN_CONFIRM: data } },
+  );
+  if (res.error || res.status !== 0) return undefined;
+  return res.stdout.trim().split(/\r?\n/).pop();
+}
+
+/** Map the Windows dialog's answer (APPLY, CANCEL, TIMEOUT, PICKED 1,3) to item numbers. */
+export function winAnswer(out: string, items: ConfirmItem[], single: boolean): number[] {
+  if (out === "TIMEOUT") return declined("Confirmation timed out");
+  if (single) return out === "APPLY" ? [items[0].n] : declined();
+  const chosen = out.startsWith("PICKED ")
+    ? out.slice(7).split(",").map(Number).filter((n) => items.some((i) => i.n === n))
+    : [];
+  return chosen.length ? chosen : declined();
+}
+
 // -- terminal -------------------------------------------------------------------
 
 function ttyAsk(question: string): string | undefined {
@@ -171,6 +249,9 @@ export function confirmChanges(items: ConfirmItem[], title = "Atlassian DC — c
       const chosen = out.split("\n").map((l) => Number(l.split(".")[0])).filter((n) => Number.isInteger(n) && n > 0);
       return chosen.length ? chosen : declined();
     }
+  } else if (process.platform === "win32") {
+    const out = winConfirm(title, items, single, t);
+    if (out !== undefined) return winAnswer(out, items, single);
   } else if ((process.env.DISPLAY || process.env.WAYLAND_DISPLAY) && hasCommand("zenity")) {
     if (single) {
       const ok = zenitySingle(title, `${line(items[0])}\n\nApply this change?`, t);
@@ -183,7 +264,7 @@ export function confirmChanges(items: ConfirmItem[], title = "Atlassian DC — c
 
   throw new ConfirmationError(
     "ConfirmationUnavailable",
-    "No interactive confirmation channel (terminal, macOS dialog or zenity). The change was not applied.",
+    "No interactive confirmation channel (terminal, macOS dialog, Windows dialog or zenity). The change was not applied.",
   );
 }
 
