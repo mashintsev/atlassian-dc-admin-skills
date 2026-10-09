@@ -55733,6 +55733,80 @@ function zenityList(title, items, timeoutS) {
   if (res.status !== 0) return [];
   return res.stdout.trim().split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0);
 }
+var WIN_CONFIRM_PS = String.raw`
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+[System.Windows.Forms.Application]::EnableVisualStyles()
+$d = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($env:ATLASSIAN_WIN_CONFIRM)) | ConvertFrom-Json
+$state = @{ timedOut = $false }
+$f = New-Object System.Windows.Forms.Form
+$f.Text = $d.title; $f.Width = 960; $f.Height = 460; $f.StartPosition = 'CenterScreen'
+$f.TopMost = $true; $f.MinimizeBox = $false; $f.MaximizeBox = $false
+$f.Font = New-Object System.Drawing.Font('Segoe UI', 10)
+if ($d.single) {
+  $box = New-Object System.Windows.Forms.TextBox
+  $box.Multiline = $true; $box.ReadOnly = $true; $box.ScrollBars = 'Vertical'; $box.Text = $d.items[0].text
+} else {
+  $box = New-Object System.Windows.Forms.CheckedListBox
+  $box.CheckOnClick = $true; $box.HorizontalScrollbar = $true
+  foreach ($it in $d.items) { [void]$box.Items.Add($it.text, $true) }
+}
+$box.Dock = 'Fill'
+$lbl = New-Object System.Windows.Forms.Label
+$lbl.Dock = 'Top'; $lbl.Height = 34; $lbl.Padding = New-Object System.Windows.Forms.Padding(6, 8, 6, 0)
+$panel = New-Object System.Windows.Forms.FlowLayoutPanel
+$panel.Dock = 'Bottom'; $panel.Height = 48; $panel.FlowDirection = 'RightToLeft'; $panel.Padding = New-Object System.Windows.Forms.Padding(6)
+$cancel = New-Object System.Windows.Forms.Button
+$cancel.Text = 'Cancel'; $cancel.Width = 120; $cancel.Height = 32; $cancel.DialogResult = 'Cancel'
+$ok = New-Object System.Windows.Forms.Button
+$ok.Width = 160; $ok.Height = 32; $ok.DialogResult = 'OK'
+if ($d.single) { $lbl.Text = 'Apply this change?'; $ok.Text = 'Apply' } else { $lbl.Text = 'Tick the changes to apply (all are ticked):'; $ok.Text = 'Apply selected' }
+$panel.Controls.Add($cancel); $panel.Controls.Add($ok)
+$f.Controls.Add($box); $f.Controls.Add($lbl); $f.Controls.Add($panel)
+$f.CancelButton = $cancel
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = [int]$d.timeout * 1000
+$timer.Add_Tick({ $state.timedOut = $true; $timer.Stop(); $f.Close() })
+$f.Add_Shown({ $f.Activate(); $cancel.Focus(); $timer.Start() })
+$r = $f.ShowDialog()
+$timer.Stop()
+if ($state.timedOut) { 'TIMEOUT' }
+elseif ($r -ne [System.Windows.Forms.DialogResult]::OK) { 'CANCEL' }
+elseif ($d.single) { 'APPLY' }
+else {
+  $picked = @(foreach ($i in $box.CheckedIndices) { $d.items[$i].n })
+  if ($picked.Count -eq 0) { 'CANCEL' } else { 'PICKED ' + ($picked -join ',') }
+}
+`;
+function winConfirm(title, items, single2, timeoutS) {
+  const data = Buffer.from(
+    JSON.stringify({ title, single: single2, timeout: timeoutS, items: items.map((it2) => ({ n: it2.n, text: line(it2) })) }),
+    "utf8"
+  ).toString("base64");
+  const res = spawnSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-STA",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-WindowStyle",
+      "Hidden",
+      "-EncodedCommand",
+      Buffer.from(WIN_CONFIRM_PS, "utf16le").toString("base64")
+    ],
+    { encoding: "utf8", timeout: (timeoutS + 30) * 1e3, env: { ...process.env, ATLASSIAN_WIN_CONFIRM: data } }
+  );
+  if (res.error || res.status !== 0) return void 0;
+  return res.stdout.trim().split(/\r?\n/).pop();
+}
+function winAnswer(out, items, single2) {
+  if (out === "TIMEOUT") return declined("Confirmation timed out");
+  if (single2) return out === "APPLY" ? [items[0].n] : declined();
+  const chosen = out.startsWith("PICKED ") ? out.slice(7).split(",").map(Number).filter((n) => items.some((i) => i.n === n)) : [];
+  return chosen.length ? chosen : declined();
+}
 function ttyAsk(question) {
   let fd;
   try {
@@ -55788,6 +55862,9 @@ Apply this change?`, String(t)], t) : osascript(APPLESCRIPT_LIST, [title, String
       const chosen = out.split("\n").map((l3) => Number(l3.split(".")[0])).filter((n) => Number.isInteger(n) && n > 0);
       return chosen.length ? chosen : declined();
     }
+  } else if (process.platform === "win32") {
+    const out = winConfirm(title, items, single2, t);
+    if (out !== void 0) return winAnswer(out, items, single2);
   } else if ((process.env.DISPLAY || process.env.WAYLAND_DISPLAY) && hasCommand("zenity")) {
     if (single2) {
       const ok = zenitySingle(title, `${line(items[0])}
@@ -55801,7 +55878,7 @@ Apply this change?`, t);
   }
   throw new ConfirmationError(
     "ConfirmationUnavailable",
-    "No interactive confirmation channel (terminal, macOS dialog or zenity). The change was not applied."
+    "No interactive confirmation channel (terminal, macOS dialog, Windows dialog or zenity). The change was not applied."
   );
 }
 function declined(message = "The user did not approve the change") {

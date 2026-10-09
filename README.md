@@ -113,7 +113,8 @@ The confirmation dialog of the CLI works the same; if the sandbox prevents it, w
 
 Every executed change needs the user's interactive confirmation, enforced by the CLI (not by the model):
 
-- `<tool> … dry_run=false` → a dialog (macOS `osascript`, Linux `zenity`) or the terminal shows the change: Apply / Cancel.
+- `<tool> … dry_run=false` → a dialog (macOS `osascript`, Windows PowerShell WinForms, Linux `zenity`) or the
+  terminal shows the change: Apply / Cancel. See `atlassian-dc-admin/WINDOWS.md` for Windows details.
 - `<tool> … --plan=FILE` collects dry runs; `apply FILE` shows one checklist with all changes ticked, the user
   unticks what they do not want. Before each item `apply` repeats the dry run and skips it as `DRIFTED` if the
   request differs from the approved one.
@@ -122,9 +123,10 @@ Every executed change needs the user's interactive confirmation, enforced by the
   only; the variable from the environment or the command line is ignored. `ATLASSIAN_CONFIRM_TIMEOUT` (seconds, default 110).
 
 Optional second layer in Claude Code: `atlassian-dc-admin/hooks/guard-confirmation.mjs` as a `PreToolUse` hook
-(matcher `Bash|Edit|Write|MultiEdit`). It denies attempts to change `ATLASSIAN_CONFIRM_*` or edit the config files
-(in every permission mode) and asks before `dry_run=false` / `apply` commands in modes that still ask
-(not in auto / bypass modes, where the CLI dialog is the only gate).
+(matcher `Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit|Read|Grep`). It denies attempts to change
+`ATLASSIAN_CONFIRM_*` or to read or edit the config files (in every permission mode) and asks before
+`dry_run=false` / `apply` commands in modes that still ask (not in auto / bypass modes, where the CLI dialog
+is the only gate). Bash and PowerShell commands and Windows paths are covered.
 
 ## Develop
 
