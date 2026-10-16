@@ -36,6 +36,10 @@ Limits:
 
 In Claude Code **auto** permission mode, a hook's `"ask"` decision can be resolved without showing the user a prompt. The real gate for writes is the CLI dialog; the hook's job is to stop the agent from turning that dialog off.
 
+## Quotes in arguments
+
+Windows PowerShell 5.1 drops double quotes inside an argument it passes to a native program, so `jql="status = \"In Review\""` reaches the CLI broken (PowerShell may even try to run the words after the quote). Write such values without inner double quotes: ids instead of names (`jql="project = PROJ AND status = 10001"`), or single-quoted JQL strings (`jql="status = 'In Review'"`), which JQL accepts.
+
 ## Building on Windows
 
 `pnpm run build` uses `mkdir -p` and `cp`, which `cmd.exe` does not have. Run its steps directly:

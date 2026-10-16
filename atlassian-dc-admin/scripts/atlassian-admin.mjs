@@ -68049,30 +68049,37 @@ async function resolveColumns(client, given) {
 var sdArg2 = external_exports.coerce.string().min(1).describe("Service desk id or project key");
 var queueArg = external_exports.coerce.string().min(1).describe("Queue id or exact name");
 var columnsArg = listArg.describe("Columns in order: field ids or exact names, comma-separated");
-var view = (q2) => ({ name: q2.name, jql: q2.jql, fields: q2.fields ?? [] });
-var same2 = (a, b) => JSON.stringify(view(a)) === JSON.stringify(view(b));
+function queueJql(jql, projectKey) {
+  const key = projectKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const clause = new RegExp(`^\\s*project\\s*=\\s*"?${key}"?\\s+AND\\s+`, "i");
+  let v = String(jql ?? "").trim();
+  while (clause.test(v)) v = v.replace(clause, "");
+  return v;
+}
+var view = (q2, key) => ({ name: q2.name, jql: queueJql(q2.jql, key), fields: q2.fields ?? [] });
+var same2 = (a, b, key) => JSON.stringify(view(a, key)) === JSON.stringify(view(b, key));
 var jiraQueueTools = [
   {
     name: "jira_create_queue",
     product: "jira",
     write: true,
-    description: "Create a service desk queue with JQL and ordered columns. Same name and settings \u2192 already-satisfied; same name otherwise \u2192 error.",
+    description: "Create a service desk queue with JQL and ordered columns. Jira adds the queue's own project clause itself (a leading `project = KEY AND` is not sent twice). Same name and settings \u2192 already-satisfied; same name otherwise \u2192 error.",
     inputShape: { service_desk: sdArg2, name: external_exports.string().trim().min(1), jql: external_exports.string().trim().min(1), columns: columnsArg, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
       const sd = await resolveServiceDesk(c, args.service_desk);
       const [queues, fields] = await Promise.all([listQueues(c, sd), resolveColumns(c, args.columns)]);
-      const body3 = { name: args.name, jql: args.jql, fields };
+      const body3 = { name: args.name, jql: queueJql(args.jql, sd.projectKey), fields };
       const summary = `Create queue '${args.name}' in ${sd.projectKey}`;
       const existing = queues.find((q2) => String(q2.name).toLowerCase() === args.name.toLowerCase());
-      if (existing && same2(existing, body3)) return alreadySatisfied(summary, `queue ${existing.id} already has this JQL and these columns`);
+      if (existing && same2(existing, body3, sd.projectKey)) return alreadySatisfied(summary, `queue ${existing.id} already has this JQL and these columns`);
       if (existing) throw new ValidationError(`Queue ${existing.id} '${existing.name}' already exists with other settings; use jira_update_queue`);
       const req2 = { method: "POST", path: `${SD}/servicedesk/${sd.id}/queue`, json: body3, headers: OPT_IN, summary };
       if (args.dry_run !== false) return guardedWrite(c, args, req2);
       await c.request("POST", req2.path, { json: body3, headers: OPT_IN });
       const back = (await listQueues(c, sd)).find((q2) => q2.name === args.name);
-      if (!back || !same2(back, body3)) throw new VerificationError(`${summary}: the queue does not read back as created`, back);
-      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req2)).request, result: { id: back.id, ...view(back) } };
+      if (!back || !same2(back, body3, sd.projectKey)) throw new VerificationError(`${summary}: the queue does not read back as created`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req2)).request, result: { id: back.id, ...view(back, sd.projectKey) } };
     }
   },
   {
@@ -68086,15 +68093,16 @@ var jiraQueueTools = [
       const sd = await resolveServiceDesk(c, args.service_desk);
       const q2 = pickQueue(await listQueues(c, sd), args.queue);
       if (!q2) throw new ValidationError(`No queue '${args.queue}' in ${sd.projectKey}`);
-      const body3 = { name: args.name ?? q2.name, jql: args.jql ?? q2.jql, fields: args.columns ? await resolveColumns(c, args.columns) : q2.fields ?? [] };
+      const body3 = { name: args.name ?? q2.name, jql: queueJql(args.jql ?? q2.jql, sd.projectKey), fields: args.columns ? await resolveColumns(c, args.columns) : q2.fields ?? [] };
       const summary = `Update queue ${q2.id} '${q2.name}' in ${sd.projectKey}`;
-      if (same2(q2, body3)) return alreadySatisfied(summary, "it already has these settings");
+      if (same2(q2, body3, sd.projectKey)) return alreadySatisfied(summary, "it already has these settings");
       const req2 = { method: "POST", path: `${SD}/servicedesk/${sd.id}/queue/${q2.id}`, json: body3, headers: OPT_IN, summary };
-      if (args.dry_run !== false) return { ...await guardedWrite(c, args, req2), before: view(q2), after: body3, identity: { op: "update-queue", sd: sd.id, queue: args.queue, ...body3 }, state: view(q2) };
+      const before = view(q2, sd.projectKey);
+      if (args.dry_run !== false) return { ...await guardedWrite(c, args, req2), before, after: body3, identity: { op: "update-queue", sd: sd.id, queue: args.queue, ...body3 }, state: before };
       await c.request("POST", req2.path, { json: body3, headers: OPT_IN });
       const back = await sdGet(c, `/servicedesk/${sd.id}/queue/${q2.id}`);
-      if (!same2(back, body3)) throw new VerificationError(`${summary}: the queue does not read back as updated`, back);
-      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req2)).request, result: { id: back.id, ...view(back) } };
+      if (!same2(back, body3, sd.projectKey)) throw new VerificationError(`${summary}: the queue does not read back as updated`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req2)).request, result: { id: back.id, ...view(back, sd.projectKey) } };
     }
   },
   {

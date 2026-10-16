@@ -22,9 +22,11 @@ export function fakeQueues(opts: { ignoreReorder?: boolean } = {}) {
     const p = path(c);
     if (p === "/rest/servicedeskapi/servicedesk") return { body: { isLastPage: true, values: [{ id: "3", projectId: "10100", projectKey: "BANK", projectName: "Bank" }] } };
     if (p === "/rest/api/2/field") return { body: FIELDS };
+    // like Jira Service Management, store the JQL with the queue's project clause prepended
+    const stored = (body: any) => (body?.jql === undefined ? body : { ...body, jql: `project = BANK AND ${body.jql}` });
     if (p === "/rest/servicedeskapi/servicedesk/3/queue") {
       if (c.method === "GET") return { body: { isLastPage: true, values: queues } };
-      const q = { id: String(next++), ...c.body };
+      const q = { id: String(next++), ...stored(c.body) };
       queues.push(q);
       return { body: q };
     }
@@ -38,7 +40,7 @@ export function fakeQueues(opts: { ignoreReorder?: boolean } = {}) {
     if (m) {
       const i = queues.findIndex((q) => q.id === m[1]);
       if (c.method === "GET") return { body: queues[i] };
-      if (c.method === "POST") { queues[i] = { ...queues[i], ...c.body }; return { body: queues[i] }; }
+      if (c.method === "POST") { queues[i] = { ...queues[i], ...stored(c.body) }; return { body: queues[i] }; }
       if (c.method === "DELETE") { queues.splice(i, 1); return { status: 204 }; }
     }
     return undefined;
@@ -59,7 +61,7 @@ describe("queues (2.1)", () => {
     const q = fakeQueues();
     const dry = await run("jira_create_queue", create, q.responder);
     assert.ok(dry.res.ok, JSON.stringify(dry.error));
-    assert.deepEqual(dry.value.request.body, { name: create.name, jql: create.jql, fields: ["issuekey", "summary", "customfield_10700", "customfield_10120"] });
+    assert.deepEqual(dry.value.request.body, { name: create.name, jql: "resolution = EMPTY", fields: ["issuekey", "summary", "customfield_10700", "customfield_10120"] });
     const r = await run("jira_create_queue", { ...create, dry_run: false }, q.responder);
     assert.ok(r.res.ok, JSON.stringify(r.error));
     assert.deepEqual(r.value.result.fields, ["issuekey", "summary", "customfield_10700", "customfield_10120"]);
@@ -77,12 +79,26 @@ describe("queues (2.1)", () => {
     const q = fakeQueues();
     const dry = await run("jira_update_queue", { service_desk: "BANK", queue: "Unassigned", jql: "project = BANK AND assignee is EMPTY", columns: "Key,Summary" }, q.responder);
     assert.ok(dry.res.ok, JSON.stringify(dry.error));
-    assert.equal(dry.value.before.jql, "project = BANK AND resolution is EMPTY AND assignee is EMPTY");
+    assert.equal(dry.value.before.jql, "resolution is EMPTY AND assignee is EMPTY");
     assert.deepEqual(dry.value.after.fields, ["issuekey", "summary"]);
     assert.ok((await run("jira_update_queue", { service_desk: "BANK", queue: 66, jql: "project = BANK AND assignee is EMPTY", dry_run: false }, q.responder)).res.ok);
     assert.equal(q.queues.find((x) => x.id === "66").jql, "project = BANK AND assignee is EMPTY");
     assert.ok((await run("jira_delete_queue", { service_desk: "BANK", queue: "Unassigned", dry_run: false }, q.responder)).res.ok);
     assert.equal((await run("jira_delete_queue", { service_desk: "BANK", queue: "Unassigned" }, q.responder)).value.already_satisfied, true);
+  });
+
+  it("does not store the project clause twice and reads a queue back without it", async () => {
+    for (const jql of ["status = 1", "project = BANK AND status = 1", 'PROJECT = "bank" and status = 1']) {
+      const q = fakeQueues();
+      const args = { service_desk: "BANK", name: "Status 1", jql, columns: "Key,Summary" };
+      const r = await run("jira_create_queue", { ...args, dry_run: false }, q.responder);
+      assert.ok(r.res.ok, `${jql}: ${JSON.stringify(r.error)}`);
+      assert.equal(q.queues.find((x) => x.name === "Status 1").jql, "project = BANK AND status = 1", jql);
+      assert.equal((await run("jira_create_queue", args, q.responder)).value.already_satisfied, true, jql);
+      const upd = await run("jira_update_queue", { service_desk: "BANK", queue: "Status 1", jql: "project = BANK AND status = 2", dry_run: false }, q.responder);
+      assert.ok(upd.res.ok, `${jql}: ${JSON.stringify(upd.error)}`);
+      assert.equal(q.queues.find((x) => x.name === "Status 1").jql, "project = BANK AND status = 2", jql);
+    }
   });
 });
 
