@@ -4,7 +4,7 @@
 
 ## Separate adapter installation
 
-The tools require a repository-owned ScriptRunner custom endpoint. They do not install it automatically. Initial allowed policy: Jira 11.3.x / ScriptRunner 10.x, Jakarta endpoints. Local compilation evidence uses Jira 11.3.6 / ScriptRunner 10.11.1. Deployed and verified on Jira 11.3.7 / ScriptRunner 10.14.0: export, validation, draft write and publish of one active workflow.
+The tools require a repository-owned ScriptRunner custom endpoint. They do not install it automatically. Initial allowed policy: Jira 11.3.x / ScriptRunner 10.x, Jakarta endpoints. Local compilation evidence uses Jira 11.3.6 / ScriptRunner 10.11.1. Deployed and verified on Jira 11.3.7 / ScriptRunner 10.14.0: export, validation, draft write and publish of one active workflow. Also deployed on Jira 11.3.8 / ScriptRunner 10.17.0: export and validation verified.
 
 Only after selecting a target instance and reviewing a concrete deployment change:
 

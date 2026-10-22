@@ -3,7 +3,8 @@
  *
  * Create, change and delete use the public Service Desk API
  * (`/rest/servicedeskapi/servicedesk/{id}/queue[/{queueId}]`, `{name, jql, fields}` as the
- * queue reads back). Columns are field ids or exact field names.
+ * queue reads back). Columns are field ids or exact field names. The queue's own project clause is
+ * added by Jira (see queueJql).
  */
 
 import { z } from "zod";
@@ -50,31 +51,47 @@ const sdArg = z.coerce.string().min(1).describe("Service desk id or project key"
 const queueArg = z.coerce.string().min(1).describe("Queue id or exact name");
 const columnsArg = listArg.describe("Columns in order: field ids or exact names, comma-separated");
 
-const view = (q: any) => ({ name: q.name, jql: q.jql, fields: q.fields ?? [] });
-const same = (a: any, b: any) => JSON.stringify(view(a)) === JSON.stringify(view(b));
+/**
+ * The JQL a queue is written with. Jira Service Management prepends `project = <KEY> AND ` to the JQL it
+ * receives and returns the stored JQL with that clause, so a leading clause for the queue's own project is
+ * dropped before sending (otherwise it is stored twice) and before comparing (otherwise a queue that was
+ * written correctly does not read back as written).
+ */
+export function queueJql(jql: string, projectKey: string): string {
+  const key = projectKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const clause = new RegExp(`^\\s*project\\s*=\\s*"?${key}"?\\s+AND\\s+`, "i");
+  let v = String(jql ?? "").trim();
+  while (clause.test(v)) v = v.replace(clause, "");
+  return v;
+}
+
+const view = (q: any, key: string) => ({ name: q.name, jql: queueJql(q.jql, key), fields: q.fields ?? [] });
+const same = (a: any, b: any, key: string) => JSON.stringify(view(a, key)) === JSON.stringify(view(b, key));
 
 export const jiraQueueTools: ToolDef[] = [
   {
     name: "jira_create_queue",
     product: "jira",
     write: true,
-    description: "Create a service desk queue with JQL and ordered columns. Same name and settings → already-satisfied; same name otherwise → error.",
+    description:
+      "Create a service desk queue with JQL and ordered columns. Jira adds the queue's own project clause itself " +
+      "(a leading `project = KEY AND` is not sent twice). Same name and settings → already-satisfied; same name otherwise → error.",
     inputShape: { service_desk: sdArg, name: z.string().trim().min(1), jql: z.string().trim().min(1), columns: columnsArg, ...dryRunShape },
     async handler({ client }, args) {
       const c = client("jira");
       const sd = await resolveServiceDesk(c, args.service_desk);
       const [queues, fields] = await Promise.all([listQueues(c, sd), resolveColumns(c, args.columns)]);
-      const body = { name: args.name, jql: args.jql, fields };
+      const body = { name: args.name, jql: queueJql(args.jql, sd.projectKey), fields };
       const summary = `Create queue '${args.name}' in ${sd.projectKey}`;
       const existing = queues.find((q) => String(q.name).toLowerCase() === args.name.toLowerCase());
-      if (existing && same(existing, body)) return alreadySatisfied(summary, `queue ${existing.id} already has this JQL and these columns`);
+      if (existing && same(existing, body, sd.projectKey)) return alreadySatisfied(summary, `queue ${existing.id} already has this JQL and these columns`);
       if (existing) throw new ValidationError(`Queue ${existing.id} '${existing.name}' already exists with other settings; use jira_update_queue`);
       const req = { method: "POST" as const, path: `${SD}/servicedesk/${sd.id}/queue`, json: body, headers: OPT_IN, summary };
       if (args.dry_run !== false) return guardedWrite(c, args, req);
       await c.request("POST", req.path, { json: body, headers: OPT_IN });
       const back = (await listQueues(c, sd)).find((q) => q.name === args.name);
-      if (!back || !same(back, body)) throw new VerificationError(`${summary}: the queue does not read back as created`, back);
-      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, ...view(back) } };
+      if (!back || !same(back, body, sd.projectKey)) throw new VerificationError(`${summary}: the queue does not read back as created`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, ...view(back, sd.projectKey) } };
     },
   },
   {
@@ -88,15 +105,16 @@ export const jiraQueueTools: ToolDef[] = [
       const sd = await resolveServiceDesk(c, args.service_desk);
       const q = pickQueue(await listQueues(c, sd), args.queue);
       if (!q) throw new ValidationError(`No queue '${args.queue}' in ${sd.projectKey}`);
-      const body = { name: args.name ?? q.name, jql: args.jql ?? q.jql, fields: args.columns ? await resolveColumns(c, args.columns) : (q.fields ?? []) };
+      const body = { name: args.name ?? q.name, jql: queueJql(args.jql ?? q.jql, sd.projectKey), fields: args.columns ? await resolveColumns(c, args.columns) : (q.fields ?? []) };
       const summary = `Update queue ${q.id} '${q.name}' in ${sd.projectKey}`;
-      if (same(q, body)) return alreadySatisfied(summary, "it already has these settings");
+      if (same(q, body, sd.projectKey)) return alreadySatisfied(summary, "it already has these settings");
       const req = { method: "POST" as const, path: `${SD}/servicedesk/${sd.id}/queue/${q.id}`, json: body, headers: OPT_IN, summary };
-      if (args.dry_run !== false) return { ...(await guardedWrite(c, args, req)), before: view(q), after: body, identity: { op: "update-queue", sd: sd.id, queue: args.queue, ...body }, state: view(q) };
+      const before = view(q, sd.projectKey);
+      if (args.dry_run !== false) return { ...(await guardedWrite(c, args, req)), before, after: body, identity: { op: "update-queue", sd: sd.id, queue: args.queue, ...body }, state: before };
       await c.request("POST", req.path, { json: body, headers: OPT_IN });
       const back = await sdGet(c, `/servicedesk/${sd.id}/queue/${q.id}`);
-      if (!same(back, body)) throw new VerificationError(`${summary}: the queue does not read back as updated`, back);
-      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, ...view(back) } };
+      if (!same(back, body, sd.projectKey)) throw new VerificationError(`${summary}: the queue does not read back as updated`, back);
+      return { dry_run: false, product: c.product, summary, request: (await guardedWrite(c, { dry_run: true }, req)).request, result: { id: back.id, ...view(back, sd.projectKey) } };
     },
   },
   {
