@@ -8,7 +8,7 @@
 
 - Jira 11 resolves only `jakarta.ws.rs` and `jakarta.servlet`; a `javax` import fails the compile.
 - The third closure parameter of `CustomEndpointDelegate` (`HttpServletRequest`) gives the caller's `Cookie`/`Authorization`, and `request.localPort` the Tomcat connector, so REST can be called from inside the server without a proxy round trip (`http://127.0.0.1:<port><contextPath>`, `baseUrl` as fallback).
-- ScriptRunner report: `GET /rest/scriptrunner/latest/script/export/` (`ScriptExportEndpoint.generateReport`, `application/zip`), the same archive as the UI export. Behaviours configuration is also at `GET /rest/scriptrunner/behaviours/latest/admin/behaviour`, but the report already contains it.
+- ScriptRunner report: `GET /rest/scriptrunner/latest/script/export/` (`ScriptExportEndpoint.generateReport`, `application/zip`), the same archive as the UI export. Without parameters it holds only enabled items; `?isActive=false` adds disabled workflow functions and behaviours, so a disabled item in the snapshot is not mistaken for a deleted one. Behaviours configuration is also at `GET /rest/scriptrunner/behaviours/latest/admin/behaviour`, but the report already contains it.
 - Automation: `GET /rest/cb-automation/latest/project/{projectId}/rule/export` (`RuleResource.export`); `GLOBAL` exports every rule.
 - JSM forms: `GET /rest/servicedesk/1/servicedesk/{requestTypeId}/request-type-fields/{visible|hidden}` (internal; hidden rows carry the preset values); SLAs: `GET /rest/servicedesk/1/servicedesk/agent/{projectKey}/sla/metrics`.
 - After a redeploy that does not compile, ScriptRunner keeps serving the old class and answers `Cannot open URL: bundle://…/<file>.groovy`; pressing Update on the endpoint shows the compile error.

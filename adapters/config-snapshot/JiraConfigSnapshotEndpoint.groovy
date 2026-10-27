@@ -64,9 +64,9 @@ import java.util.zip.ZipOutputStream
  *    resolutions, link types, categories, roles, events).
  *  - REST from inside the server under the session of whoever opened the link: JSM (request types with forms,
  *    portal groups, queues, SLAs), the Assets structure (schemas, object types, attributes, statuses; no objects),
- *    the ScriptRunner report (GET /rest/scriptrunner/latest/script/export/, the same zip as the UI export button)
- *    as scriptrunner-report.zip, and all Automation rules (GET /rest/cb-automation/latest/project/GLOBAL/rule/export)
- *    as automation-rules.json.
+ *    the ScriptRunner report (GET /rest/scriptrunner/latest/script/export/?isActive=false: the zip of the UI export
+ *    button plus disabled workflow functions and behaviours) as scriptrunner-report.zip, and all Automation rules
+ *    (GET /rest/cb-automation/latest/project/GLOBAL/rule/export) as automation-rules.json.
  * skip: jsm, assets, scriptrunner, automation, drafts, options; leave a section out when the export takes too long.
  * meta.json carries baseUrl: unpack.py maps it to the local instance folder.
  * Access: the groups list of the endpoint below; set it to your administrator group.
@@ -560,7 +560,7 @@ Map collectSnapshot(Set<String> excludedCategories, Set<String> skipped, Map res
   final List<Map> serviceDeskNodes = skipped.contains('jsm') ? [] : collectServiceDesks(rest, errors)
   final List<Map> assetsSchemaNodes = skipped.contains('assets') ? [] : collectAssetsSchemas(rest, errors)
   final byte[] scriptRunnerReport = skipped.contains('scriptrunner') ? null : (restPart(errors, 'scriptrunner', 'script/export') {
-    restGetBytes(rest, '/rest/scriptrunner/latest/script/export/')
+    restGetBytes(rest, '/rest/scriptrunner/latest/script/export/?isActive=false')
   } as byte[])
   final byte[] automationRules = skipped.contains('automation') ? null : (restPart(errors, 'automation', 'rule/export') {
     restGetBytes(rest, '/rest/cb-automation/latest/project/GLOBAL/rule/export')

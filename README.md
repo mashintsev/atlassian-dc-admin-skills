@@ -78,7 +78,8 @@ The snapshot is one zip from a read-only ScriptRunner REST endpoint:
 What the zip holds: the Java API part (projects, schemes, workflows and drafts as XML, screens, fields,
 options, permission/notification/security schemes, global permissions, lookups) and, read over REST
 from inside the server under the caller's session, JSM forms/queues/SLAs, the Assets structure, the
-ScriptRunner report (`GET /rest/scriptrunner/latest/script/export/`) and all Automation rules
+ScriptRunner report (`GET /rest/scriptrunner/latest/script/export/?isActive=false`, disabled functions and
+behaviours included) and all Automation rules
 (`GET /rest/cb-automation/latest/project/GLOBAL/rule/export`). A failing section is listed in
 `errors.json`; the rest of the snapshot stays complete. If a plugin upgrade moves the export URLs,
 `adapters/config-snapshot/ProbeExportEndpoints.groovy` (Script Console, read-only) lists them.
