@@ -81,7 +81,7 @@ Compact cells and long text carry cut markers; JSON retains columns but respects
 Assets search defaults to 20 objects and previews 20 attributes; name `attributes` to select them. Custom field options without `context` return counts; with `context`, page via `limit`/`offset`. Audit `raw=true` requires `limit<=50`. Request forms show addable fields only with `include_addable=true`; space discovery audit rows require `include_audit=true`. Comments use storage Markdown and `max_body_chars` (default 2,000). Markdown page writes reject code cut markers: read full storage or a smaller section first. Expanded JSON reads can require `--out`.
 
 <!-- tools:start -->
-383 tools, 215 of them write tools (✎; they also take `dry_run`, default true). Arguments and descriptions: run `describe <tool>`; search by concept with `list <text>`.
+384 tools, 216 of them write tools (✎; they also take `dry_run`, default true). Arguments and descriptions: run `describe <tool>`; search by concept with `list <text>`.
 
 ### Jira admin — system
 
@@ -261,7 +261,7 @@ Assets search defaults to 20 objects and previews 20 attributes; name `attribute
 
 ### Confluence admin — spaces and permissions
 
-`confluence_list_spaces`, `confluence_get_space`, `confluence_get_space_permissions`, `confluence_grant_space_permissions` ✎, `confluence_revoke_space_permissions` ✎, `confluence_get_global_permissions`, `confluence_archive_space` ✎, `confluence_delete_space` ✎, `confluence_get_space_categories`, `confluence_add_space_category` ✎, `confluence_remove_space_category` ✎, `confluence_find_spaces_by_group`
+`confluence_list_spaces`, `confluence_get_space`, `confluence_get_space_permissions`, `confluence_grant_space_permissions` ✎, `confluence_revoke_space_permissions` ✎, `confluence_get_global_permissions`, `confluence_create_space` ✎, `confluence_archive_space` ✎, `confluence_delete_space` ✎, `confluence_get_space_categories`, `confluence_add_space_category` ✎, `confluence_remove_space_category` ✎, `confluence_find_spaces_by_group`
 
 ### Confluence — pages and search
 

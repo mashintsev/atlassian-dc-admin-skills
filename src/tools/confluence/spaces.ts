@@ -239,6 +239,25 @@ export const confluenceSpaceTools: ToolDef[] = [
     },
   },
   {
+    name: "confluence_create_space",
+    product: "confluence",
+    write: true,
+    description: "Create a global space with a key and name (optional plain-text description). Existing key → already-satisfied.",
+    inputShape: { space_key: z.string(), name: z.string(), description: z.string().optional(), ...dryRunShape },
+    async handler({ client }, args) {
+      const c = client("confluence");
+      const summary = `Create space ${args.space_key} "${args.name}"`;
+      if ((await spaceStatus(c, args.space_key)) !== null) return alreadySatisfied(summary, "a space with this key already exists");
+      const json: Record<string, unknown> = { key: args.space_key, name: args.name };
+      if (args.description) json.description = { plain: { value: args.description, representation: "plain" } };
+      const req = { method: "POST" as const, path: `${API}/space`, json, summary };
+      if (args.dry_run !== false) return guardedWrite(c, args, req);
+      const result = await guardedWrite(c, args, req);
+      if ((await spaceStatus(c, args.space_key)) === null) throw new VerificationError(`${summary}: the space is not found afterwards`, { space: args.space_key });
+      return result;
+    },
+  },
+  {
     name: "confluence_archive_space",
     product: "confluence",
     write: true,

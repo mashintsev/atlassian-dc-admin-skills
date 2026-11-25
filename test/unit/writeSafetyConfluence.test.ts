@@ -93,6 +93,10 @@ function fakeConfluence(opts: { ignore?: boolean } = {}) {
       return { body: [...set].map((v) => ({ subject: { type, name: subject }, operation: { operationKey: v.split(":")[0], targetType: v.split(":")[1] } })) };
     }
     // spaces
+    if (p === "/rest/api/space" && c.method === "POST") {
+      if (!opts.ignore) spaces.set(c.body.key, "current");
+      return { body: { key: c.body.key, name: c.body.name } };
+    }
     if ((m = /^\/rest\/api\/space\/([^/]+)\/archive$/.exec(p)) && c.method === "PUT") {
       if (!opts.ignore) spaces.set(m[1]!, "archived");
       return { body: {} };
@@ -128,6 +132,7 @@ const CASES: Array<{ tool: string; satisfied: Record<string, unknown>; change: R
   { tool: "confluence_add_label", satisfied: { content_id: "42", names: "existing" }, change: { content_id: "42", names: "existing,Release Notes" }, applied: (f) => f.labels.get("42")!.has("global:release-notes") },
   { tool: "confluence_grant_space_permissions", satisfied: { space_key: "DOC", subject_type: "group", subject: "team-a", operations: "read:space" }, change: { space_key: "DOC", subject_type: "group", subject: "team-a", operations: "read:space,create:page" }, applied: (f) => f.perms.get("DOC|group|team-a")!.has("create:page") },
   { tool: "confluence_revoke_space_permissions", satisfied: { space_key: "DOC", subject_type: "group", subject: "team-a", operations: "delete:space" }, change: { space_key: "DOC", subject_type: "group", subject: "team-a", operations: "read:space" }, applied: (f) => !f.perms.get("DOC|group|team-a")!.has("read:space") },
+  { tool: "confluence_create_space", satisfied: { space_key: "DOC", name: "Doc" }, change: { space_key: "NEW", name: "New" }, applied: (f) => f.spaces.get("NEW") === "current" },
   { tool: "confluence_archive_space", satisfied: { space_key: "OLD" }, change: { space_key: "DOC" }, applied: (f) => f.spaces.get("DOC") === "archived" },
   { tool: "confluence_delete_space", satisfied: { space_key: "GONE" }, change: { space_key: "DOC" }, applied: (f) => !f.spaces.has("DOC") },
 ];
